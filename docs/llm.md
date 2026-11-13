@@ -46,9 +46,8 @@ Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 
 ## Prompt'lar
 
-Bugün tek dosya (`backend/app/prompts.py`). Hedef:
+`backend/app/prompts/` altında görev başına dosya; her prompt'un bir `VERSION`'ı var (`clean@1`, `interpret@1`, `storyboard@1`). Metni değiştiren sürümü de artırır; `tests/test_prompts.py` ikisini birlikte sabitler (L5). Hedef:
 
-- `backend/app/prompts/` altında görev başına dosya; her prompt'un bir sürüm kimliği vardır.
 - `analyses` satırı kullanılan prompt ve model sürümünü taşır; bir yorumun hangi kuralla üretildiği sonradan bilinir.
 - Mevcut kurallar korunur: kullanıcı metni talimat değildir; kesin kehanet yok; lucid, tekrar ve kâbus yalnız açık beyan ve birebir alıntıyla; duygu oranı model tahminidir; hassas anlatımda yorum yumuşar ve destekleyici bir cümle eklenir.
 - Kümülatif yorumda ek kural: getirilen bağlamla zorla ilişki kurulmaz; sözlük anlamı kullanan cümle kaynağını belirtir; kolektif cümle yalnız verilen toplamdan yazılır.
@@ -65,7 +64,9 @@ Bugün tek dosya (`backend/app/prompts.py`). Hedef:
 | Güvenlik | Talimat sızdırma, hassas içerik davranışı | Elle |
 | Yorum | Bağlama sadakat, uydurma bağ | Model hakemli + elle örneklem |
 
-**Duygu hedefi (A13):** çıkarımın beş HVdC duygusuna eşlenen çıktısı, elle kodlanmış İngilizce örneklerde rapor başına var/yok olarak makro F1 ≥ 0,80; üzüntü ayrıca raporlanır ve ≥ 0,70 olmalı. Referans: ince ayarlı BERT DreamBank'te makro F1 0,85–0,86, üzüntüde 0,77–0,80 ([kart](arastirma/notlar/olcum-llm-kodlama.md)). Türkçe set için hedef İngilizce sonuçtan en çok 0,05 düşük. Mutluluk gibi olumlu duygunun kaçırılması ayrı izlenir; hazır duygu modellerinin en zayıf yeri bu.
+**Duygu hedefi (A13):** çıkarımın beş HVdC duygusuna eşlenen çıktısı, elle kodlanmış İngilizce örneklerde rapor başına var/yok olarak makro F1 ≥ 0,80; üzüntü ayrıca raporlanır ve ≥ 0,70 olmalı. Referans: ince ayarlı BERT DreamBank'te makro F1 0,85–0,86, üzüntüde 0,77–0,80 ([kart](arastirma/notlar/olcum-llm-kodlama.md)). Türkçe set için hedef İngilizce sonuçtan en çok 0,05 düşük. Mutluluk gibi olumlu duygunun kaçırılması ayrı izlenir; hazır duygu modellerinin en zayıf yeri bu. Tavan: HVdC'nin kendi kodlayıcıları duygularda yalnız %63 tam uyum sağladı (A15); eval seti iki kişiyle kodlanır, model insanlar arası uyumu geçmesi beklenmeyen bir ölçüde değerlendirilir.
+
+Duygu tek parametre değil: karakter, etkileşim, talih, mekân, tema, tür, bakış açısı, beyan, güvenlik ve süre tahmini dahil 30'dan fazla parametrenin hedefi [eval hedefleri](eval-hedefleri.md) belgesinde ve `evals/targets.toml` dosyasında; insan tavanı olanlarda hedef insan uyumunun %90'ı.
 
 CI kayıtlı yanıtlarla koşar ve ücretli çağrı yapmaz. Canlı koşu elle tetiklenir; model ya da prompt değişikliği sonuç tablosuyla birlikte gelir. Yeni bir zor rüya örneği eklemek dışarıdan katkıya açık en kolay iştir.
 
