@@ -6,7 +6,7 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 
 ## Faz 0: araştırma
 
-İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13). Kalanlar:
+İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13); HVdC insanlar arası uyum, duygularda %63 (A15). Kalanlar:
 
 | No | Görev |
 | --- | --- |
@@ -14,7 +14,6 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 | A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
 | A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
 | A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini oku; pratik listesini halkbilimi kartına ekle |
-| A15 | HVdC duygu kodlamasında insanlar arası uyum (κ) kaynağını bul; eval hedefinin tavanını koy |
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
