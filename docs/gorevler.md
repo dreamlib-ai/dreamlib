@@ -33,11 +33,10 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 
 ### İş sistemi ve maliyet
 
-Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2).
+Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2); zincir ve tekrar koruması sütunları, öncelik, tür başına eşzamanlılık (B3).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| B3 | `dream_id`, `parent_id`, `dedupe_key`, `priority`; tür başına eşzamanlılık kuralı | B1 |
 | B4 | `usage` tablosu; LLM ve fal çağrıları satır yazsın | B1 |
 | B5 | Rüya başına tek durum ucu | B3 |
 

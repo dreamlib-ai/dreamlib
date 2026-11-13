@@ -12,11 +12,13 @@ class Kind:
     run: Callable[[JobContext], Awaitable[None]]
     timeout: float  # seconds for one try
     failed: str  # what the user reads when the job gives up
+    exclusive: bool = True  # at most one exclusive job per user is queued or running (paid drawing)
+    priority: int = 0  # higher goes first; jobs a user is waiting on outrank background work
 
 
 KINDS: dict[str, Kind] = {
-    "manga": Kind(manga.run, manga.MANGA_TIMEOUT, manga.FAILED),
-    "image": Kind(image.run, 3 * 60, image.FAILED),
+    "manga": Kind(manga.run, manga.MANGA_TIMEOUT, manga.FAILED, priority=10),
+    "image": Kind(image.run, 3 * 60, image.FAILED, priority=10),
 }
 
 UNKNOWN = "bu iş türü artık desteklenmiyor"
