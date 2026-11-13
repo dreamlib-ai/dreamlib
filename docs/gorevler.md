@@ -44,9 +44,10 @@ Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (
 
 ### Motor ve yorum
 
+Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile).
+
 | No | Görev | Önce |
 | --- | --- | --- |
-| M1 | pgvector, `entity_kinds`, `entities`, `entity_aliases`, `dream_entities` | Z1 |
 | M2 | `relation_types`, `edges`, `dream_embeddings` ve arama SQL fonksiyonları | M1 |
 | M3 | `analyses` tablosu; yorum yeni satır yazsın, eski alanlar okunmaya devam etsin | Z1 |
 | M4 | `index` işi: çıkar, normalize et, vektörle | M1, L2, L4, B3 |
