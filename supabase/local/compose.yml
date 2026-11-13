@@ -1,9 +1,9 @@
-# Yerel veritabanı yığını: canlıdaki Supabase Postgres imajı (auth, pgvector içinde) ve uygulamanın
-# konuştuğu REST katmanı PostgREST. Aynı dosya iki proje adıyla çalışır:
-#   dreamlib-local       kalıcı geliştirme veritabanı (scripts/local_db.py, npm run db); `api` profiliyle
-#                        giriş (GoTrue), dosya deposu (storage-api) ve hepsini Supabase'in yollarıyla
-#                        (/rest/v1, /auth/v1, /storage/v1) tek adreste sunan ağ geçidi de kalkar.
-#   dreamlib-local-test  her test koşusunda sıfırdan kurulup silinen kopya (scripts/db_test.py), yalnız db ve rest.
+# Yerel Supabase: canlıdaki Postgres imajı (auth, pgvector içinde), PostgREST, GoTrue (giriş), storage-api
+# (görseller) ve hepsini Supabase'in yollarıyla (/rest/v1, /auth/v1, /storage/v1) tek adreste sunan geçit.
+# Uygulama (api, web) ayrı grupta: kökteki compose.yml. Aynı dosya iki proje adıyla çalışır:
+#   dreamlib-supabase    kalıcı geliştirme yığını, veritabanı adı dreamlib-local (scripts/local_db.py, npm start)
+#   dreamlib-local-test  her test koşusunda sıfırdan kurulup silinen kopya (scripts/db_test.py), yalnız db ve rest
+# Volume ve ağ adları veritabanı adından gelir; proje adı değişse de veri kalır.
 # Parolalar, JWT sırrı ve anahtarlar yalnız yerel kullanım içindir.
 
 services:
@@ -101,8 +101,8 @@ services:
     profiles: ["api"]
 
   gateway:
-    # İçeride de aynı portta dinler: backend bu servisin ağını paylaştığı için http://127.0.0.1:<port>
-    # hem tarayıcıdan hem backend'den aynı yere çıkar (imzalı görsel adresleri tarayıcıya gider).
+    # Supabase'in Kong'unun yerel karşılığı. İçeride de aynı portta dinler: api bu ağdan
+    # http://gateway:<port> ile, tarayıcı http://127.0.0.1:<port> ile aynı yollara gelir.
     image: nginx:1.27.5-alpine
     depends_on:
       - rest
@@ -115,57 +115,14 @@ services:
       - ./gateway.conf:/etc/nginx/templates/default.conf.template:ro
     ports:
       - "127.0.0.1:${DREAMLIB_API_PORT:-55431}:${DREAMLIB_API_PORT:-55431}"
-      - "127.0.0.1:${DREAMLIB_BACKEND_PORT:-8080}:8080"  # backend'in portu (backend bu ağda koşar)
     profiles: ["api"]
-
-  backend:
-    # Canlıdaki imaj (backend/Dockerfile); kod bağlanır ve değişince yeniden yüklenir.
-    # Anahtarlar backend/.env'den gelir; Supabase ayarları burada dreamlib-local'a çevrilir.
-    build: ../../backend
-    image: dreamlib-local-backend
-    network_mode: service:gateway
-    depends_on:
-      - gateway
-    env_file:
-      - path: ../../backend/.env
-        required: false
-    environment:
-      ADDR: 0.0.0.0:8080
-      SUPABASE_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}
-      SUPABASE_SERVICE_KEY: ${DREAMLIB_SERVICE_KEY:-}
-      DREAMLIB_DEV_AUTH: "0"
-      DREAMLIB_FAKE_AI: "0"
-    volumes:
-      - ../../backend/app:/app/app
-    command: ["python", "-m", "uvicorn", "app.main:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8080",
-              "--reload", "--reload-dir", "/app/app"]
-    profiles: ["app"]
-
-  frontend:
-    # Vite geliştirme sunucusu; node_modules konteynerin kendi biriminde (Windows'unkiyle karışmaz).
-    image: node:22.23.0-alpine
-    working_dir: /app
-    depends_on:
-      - backend
-    environment:
-      VITE_SUPABASE_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}
-      VITE_SUPABASE_ANON_KEY: ${DREAMLIB_ANON_KEY:-}
-      DREAMLIB_API_PROXY: http://gateway:8080
-      DREAMLIB_POLL: "1"
-    volumes:
-      - ../../frontend:/app
-      - node_modules:/app/node_modules
-    command: ["sh", "-c", "npm ci --no-audit --no-fund && npx vite --host 0.0.0.0"]
-    ports:
-      - "127.0.0.1:${DREAMLIB_FRONTEND_PORT:-5173}:5173"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5173/"]
-      interval: 3s
-      timeout: 3s
-      retries: 100
-    profiles: ["app"]
 
 volumes:
   data:
+    name: ${DREAMLIB_DB_NAME:-dreamlib-local}_data
   files:
-  node_modules:
+    name: ${DREAMLIB_DB_NAME:-dreamlib-local}_files
+
+networks:
+  default:
+    name: ${DREAMLIB_DB_NAME:-dreamlib-local}_net

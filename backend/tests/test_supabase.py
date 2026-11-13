@@ -151,6 +151,18 @@ def test_storage_save_sign_and_remove():
         run(Supabase("https://x.supabase.co", "k", transport=httpx.MockTransport(handler)).save_image(UID, "http://fal.test/i.png"))
 
 
+def test_signed_links_use_the_public_address_while_calls_use_the_inner_one():
+    seen = []
+
+    def handler(req):
+        seen.append(str(req.url))
+        return httpx.Response(200, json=[{"path": "a", "signedURL": "/object/sign/dream-images/a?token=t"}])
+
+    sb = Supabase("http://gateway:55431", "k", transport=httpx.MockTransport(handler), public_url="http://127.0.0.1:55431/")
+    assert run(sb.sign(["a"])) == ["http://127.0.0.1:55431/storage/v1/object/sign/dream-images/a?token=t"]
+    assert seen[0].startswith("http://gateway:55431/storage/v1/object/sign/")
+
+
 def test_quota_and_locks_go_through_postgres_functions():
     seen = []
 
