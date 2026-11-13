@@ -22,12 +22,11 @@ Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştı
 
 ## Faz 1: zemin
 
-Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1, Z2); birleşmiş dallar silindi (Z3); migration'lar tek klasörde (Z4); yerel not ve env dosyaları git dışı (Z5); tüm geçmişte sır taraması temiz (Z6); yalnız kontrol çalıştıran CI, Actions açık (Z7); proje kimlikleri ve kişisel bilgiler repodan çıktı (Z8); `DREAMLIB_FAKE_AI=1` ile anahtarsız yerel akış (Z9); temiz geçmişli public repo, AGPL-3.0 ve şablonlar (Z10); tercih anketi sitesi duraklatıldı, sonuçlar veritabanında (Z11). Kalanlar:
+Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1, Z2); birleşmiş dallar silindi (Z3); migration'lar tek klasörde (Z4); yerel not ve env dosyaları git dışı (Z5); tüm geçmişte sır taraması temiz (Z6); yalnız kontrol çalıştıran CI, Actions açık (Z7); proje kimlikleri ve kişisel bilgiler repodan çıktı (Z8); `DREAMLIB_FAKE_AI=1` ile anahtarsız yerel akış (Z9); temiz geçmişli public repo, AGPL-3.0 ve şablonlar (Z10); tercih anketi sitesi duraklatıldı, sonuçlar veritabanında (Z11); ilk altı `good first issue` GitHub'da açık (Z12). Kalanlar:
 
 | No | Görev | Önce |
 | --- | --- | --- |
 | Z5b | Bakımcının yerel `dreamlib-vibe/` env dosyasındaki anahtarları sağlayıcı panellerinden döndür | — |
-| Z12 | İlk `good first issue` işlerini GitHub'da aç (🌱 satırlardan) | — |
 
 ## Faz 2: beta çekirdeği
 
