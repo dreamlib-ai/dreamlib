@@ -42,11 +42,10 @@ Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (
 
 ### Motor ve yorum
 
-Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile).
+Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile); `relation_types` (9 ilişki), `edges` (simetrik kenar tek ve sıralı), `dream_embeddings`, `dream_neighbors` ve derinliği üçle sınırlı `dream_chain` (M2; arama yalnız kişinin kendi rüyalarında, rızalılar R1 ile).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| M2 | `relation_types`, `edges`, `dream_embeddings` ve arama SQL fonksiyonları | M1 |
 | M3 | `analyses` tablosu; yorum yeni satır yazsın, eski alanlar okunmaya devam etsin | Z1 |
 | M4 | `index` işi: çıkar, normalize et, vektörle | M1, L2, L4, B3 |
 | M5 | `similar` puanlayıcısı ve kanıt; kişinin kendi rüyaları arasında | M2, M4 |
