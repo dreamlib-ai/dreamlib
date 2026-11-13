@@ -20,6 +20,7 @@ from .store.devstore import DevStore
 from .store.jobstore import MemoryJobs, SupabaseJobs
 from .store.quota import SupabaseQuota
 from .store.supabase import Supabase, Unauthorized
+from .usage import MemoryUsage, Meter, SupabaseUsage, set_scope
 
 log = logging.getLogger("dreamlib")
 
@@ -112,6 +113,7 @@ class Services:
     daily_guest: int = 0  # jobs a guest may start in 24 hours; 0 is no limit
     daily_user: int = 0
     worker: object | None = None  # the running Worker, set when the app starts
+    meter: Meter | None = None  # writes a usage row per paid provider call; comes with accounts
     locks: UserLocks = field(default_factory=UserLocks)
     limits: CallLimits = field(default_factory=CallLimits)
 
@@ -130,9 +132,9 @@ def build_services(cfg: Settings) -> Services:
     sb = Supabase(cfg.supabase_url, cfg.supabase_service_key)
     s = Services(
         llm=on(OpenRouter(cfg.openrouter_key, cfg.openrouter_model, cfg.openrouter_routes)),
-        images=on(Fal(cfg.fal_key, cfg.fal_image_model)),
-        editor=on(Fal(cfg.fal_key, cfg.fal_edit_model)),
-        speech=on(Fal(cfg.fal_key, cfg.fal_speech_model)),
+        images=on(Fal(cfg.fal_key, cfg.fal_image_model, "image")),
+        editor=on(Fal(cfg.fal_key, cfg.fal_edit_model, "edit")),
+        speech=on(Fal(cfg.fal_key, cfg.fal_speech_model, "speech")),
         workers=cfg.workers,
         daily_guest=cfg.daily_guest,
         daily_user=cfg.daily_user,
@@ -140,11 +142,13 @@ def build_services(cfg: Settings) -> Services:
     )
     if sb.enabled:
         s.auth, s.store, s.blobs, s.queue = sb, sb, sb, SupabaseJobs(sb)
+        s.meter = Meter(SupabaseUsage(sb))
         quota = SupabaseQuota(sb)
         s.limits.store, s.locks = quota, UserLocks(quota)
     elif cfg.dev_auth:
         s.auth = s.store = DevStore()
         s.queue = MemoryJobs()
+        s.meter = Meter(MemoryUsage())
         log.warning("DREAMLIB_DEV_AUTH=1: in-memory accounts, any 'dev-' token is accepted. Local use only.")
     else:
         log.warning("SUPABASE_URL or SUPABASE_SERVICE_KEY missing: saving dreams is off")
@@ -153,6 +157,9 @@ def build_services(cfg: Settings) -> Services:
             raise SystemExit("DREAMLIB_FAKE_AI=1 is for local work; turn it off when Supabase is configured")
         s.llm, s.images, s.editor, s.speech = FakeLLM(), FakeFal("image"), FakeFal("edit"), FakeFal("speech")
         log.warning("DREAMLIB_FAKE_AI=1: stand-in model and picture answers. Local use only.")
+    for client in (s.llm, s.images, s.editor, s.speech):
+        if client is not None:
+            client.meter = s.meter
     if not s.llm:
         log.warning("OPENROUTER_API_KEY or OPENROUTER_MODEL missing: /api/analyze is off")
     if not s.images:
@@ -178,7 +185,9 @@ async def current_user(request: Request) -> str:
     if not token:
         raise ApiError(401, "giriş gerekli")
     try:
-        return await s.auth.user_id(token)
+        user_id = await s.auth.user_id(token)
+        set_scope(user_id=user_id)  # usage rows of this request belong to them
+        return user_id
     except Unauthorized:
         raise ApiError(401, "oturum geçersiz")
     except Exception:
