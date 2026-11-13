@@ -13,7 +13,15 @@ ACTIVE = ("queued", "running")
 
 
 class Busy(Exception):
-    """The user already has a job queued or running."""
+    """The user already has an exclusive job queued or running."""
+
+
+class Duplicate(Exception):
+    """A job with this dedupe key already exists; job is that one."""
+
+    def __init__(self, job: "Job"):
+        super().__init__(job.id)
+        self.job = job
 
 
 class Job(BaseModel):
@@ -29,6 +37,12 @@ class Job(BaseModel):
     attempts: int = 0
     worker: str = ""
     cost_usd: float = 0
+    dream_id: str | None = None  # the dream the job works for, when there is one
+    parent_id: str | None = None  # the job that queued this one, in a chain
+    dedupe_key: str = ""  # the same key for the same user and kind never makes a second job
+    priority: int = 0
+    exclusive: bool = True
+    run_after: datetime | None = None  # a queued job waits until then (backoff after a transient error)
     created_at: datetime | None = None
 
 
@@ -36,10 +50,22 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _check_kind(kind: str) -> None:
+def _kind(kind: str):
     from ..pipelines.registry import check  # late: the pipelines import the services, which import this
 
-    check(kind)
+    return check(kind)
+
+
+def _row(user_id: str, kind: str, input: dict, total: int, dream_id, parent_id, dedupe_key: str) -> dict:
+    k = _kind(kind)
+    row = {"user_id": user_id, "kind": kind, "input": input, "total": total, "priority": k.priority, "exclusive": k.exclusive}
+    if dream_id:
+        row["dream_id"] = dream_id
+    if parent_id:
+        row["parent_id"] = parent_id
+    if dedupe_key:
+        row["dedupe_key"] = dedupe_key
+    return row
 
 
 class SupabaseJobs:
@@ -56,13 +82,17 @@ class SupabaseJobs:
             raise RuntimeError(f"jobs: status {res.status_code}: {res.text.strip()[:300]}")
         return rows
 
-    async def create(self, user_id: str, kind: str, input: dict, total: int, request_id: str = "") -> Job:
-        _check_kind(kind)
-        body = {"user_id": user_id, "kind": kind, "input": input, "total": total}
+    async def create(self, user_id: str, kind: str, input: dict, total: int, request_id: str = "", *,
+                     dream_id: str | None = None, parent_id: str | None = None, dedupe_key: str = "") -> Job:
+        body = _row(user_id, kind, input, total, dream_id, parent_id, dedupe_key)
         if request_id:
             body["id"] = request_id
         res, rows = await self._call("POST", "/rest/v1/jobs", body=body, prefer="return=representation")
-        if res.status_code == 409:  # jobs_one_active_idx
+        if res.status_code == 409:  # jobs_dedupe_idx or jobs_one_active_idx
+            if dedupe_key:
+                params = {"user_id": f"eq.{user_id}", "kind": f"eq.{kind}", "dedupe_key": f"eq.{dedupe_key}", "limit": "1"}
+                if found := await self._rest("GET", params):
+                    raise Duplicate(Job(**found[0]))
             raise Busy()
         if res.status_code // 100 != 2 or len(rows) != 1:
             raise RuntimeError(f"jobs: create status {res.status_code}: {res.text.strip()[:300]}")
@@ -73,6 +103,14 @@ class SupabaseJobs:
             return None
         rows = await self._rest("GET", {"id": f"eq.{job_id}", "user_id": f"eq.{user_id}"})
         return Job(**rows[0]) if rows else None
+
+    async def for_dream(self, user_id: str, dream_id: str) -> list[Job]:
+        """The user's jobs for one dream, oldest first."""
+        if not UUID.match(dream_id):
+            return []
+        params = {"user_id": f"eq.{user_id}", "dream_id": f"eq.{dream_id}", "order": "created_at",
+                  "select": "id,user_id,kind,status,done,total,error,dream_id,parent_id,created_at", "limit": "100"}
+        return [Job(**r) for r in await self._rest("GET", params)]
 
     async def active(self, user_id: str) -> bool:
         params = {"user_id": f"eq.{user_id}", "status": f"in.({','.join(ACTIVE)})", "select": "id", "limit": "1"}
@@ -119,19 +157,28 @@ class MemoryJobs:
         self.jobs: dict[str, Job] = {}
         self.leases: dict[str, datetime] = {}
 
-    async def create(self, user_id: str, kind: str, input: dict, total: int, request_id: str = "") -> Job:
-        _check_kind(kind)
+    async def create(self, user_id: str, kind: str, input: dict, total: int, request_id: str = "", *,
+                     dream_id: str | None = None, parent_id: str | None = None, dedupe_key: str = "") -> Job:
+        row = _row(user_id, kind, copy.deepcopy(input), total, dream_id, parent_id, dedupe_key)
+        if dedupe_key:
+            for j in self.jobs.values():
+                if (j.user_id, j.kind, j.dedupe_key) == (user_id, kind, dedupe_key):
+                    raise Duplicate(j.model_copy(deep=True))
         if request_id and request_id in self.jobs:
             raise Busy()
-        if await self.active(user_id):
+        if row["exclusive"] and any(j.user_id == user_id and j.exclusive and j.status in ACTIVE for j in self.jobs.values()):
             raise Busy()
-        job = Job(id=request_id or secrets.token_hex(12), user_id=user_id, kind=kind, input=copy.deepcopy(input), total=total, created_at=_now())
+        job = Job(id=request_id or secrets.token_hex(12), created_at=_now(), **row)
         self.jobs[job.id] = job
         return job.model_copy(deep=True)
 
     async def get(self, job_id: str, user_id: str) -> Job | None:
         j = self.jobs.get(job_id)
         return j.model_copy(deep=True) if j and j.user_id == user_id else None
+
+    async def for_dream(self, user_id: str, dream_id: str) -> list[Job]:
+        mine = [j for j in self.jobs.values() if j.user_id == user_id and j.dream_id == dream_id]
+        return [j.model_copy(deep=True) for j in sorted(mine, key=lambda j: j.created_at)]
 
     async def active(self, user_id: str) -> bool:
         return any(j.user_id == user_id and j.status in ACTIVE for j in self.jobs.values())
@@ -156,8 +203,8 @@ class MemoryJobs:
         for j in expired:
             if j.attempts >= max_attempts:
                 j.status, j.error = "failed", "iş tamamlanamadı, tekrar dene"
-        for j in sorted(self.jobs.values(), key=lambda j: j.created_at):
-            if j.status == "queued" or (j.status == "running" and self.leases.get(j.id, now) < now):
+        for j in sorted(self.jobs.values(), key=lambda j: (-j.priority, j.created_at)):
+            if (j.status == "queued" and (j.run_after is None or j.run_after <= now)) or (j.status == "running" and self.leases.get(j.id, now) < now):
                 j.status, j.attempts, j.worker = "running", j.attempts + 1, worker
                 self.leases[j.id] = now + timedelta(seconds=lease)
                 return j.model_copy(deep=True)
@@ -171,6 +218,8 @@ class MemoryJobs:
         if "lease_until" in fields:  # only ever cleared, when a job goes back to the queue
             del fields["lease_until"]
             self.leases.pop(job_id, None)
+        if isinstance(fields.get("run_after"), str):
+            fields["run_after"] = datetime.fromisoformat(fields["run_after"])
         for k, v in fields.items():
             setattr(j, k, v)
         if lease:

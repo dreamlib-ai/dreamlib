@@ -27,9 +27,11 @@ class FakeLLM:
     def __init__(self, reply):
         self.reply, self.system = reply, ""
 
-    async def chat(self, messages, json_mode=False, *, task):
+    async def chat(self, messages, json_mode=False, *, task, schema=None):
         assert task in TASKS, task  # every call site names a known task
         self.system, self.task = messages[0]["content"], task
+        assert schema is not None or not json_mode, task  # every JSON task names its output shape
+        self.schema = schema
         return self.reply(messages) if callable(self.reply) else self.reply
 
 
@@ -41,6 +43,9 @@ class FakeFal:
 
     def __init__(self, text="Dün gece uçuyordum."):
         self.text, self.calls, self.fail = text, [], False
+
+    async def estimate(self, pictures: int = 1, references: int = 0, queue_position: int = 0) -> float:
+        return 2.0
 
     async def submit(self, body):
         edit = "image_urls" in body
@@ -74,7 +79,8 @@ def make_client(**overrides):
 
 
 @pytest.fixture
-def api():
+def api(monkeypatch):
+    monkeypatch.setattr("app.worker.BACKOFF", (0, 0, 0))  # retries after a transient error at once
     client, s = make_client()
     with client:
         yield client, s
@@ -88,7 +94,11 @@ def wait_job(client, job_id, headers=None, seconds=10):
     deadline = time.time() + seconds
     while time.time() < deadline:
         job = client.get(f"/api/jobs/{job_id}", headers=headers or auth()).json()
-        if job["status"] != "running":
+        if job["status"] not in ("queued", "running"):
             return job
         time.sleep(0.02)
     raise AssertionError("job did not finish")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "db: needs the real database stack (scripts/db_test.py)")

@@ -6,20 +6,24 @@ out and the next worker picks the job up again from its saved state, up to MAX_A
 import asyncio
 import logging
 import os
+import random
 import secrets
 import socket
 from datetime import datetime, timedelta, timezone
 
 from .pipelines.context import JobContext, JobFailed, LostLease
+from .providers.errors import is_transient
 from .pipelines.registry import KINDS, UNKNOWN
 from .services import remove_files
 from .store.jobstore import Job
+from .usage import set_scope
 
 log = logging.getLogger("dreamlib")
 
 LEASE = 60
 HEARTBEAT = 15
 MAX_ATTEMPTS = 3
+BACKOFF = (5, 20, 80)  # seconds before the next try after a transient error; jittered by ±25%
 IDLE = 5  # seconds between looks at an empty queue; a job made here wakes the worker at once
 KEEP_JOBS = timedelta(days=7)  # finished jobs are swept after this; pictures never saved to a dream go with them
 SWEEP_EVERY = 6 * 3600
@@ -76,6 +80,7 @@ class Worker:
             return
         pipeline, timeout, failed = kind.run, kind.timeout, kind.failed
         lost = asyncio.Event()
+        set_scope(user_id=job.user_id, job_id=job.id)  # copied into the pipeline task below
         work = asyncio.create_task(pipeline(ctx))
         beat = asyncio.create_task(self._heartbeat(ctx, work, lost))
         log.info("worker: %s job %s (try %d)", job.kind, job.id, job.attempts)
@@ -97,10 +102,11 @@ class Worker:
             work.cancel()
             if not lost.is_set():
                 raise  # shutting down: leave the job for the next worker
-        except Exception:
-            log.exception("worker: job %s failed (try %d)", job.id, job.attempts)
-            if job.attempts < MAX_ATTEMPTS:
-                await self._release(ctx)
+        except Exception as e:
+            transient = is_transient(e)
+            log.exception("worker: job %s failed (try %d, %s)", job.id, job.attempts, "transient" if transient else "permanent")
+            if transient and job.attempts < MAX_ATTEMPTS:
+                await self._release(ctx, backoff(job.attempts))
             else:
                 await self._fail(ctx, failed)
         finally:
@@ -119,11 +125,13 @@ class Worker:
                 work.cancel()
                 return
 
-    async def _release(self, ctx: JobContext) -> None:
-        """Back in the queue for another try, with what was made so far."""
+    async def _release(self, ctx: JobContext, delay: float) -> None:
+        """Back in the queue for another try after delay seconds, with what was made so far."""
+        run_after = datetime.now(timezone.utc) + timedelta(seconds=delay)
         try:
-            await ctx.save(status="queued", worker="", lease_until=None)
-            self.wake()
+            await ctx.save(status="queued", worker="", lease_until=None, run_after=run_after.isoformat())
+            if delay <= 0:
+                self.wake()
         except Exception:
             log.warning("worker: release failed; the lease will run out", exc_info=True)
 
@@ -145,6 +153,12 @@ class Worker:
             except Exception:
                 log.warning("worker: sweep failed", exc_info=True)
             await asyncio.sleep(SWEEP_EVERY)
+
+
+def backoff(attempts: int) -> float:
+    """Seconds to wait after the given failed try (1-based)."""
+    base = BACKOFF[min(max(attempts, 1), len(BACKOFF)) - 1]
+    return base * random.uniform(0.75, 1.25)
 
 
 async def sweep(s, keep: timedelta = KEEP_JOBS) -> int:

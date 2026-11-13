@@ -33,6 +33,23 @@ class Analysis(BaseModel):
     features: Features = Field(default_factory=Features)
 
 
+class CleanOut(BaseModel):
+    """What the clean task returns."""
+    cleanText: str = ""
+    language: str = ""
+
+
+class StoryPanel(BaseModel):
+    scene: str
+    caption: str = ""
+
+
+class Storyboard(BaseModel):
+    """What the storyboard task returns."""
+    characterNote: str = ""
+    panels: list[StoryPanel] = []
+
+
 class Panel(BaseModel):
     """One picture of a booklet. path is a storage path (or, without storage, the remote image
     URL); url is the viewable address, filled in when a dream is sent out."""
@@ -62,6 +79,8 @@ class MangaMeta(BaseModel):
     avatar_path: str = Field('',alias='AvatarPath')
     avatar_spec: AvatarSpec | None = Field(None,alias='AvatarSpec')
     perspective: str = Field('unknown',alias='Perspective')
+    prompt_version: str = Field('', alias='PromptVersion')  # picture prompt revision; empty is the legacy wording
+    image_model: str = Field('', alias='ImageModel')  # registry name the panels were first drawn with
 
 
 class DreamIn(Analysis):

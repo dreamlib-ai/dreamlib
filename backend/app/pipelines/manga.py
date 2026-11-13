@@ -4,9 +4,11 @@ Every step is written to the job's state as it finishes (storyboard, each queued
 each stored panel), so a booklet picked up after a restart carries on from where it stopped."""
 import asyncio
 import logging
+import math
+import time
 
-from ..models import MangaMeta, Panel
-from ..prompts import STYLE_HINTS, storyboard_prompt
+from ..models import MangaMeta, Panel, Storyboard
+from ..prompts import image as image_prompts, storyboard_prompt
 from ..services import Services, clip, extract_json
 from ..avatar import AvatarSpec, avatar_prompt
 from .context import JobContext, JobFailed, LostLease
@@ -31,6 +33,9 @@ async def run(ctx: JobContext) -> None:
         st.update(meta=meta.model_dump(by_alias=True), captions=captions, paths=[""] * n, requests={})
         await ctx.save()
     meta = MangaMeta.model_validate(st["meta"])
+    if "eta_at" not in st:
+        st["eta_at"] = time.time() + await booklet_seconds(s, meta, n)
+        await ctx.save()
     if not st['paths'][0] and meta.avatar_path:
         await avatar_reference(s,meta)
     paths, requests = st["paths"], st.setdefault("requests", {})
@@ -65,6 +70,14 @@ async def run(ctx: JobContext) -> None:
             raise RuntimeError(f"panel failed: {r!r}") from r
 
 
+async def booklet_seconds(s: Services, meta: MangaMeta, n: int) -> float:
+    """Expected seconds until the booklet is drawn: panel one, then the rest a few at a time."""
+    first = await s.images.estimate(1)
+    later = s.editor if meta.consistent and s.editor else s.images
+    rest = await later.estimate(1, 1 if later is s.editor else 0) if n > 1 else 0.0
+    return first + math.ceil((n - 1) / PANEL_CONCURRENCY) * rest
+
+
 async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list[str]]:
     perspective = input.get('perspective','unknown')
     camera = {'first-person':'Every panel is POV through the dreamer\'s eyes; show their hands or body only if appropriate, never an outside portrait of them.', 'observer':'Show the dreamer from an external observer camera.', 'mixed':'Follow the explicitly changing viewpoint in the narrative.', 'unknown':'Follow the viewpoint in the narrative; do not impose a camera choice.'}[perspective]
@@ -74,7 +87,7 @@ async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list
         system += '\nThe dreamer uses this fixed character appearance. Preserve it; do not replace them with an unrelated character. ' + avatar_prompt(appearance)
     try:
         reply = await s.llm.chat(
-            [{"role": "system", "content": system}, {"role": "user", "content": f"{input.get('title', '')}\n\n{input['text']}"}], True, task="storyboard"
+            [{"role": "system", "content": system}, {"role": "user", "content": f"{input.get('title', '')}\n\n{input['text']}"}], True, task="storyboard", schema=Storyboard
         )
     except Exception as e:
         raise RuntimeError(f"storyboard failed: {e}") from e  # worth another try
@@ -87,7 +100,7 @@ async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list
     except (ValueError, KeyError, TypeError) as e:
         raise JobFailed("hikâye taslağı okunamadı, tekrar dene", f"bad storyboard: {e}")
     scenes = [camera + ' ' + scene for scene in scenes]
-    meta = MangaMeta(style=input["style"], character_note=str(sb.get("characterNote", "")), scenes=scenes[:n], consistent=input["consistent"],avatar_path=input.get('avatarPath',''),avatar_spec=appearance,perspective=perspective)
+    meta = MangaMeta(style=input["style"], character_note=str(sb.get("characterNote", "")), scenes=scenes[:n], consistent=input["consistent"],avatar_path=input.get('avatarPath',''),avatar_spec=appearance,perspective=perspective,prompt_version=image_prompts.active(),image_model=getattr(getattr(s.images, 'spec', None), 'name', ''))
     return meta, captions[:n]
 
 
@@ -101,15 +114,16 @@ async def render(s: Services, user_id: str, meta: MangaMeta, i: int, requests: d
     from. With consistency on, an edit failure fails the panel rather than quietly replacing the
     character with an unrelated text-only generation. A queued request is kept in requests (and
     saved) before waiting on it, so it can be picked up again."""
-    scene, style = meta.scenes[i], STYLE_HINTS[meta.style]
+    t = image_prompts.revision(meta.prompt_version)
+    scene, style = meta.scenes[i], t["styles"][meta.style]
     if meta.consistent and meta.ref_url:
         if not s.editor:
             raise RuntimeError("manga: editor unavailable")
-        identity = 'Keep the same recognizable individual, face, hair, clothing silhouette and proportions; adapt the reference to the requested rendering style.' if i == 0 and meta.avatar_path else 'Keep the exact same character design, proportions and art style as the reference image.'
-        prompt = f"{identity} {style}. New scene: {scene}"
+        identity = t["identity_avatar"] if i == 0 and meta.avatar_path else t["identity_reference"]
+        prompt = t["edit_panel"].format(identity=identity, style=style, scene=scene)
         client, body = s.editor, s.editor.edit_body(clip(prompt, MAX_SCENE_PROMPT), [meta.ref_url])
     else:
-        client, body = s.images, s.images.image_body(clip(f"{style}. {meta.character_note}. {scene}", MAX_SCENE_PROMPT))
+        client, body = s.images, s.images.image_body(clip(t["text_panel"].format(style=style, character=meta.character_note, scene=scene), MAX_SCENE_PROMPT))
 
     requests = {} if requests is None else requests
     key = str(i)

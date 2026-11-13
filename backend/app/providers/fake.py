@@ -62,7 +62,7 @@ class FakeLLM:
     enabled = True
     model = "fake"
 
-    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str = "") -> str:
+    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str = "", schema=None) -> str:
         system, user = messages[0]["content"], messages[-1]["content"]
         if "metin düzelticisisin" in system:
             return json.dumps({"cleanText": _clean(user), "language": "tr"}, ensure_ascii=False)
@@ -111,6 +111,9 @@ class FakeFal:
 
     def __init__(self, model: str = "fake"):
         self.model = model
+
+    async def estimate(self, pictures: int = 1, references: int = 0, queue_position: int = 0) -> float:
+        return 2.0
 
     async def submit(self, body: dict) -> dict:
         n = int(body.get("num_images", 1))

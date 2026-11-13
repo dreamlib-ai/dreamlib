@@ -6,15 +6,14 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 
 ## Faz 0: araştırma
 
-İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13). Kalanlar:
+İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13); HVdC insanlar arası uyum, duygularda %63 (A15). Kalanlar:
 
 | No | Görev |
 | --- | --- |
 | A4 | Mirror, Oniri, The Dream Drop, Remora ve Türkiye'deki rüya uygulamalarını elle dene; karşılaştırma kartını tamamla |
 | A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
 | A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
-| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini oku; pratik listesini halkbilimi kartına ekle |
-| A15 | HVdC duygu kodlamasında insanlar arası uyum (κ) kaynağını bul; eval hedefinin tavanını koy |
+| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini indir (Açık Bilim, CC BY 4.0 görünüyor); lisansı teyit et, pratik listesini halkbilimi kartına ve korpus atlasına ekle |
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
@@ -30,31 +29,22 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 
 ### İş sistemi ve maliyet
 
-Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1).
-
-| No | Görev | Önce |
-| --- | --- | --- |
-| B2 | `run_after`, üstel bekleme ve jitter; hata sınıfları (geçici, kalıcı) | B1 |
-| B3 | `dream_id`, `parent_id`, `dedupe_key`, `priority`; tür başına eşzamanlılık kuralı | B1 |
-| B4 | `usage` tablosu; LLM ve fal çağrıları satır yazsın | B1 |
-| B5 | Rüya başına tek durum ucu | B3 |
+Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2); zincir ve tekrar koruması sütunları, öncelik, tür başına eşzamanlılık (B3); `usage` tablosu, OpenRouter ve fal çağrıları satır yazıyor (B4); rüya başına tek durum ucu (B5).
 
 ### LLM
 
-Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); embedding çağrısı (L4); akışlı çağrı ve SSE yardımcısı (L3, uca bağlanması yorum ucuyla).
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); Pydantic'ten şemalı çıktı ve JSON modu yedeği (L2); prompt'lar görev dosyalarında, sürümlü (L5); embedding çağrısı (L4); akışlı çağrı ve SSE yardımcısı (L3, uca bağlanması yorum ucuyla).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| L2 | Şemalı çıktı (Pydantic'ten şema), ayrıştırıcı yedeği | L1 |
-| L5 | Prompt'ları görev dosyalarına böl, sürüm kimliği ver | L1 |
 | L6 | 🌱 `evals/` iskeleti, kayıtlı yanıtla koşan ilk çıkarım seti | L2 |
 
 ### Motor ve yorum
 
+Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile); `relation_types` (9 ilişki), `edges` (simetrik kenar tek ve sıralı), `dream_embeddings`, `dream_neighbors` ve derinliği üçle sınırlı `dream_chain` (M2; arama yalnız kişinin kendi rüyalarında, rızalılar R1 ile).
+
 | No | Görev | Önce |
 | --- | --- | --- |
-| M1 | pgvector, `entity_kinds`, `entities`, `entity_aliases`, `dream_entities` | Z1 |
-| M2 | `relation_types`, `edges`, `dream_embeddings` ve arama SQL fonksiyonları | M1 |
 | M3 | `analyses` tablosu; yorum yeni satır yazsın, eski alanlar okunmaya devam etsin | Z1 |
 | M4 | `index` işi: çıkar, normalize et, vektörle | M1, L2, L4, B3 |
 | M5 | `similar` puanlayıcısı ve kanıt; kişinin kendi rüyaları arasında | M2, M4 |
@@ -72,6 +62,8 @@ Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (
 | R3 | [Hassas içerik](hassas-icerik.md) politikasını uygula: `sensitive` sınıflaması, destek kartı, eval seti | L6, A7 |
 
 ### İkon, dergi, kütüphane
+
+Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, öğrenen süre tahmini ve `etaSeconds`.
 
 | No | Görev | Önce |
 | --- | --- | --- |

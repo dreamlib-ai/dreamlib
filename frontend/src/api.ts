@@ -34,7 +34,7 @@ export type Analysis = {
 };
 
 export type Panel = { caption: string; path: string; url?: string };
-export type Job = { id: string; status: 'running' | 'done' | 'failed'; done: number; total: number; panels: Panel[]; error: string };
+export type Job = { id: string; status: 'running' | 'done' | 'failed'; done: number; total: number; panels: Panel[]; error: string; etaSeconds?: number };
 
 export type Dream = Analysis & {
   id: string;

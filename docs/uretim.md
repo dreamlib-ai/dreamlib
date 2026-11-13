@@ -7,11 +7,11 @@ Uzun süren her şey (indeksleme, ikon, dergi, video) Postgres `jobs` kuyruğund
 | Değişiklik | Bugün | Hedef |
 | --- | --- | --- |
 | İş türü | Yapıldı (B1): türler `pipelines/registry.py` içindeki `KINDS` kaydında; sütunda yalnız biçim check'i | Yeni tür bir kayıt satırıdır |
-| Eşzamanlılık | Kullanıcı başına tek aktif iş | Tür başına kural: ücretli çizimde tek, `index` ve `glyph` serbest |
-| Bekleme | Hata sonrası hemen kuyruğa döner | `run_after` sütunu; üstel bekleme ve jitter |
-| Zincir | Yok | `dream_id`, `parent_id`; biten iş sonrakini kuyruğa yazar |
-| Tekrar koruması | Manga için `requestId` | Tüm türlerde `dedupe_key` |
-| Öncelik | Geliş sırası | `priority`; kullanıcının beklediği iş arka plan işinin önüne geçer |
+| Eşzamanlılık | Yapıldı (B3): tek aktif iş kuralı yalnız `exclusive` türlerde (`manga`, `image`) | `index` ve `glyph` kayda `exclusive=False` ile girer |
+| Bekleme | Yapıldı (B2): geçici hatada `run_after` ile 5, 20, 80 sn (±%25) bekleme; kalıcı hatada tekrar yok | — |
+| Zincir | Sütunlar var (B3): `dream_id`, `parent_id` | Biten iş sonrakini kuyruğa yazar (`index` işiyle, M4) |
+| Tekrar koruması | Yapıldı (B3): kullanıcı, tür ve `dedupe_key` tekil; ikinci istek mevcut işi döner. Manga `requestId` ile sürüyor | — |
+| Öncelik | Yapıldı (B3): `priority` kayıttan; çizim 10, arka plan 0 | — |
 
 Bir rüyanın yolu:
 
@@ -25,7 +25,7 @@ anlatım ─> akışlı yorum (senkron, SSE)
 
 ## Hata ve tekrar
 
-Hatalar iki sınıftır; sınıfı sağlayıcı istemcisi belirler, worker yalnız uygular.
+Hatalar iki sınıftır; sınıfı sağlayıcı istemcisi belirler (`providers/errors.py`, `ProviderError.status`), worker yalnız uygular. Bilinmeyen hata geçici sayılır: en çok üç denemeyle sınırlı. fal ve OpenRouter istemcileri bu sınıfla hata verir.
 
 | Sınıf | Örnek | Davranış |
 | --- | --- | --- |
@@ -37,7 +37,9 @@ Korunan mevcut davranışlar: lease ve heartbeat, süreç ölünce devralma, sak
 
 ## fal entegrasyonu
 
-- **Model kaydı:** `providers/fal.py` içinde görev → model, girdi kurucu, fiyat. Görevler: `image`, `edit`, `speech`, `glyph`, `video`. Model adları ortam değişkeninden gelir; kodda sabit değildir.
+- **Model kaydı (yapıldı):** `backend/app/providers/image_models.toml`; her model bir blok: takma ad, fal id'si, rol (`image`, `edit`, `speech`), fiyat, tipik süre, açık/kapalı. `FAL_IMAGE_MODEL` gibi ayarlar takma adı ya da tam id'yi alır. Eklemek bir blok, çıkarmak silmek ya da `enabled = false`; kayıtta olmayan tam id uyarıyla çalışır. `DREAMLIB_IMAGE_MODELS` başka bir dosyayı gösterebilir.
+- **Prompt revizyonları (yapıldı):** stil satırları ve fal'a giden bütün şablonlar `prompts/image.py` içinde numaralı revizyonlar (`image@1`). Değişiklik yeni revizyondur, eskisi düzenlenmez (test sabitler). Yeni işler `DREAMLIB_IMAGE_PROMPT` ile seçilen revizyonu kullanır, iş başladığı revizyonu ve modeli kaydeder; tekrar ve panel yenilemede aynı kalır.
+- **Süre tahmini (yapıldı):** fal kuyruğu tahmin vermez; durum ucu yalnız `queue_position` (sıradayken) ve `metrics.inference_time` (bitince) döner. `app/eta.py` model başına cezalı (ridge) doğrusal regresyonu her biten istekten sonra özyinelemeli günceller (RLS). Özellikler: görsel sayısı, referans görsel sayısı, ilk bakıştaki sıra. Ön değer kayıttaki tipik süre; ceza tek bir takılmış isteğin eğriyi savurmasını önler. Son hatalar büyükse (ortalama mutlak yüzde hata %25'in üstünde) eski gözlemler hızlı unutulur, küçükse eğri durulur. Gözlemler `generation_timings` tablosunda; açılışta son 500'ü yeniden oynatılır. İş ucu çalışırken `etaSeconds` döner.
 - **Kuyruk ve webhook:** istek fal kuyruğuna verilir, adresleri iş durumuna yazılır (bugünkü gibi). Herkese açık API adresi olduğu için fal'a webhook adresi de verilir; imzası doğrulanan çağrı işi uyandırır. Yoklama, webhook gelmezse devreye giren yedektir.
 - **İçerik bayrağı:** fal'ın uygunsuz içerik işareti panele yazılır; işaretli görsel paylaşıma çıkamaz.
 - **Kalıcılık:** fal adresleri geçicidir; her çıktı Storage'a alınır (bugünkü gibi), genişlik, yükseklik ve blurhash ile birlikte.
