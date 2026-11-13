@@ -76,3 +76,26 @@ def test_provider_status_decides_the_error_class(monkeypatch):
         with pytest.raises(ProviderError) as err:
             asyncio.run(llm.chat([], task="clean"))
         assert err.value.status == status and is_transient(err.value) is transient
+
+
+def test_schema_goes_as_structured_output_and_falls_back_to_json_mode(monkeypatch):
+    from app.models import CleanOut
+
+    monkeypatch.setattr("app.providers.openrouter.RETRY_AFTER", 0)
+    sent = []
+
+    def handler(req):
+        body = json.loads(req.content)
+        sent.append(body["response_format"])
+        if body["response_format"]["type"] == "json_schema" and len(sent) == 1 and refuse:
+            return httpx.Response(400, text="response_format json_schema is not supported")
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+
+    for refuse in (False, True):
+        sent.clear()
+        llm = OpenRouter("key", "m")
+        llm.http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        asyncio.run(llm.chat([], True, task="clean", schema=CleanOut))
+        assert sent[0]["type"] == "json_schema" and sent[0]["json_schema"]["name"] == "CleanOut"
+        assert "cleanText" in sent[0]["json_schema"]["schema"]["properties"]
+        assert [f["type"] for f in sent] == (["json_schema", "json_object"] if refuse else ["json_schema"])

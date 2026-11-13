@@ -27,9 +27,11 @@ class FakeLLM:
     def __init__(self, reply):
         self.reply, self.system = reply, ""
 
-    async def chat(self, messages, json_mode=False, *, task):
+    async def chat(self, messages, json_mode=False, *, task, schema=None):
         assert task in TASKS, task  # every call site names a known task
         self.system, self.task = messages[0]["content"], task
+        assert schema is not None or not json_mode, task  # every JSON task names its output shape
+        self.schema = schema
         return self.reply(messages) if callable(self.reply) else self.reply
 
 

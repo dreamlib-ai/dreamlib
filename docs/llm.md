@@ -21,7 +21,7 @@ Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde 
 
 ## İstek kuralları
 
-- **Şemalı çıktı:** `extract`, `storyboard`, `moderate` görevleri JSON şemasıyla istenir; şema Pydantic modelinden üretilir. Şemayı desteklemeyen modelde JSON modu ve mevcut `extract_json` ayrıştırıcısı yedektir.
+- **Şemalı çıktı (L2):** JSON dönen her görev şemayla istenir (`chat(..., schema=Model)`); şema Pydantic modelinden üretilir (`CleanOut`, `Analysis`, `Storyboard`). Model şemayı reddederse (400) bir kez JSON moduna düşülür. Şemayı desteklemeyen modelde JSON modu ve mevcut `extract_json` ayrıştırıcısı yedektir.
 - **Yedek model:** istek, görev için tanımlı model dizisiyle gider; ilk model yanıt veremezse OpenRouter sıradakini dener.
 - **Sağlayıcı tercihi:** rüya metni hassas veridir. İstekler, girdiyi saklamayan ve eğitimde kullanmayan sağlayıcılarla sınırlanır; bu koşulu sağlamayan model aday olmaz.
 - **Zaman aşımı:** görev başına ayrı: `clean` 30, `extract` 60, `interpret` ve `storyboard` 120, `embed` 30, `moderate` 20 saniye.
