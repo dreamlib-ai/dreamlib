@@ -43,6 +43,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   const [error, setError] = useState('');
   const [storageError, setStorageError] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [eta, setEta] = useState<number | undefined>();
   const [retry, setRetry] = useState(0);
   const [feedback, setFeedback] = useState<'helpful' | 'unhelpful' | null>(null);
   const alive = useRef(false);
@@ -76,6 +77,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
           }
           if (!current) return;
           setProgress(job.done);
+          setEta(job.etaSeconds);
           if (job.status === 'done') {
             if (jobStatus === 'pending') track('booklet_ready', jobId);
             setDraft(d => ({ ...d, panels: job.panels, jobStatus: 'done' }));
@@ -163,7 +165,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
             {saved ? <button className="go quiet" onClick={onLibrary}>{tr.openLibrary}</button> : <button className="go quiet" disabled={busy !== null || jobStatus === 'pending'} onClick={() => void save()}>{busy === 'save' ? tr.saving : tr.save}</button>}
           </div>
         </section>
-        {busy === 'image' && <div className="drawing-progress" role="status"><progress max={count} value={progress} /><span>{tr.app.progress}</span></div>}
+        {busy === 'image' && <div className="drawing-progress" role="status"><progress max={count} value={progress} /><span>{tr.app.progress}{eta ? ` · ${tr.app.remaining(eta)}` : ''}</span></div>}
         {panels.length > 0 && <section className="booklet"><h3>{tr.app.artwork}</h3><div className="shots">{panels.map((panel) => <figure key={panel.path}>{panel.url && <img src={panel.url} alt={panel.caption} />}{panel.caption && <figcaption>{panel.caption}</figcaption>}</figure>)}</div></section>}
       </Result></div>
     </>}
