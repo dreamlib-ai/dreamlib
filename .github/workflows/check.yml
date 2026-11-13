@@ -1,4 +1,4 @@
-# Yalnız kontrol: testler, tip kontrolü, build ve sır taraması. Yayın elle yapılır (docs/yayin.md).
+# Yalnız kontrol: testler, gerçek veritabanı testleri, tip kontrolü, build ve sır taraması. Yayın elle yapılır (docs/yayin.md).
 name: check
 
 on:
@@ -25,6 +25,19 @@ jobs:
           cache-dependency-path: backend/requirements*.txt
       - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: python -m pytest -q
+
+  database:
+    # Supabase Postgres + PostgREST Docker'da; bütün migration'lar sırayla uygulanır, tests/db koşar.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r backend/requirements.txt -r backend/requirements-dev.txt
+      - run: python scripts/db_test.py
 
   frontend:
     runs-on: ubuntu-latest

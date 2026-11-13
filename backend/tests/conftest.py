@@ -98,3 +98,7 @@ def wait_job(client, job_id, headers=None, seconds=10):
             return job
         time.sleep(0.02)
     raise AssertionError("job did not finish")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "db: needs the real database stack (scripts/db_test.py)")
