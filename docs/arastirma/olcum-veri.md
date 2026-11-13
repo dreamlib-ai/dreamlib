@@ -47,7 +47,7 @@ Bize dersi: çıkarım prompt'umuzun ölçüleceği hazır bir literatür ve ara
 | SDDb | ~44 bin anlatı | İzin gerekli | Zenodo kopyası (B) |
 | DreamNet (2025) | 1.500 anlatı, 12 tema, 8 duygu; 400'ü EEG'li ✓ | Lisans teyit edilecek | Yok |
 | Reddit r/Dreams | 44 bin+ | Platform koşulları | Kullanılmıyor |
-| Thompson Motif Dizini veri seti | Motif başına satır | CC BY-SA 4.0 ✓ | Yok (A adayı) |
+| Thompson Motif Dizini veri seti | 46.230 motif satırı ✓ | Çelişkili, NC okunuyor ✓ | Ölçüldü (B, teyit bekliyor) |
 | Açıklamalı masal külliyatı (Zenodo) | Masallar ve tipler ✓ | Teyit edilecek | Yok |
 | Duygu sözlükleri (NRC, GoEmotions) ○ | Kelime ve cümle düzeyinde duygu | Değişir; teyit edilecek | Yok |
 | Wikidata, WordNet, ConceptNet ○ | Kavram hiyerarşisi | Açık | Kısmen |

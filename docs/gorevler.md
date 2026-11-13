@@ -6,17 +6,15 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 
 ## Faz 0: araştırma
 
-İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. Kalanlar:
+İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13). Kalanlar:
 
 | No | Görev |
 | --- | --- |
 | A4 | Mirror, Oniri, The Dream Drop, Remora ve Türkiye'deki rüya uygulamalarını elle dene; karşılaştırma kartını tamamla |
 | A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
 | A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
-| A10 | Türk halkbiliminde rüya pratikleri: YÖK Tez ve DergiPark taraması |
-| A11 | `trilogy` verisini indir; satır say, sık rüya temalarıyla motif örtüşmesini ölç |
-| A12 | Tipik Rüyalar Anketi'nin tam madde listesiyle tema listesini güncelle |
-| A13 | CLPsych 2024 makalesinden insan–model uyum rakamlarını oku; eval hedefini koy |
+| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini oku; pratik listesini halkbilimi kartına ekle |
+| A15 | HVdC duygu kodlamasında insanlar arası uyum (κ) kaynağını bul; eval hedefinin tavanını koy |
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
@@ -123,7 +121,7 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 | K10 | 🌱 Rüya bağışı formu ve açık veri seti dışa aktarımı | R3 |
 | K11 | Aday düğüm birleştirme önerileri ve onay akışı | M4 |
 | K12 | Rüya ikizi: rızalı benzer rüya bildirimi, yalnız ortak semboller | K1 |
-| K13 | `motif` düğümleri ve `evokes_motif` puanlayıcısı (Thompson dizini, seviye 1–3) | M4, A11 |
+| K13 | `motif` düğümleri ve `evokes_motif` puanlayıcısı (Thompson dizini, seviye 1–3) | M4, V6 (`trilogy` lisans teyidi) |
 | K14 | Çevre: küçük grupta paylaşım ve eşleşme; "benim rüyam olsaydı" tepkisi | R1, G6 |
 
 ## Veri işleri (koddan bağımsız, paralel)
@@ -135,7 +133,7 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 | V3 | A kademesi anlamları dışa aktar; kaynak ve yer bilgisiyle |
 | V4 | Internet Archive OCR metinlerini maddeye çevir |
 | V5 | Çevrimdışı: sembol IDF ve birliktelik, benzerlik eşiği, altın çiftler |
-| V6 | Hak sahiplerine izin yazıları; yanıtları kaydet |
+| V6 | Hak sahiplerine izin yazıları; yanıtları kaydet (ilk sırada `trilogy`: README CC BY-SA, `LICENSE.md` CC BY-NC-SA) |
 | V7 | 🌱 Yeni bir kültürün serbest lisanslı tabir kaynağını ekle |
 
 ## Topluluğa açık sürekli işler

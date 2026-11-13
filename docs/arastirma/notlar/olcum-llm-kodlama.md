@@ -10,15 +10,18 @@
 - Bertolini, Consoli, Weeds (2025), *Frontiers in Sleep* — hakemli. [Frontiers](https://www.frontiersin.org/articles/10.3389/frsle.2025.1625185/full)
 - DreamNet (2025): 1.500 anlatı, 12 tema, 8 duygu, 400'ü EEG eşli — ön baskı. [arXiv](https://arxiv.org/html/2503.05778v1)
 
-**Güven:** orta. Alanın varlığı ve yönü net; doğruluk rakamları bu turda okunmadı.
+**CLPsych 2024 rakamları (A13):** Bertolini, Elce, Michalak, Widhoelzl, Bernardi, Weeds, "Automatic Annotation of Dream Report's Emotional Content with Large Language Models". Veri: DreamBank'in HVdC kodlu ~1,8 bin İngilizce anlatısından en az bir duygu içeren 922'si, altı seri. Yöntem: BERT-large-cased ince ayarı, beş duygunun her biri için var/yok (çok etiketli), 5 katlı çapraz doğrulama. Sonuç (F1, rüyacının duyguları / tüm karakterlerin duyguları): öfke 87/87, endişe 87/89, **üzüntü 77/80**, şaşkınlık 82/88, mutluluk 89/87; makro ortalama 85/86, ağırlıklı 85/87. Üzüntü en seyrek ve en oynak sınıf (±11). Rüyacı setinde kesinlik duyarlılıktan yüksek: model az etiketliyor, kaçırıyor. Hazır bir duygu modeliyle olumlu/olumsuz ikili sınıflamada olumsuz F1 0,86–0,87, **olumlu yalnız 0,52–0,53**. İnsan kodlayıcılar arası uyum makalede verilmiyor; tavan bilinmiyor. PTSD'li bir gazinin 98 rüyasında model %84'ünde duygu buldu, en sık endişe.
+
+**Güven:** orta. Alanın yönü net; CLPsych rakamları makaleden doğrudan okundu ama tek veri seti, tek dil ve ince ayarlı model; bizim prompt tabanlı çıkarımımıza doğrudan aktarılmaz.
 
 **Motora etkisi:**
 - *Eval:* kendi çıkarım eval setimiz HVdC sınıflarıyla karşılaştırılabilir kurulur; DReAMy'nin etiketleri ve DreamBank-annotated yerelde karşılaştırma tabanı olur (B kademesi, ürüne girmez).
 - *Duygu taksonomisi:* HVdC'nin beş sınıfı (öfke, üzüntü, endişe, şaşkınlık, mutluluk) kaba; bizim serbest duygu etiketlerimiz bu beşe de eşlenerek saklanmalı ki hem ince gösterim hem karşılaştırılabilir ölçüm olsun.
 - *Model seçimi:* rüya anlatıları LLM'ler için alışılmadık metin; ucuz `extract` modeli seçilirken rüya diline özgü eval şart ([LLM](../../llm.md)).
+- *Eval hedefi:* duygu çıkarımı beş HVdC sınıfına eşlenip makro F1 ≥ 0,80, üzüntü ≥ 0,70 ile ölçülür; hedef [LLM](../../llm.md) belgesinin eval bölümünde. Eval setinde üzüntü ve mutluluk örnekleri bilerek çoğaltılır.
 - *Araç:* DReAMy Python kitaplığı çevrimdışı araştırmada kullanılabilir; ürüne bağımlılık olarak girmez.
 - *Lisans uyarısı:* DreamNet'in lisansı teyit edilmeden eval'e alınmaz.
 
-**Açık kalan:** CLPsych 2024 makalesindeki insan–model uyum rakamları ve hangi duygu sınıfında modelin zayıf kaldığı okunmalı.
+**Açık kalan:** HVdC duygu kodlamasında insanlar arası uyum (κ) için ayrı kaynak bulunmalı; hedefin tavanı o olur. Türkçe anlatılar için karşılaştırma verisi yok; kendi elle kodlanmış setimiz ilk olacak.
 
 **Veri:** DReAMy (araç), DreamNet (lisans teyidi bekliyor).
