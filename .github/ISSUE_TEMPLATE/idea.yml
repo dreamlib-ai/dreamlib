@@ -1,0 +1,20 @@
+name: Idea
+description: A feature, a dream tradition, a research lead
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it fits Dreamlib
+      description: Voice first, dreams private by default, every match explained, quiet when data is thin.
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources (for research or traditions)
+      description: Title, author, year, link and license if you know it.
