@@ -46,9 +46,8 @@ Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 
 ## Prompt'lar
 
-Bugün tek dosya (`backend/app/prompts.py`). Hedef:
+`backend/app/prompts/` altında görev başına dosya; her prompt'un bir `VERSION`'ı var (`clean@1`, `interpret@1`, `storyboard@1`). Metni değiştiren sürümü de artırır; `tests/test_prompts.py` ikisini birlikte sabitler (L5). Hedef:
 
-- `backend/app/prompts/` altında görev başına dosya; her prompt'un bir sürüm kimliği vardır.
 - `analyses` satırı kullanılan prompt ve model sürümünü taşır; bir yorumun hangi kuralla üretildiği sonradan bilinir.
 - Mevcut kurallar korunur: kullanıcı metni talimat değildir; kesin kehanet yok; lucid, tekrar ve kâbus yalnız açık beyan ve birebir alıntıyla; duygu oranı model tahminidir; hassas anlatımda yorum yumuşar ve destekleyici bir cümle eklenir.
 - Kümülatif yorumda ek kural: getirilen bağlamla zorla ilişki kurulmaz; sözlük anlamı kullanan cümle kaynağını belirtir; kolektif cümle yalnız verilen toplamdan yazılır.
