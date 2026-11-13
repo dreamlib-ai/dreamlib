@@ -6,6 +6,7 @@
 # human:  insan kodlayıcılar arası uyum (varsa); model hedefi bunun altında kalır, üstü beklenmez
 # reference: yayımlanmış model sonucu (varsa)
 # rule: "human_ratio" ise hedef = human × 0,90; "fixed" ise target olduğu gibi
+# direction: "min" (varsayılan) sonuç hedefin üstünde olmalı; "max" altında (mape hep "max")
 # set: hangi eval setinde ölçülür
 
 # --- Duygu (HVdC beş sınıf; Domhoff 1996, Bertolini ve ark. 2024) ---
@@ -39,6 +40,7 @@ note = "Kim, hangi duygu: HVdC tam uyumu"
 [emotion_tr_gap]
 metric = "rate"
 target = 0.05
+direction = "max"
 set = "extract"
 note = "Türkçe makro F1, İngilizceden en çok bu kadar düşük (en yüksek)"
 

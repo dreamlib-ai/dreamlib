@@ -1,0 +1,10 @@
+{"id": "tr-01", "lang": "tr", "text": "Eski okulumun koridorlarında kayboldum, her kapı başka bir sınıfa açılıyordu ve nerede olduğumu anlayamadım. Sonra annemi gördüm ve içim rahatladı.", "emotions": ["confusion", "happiness"], "source": "synthetic"}
+{"id": "tr-02", "lang": "tr", "text": "Biri beni karanlık bir ormanda kovalıyordu. Koştukça ayaklarım yere gömülüyordu, bağırmak istedim ama sesim çıkmadı.", "emotions": ["apprehension"], "source": "synthetic"}
+{"id": "tr-03", "lang": "tr", "text": "Dedemin evine gittim ama ev boştu. Mutfaktaki fincanı elime aldım ve ağlamaya başladım; onu çok özlemişim.", "emotions": ["sadness"], "source": "synthetic"}
+{"id": "tr-04", "lang": "tr", "text": "Kardeşim en sevdiğim kitabı yırttı, ona bağırdım ve kapıyı çarpıp çıktım.", "emotions": ["anger"], "source": "synthetic"}
+{"id": "tr-05", "lang": "tr", "text": "Denizin üstünde yürüyordum, su ılıktı ve arkadaşlarım kıyıda gülüyordu. Hiç bu kadar hafif hissetmemiştim.", "emotions": ["happiness"], "source": "synthetic"}
+{"id": "en-01", "lang": "en", "text": "I was late for an exam in a building with no stairs, and the clock kept jumping forward. I felt sick with worry.", "emotions": ["apprehension"], "source": "synthetic"}
+{"id": "en-02", "lang": "en", "text": "My old dog came back and ran to me across a field. I hugged him and woke up smiling.", "emotions": ["happiness"], "source": "synthetic"}
+{"id": "en-03", "lang": "en", "text": "A stranger took my bag on the train and laughed at me. I shouted at him and wanted to hit him.", "emotions": ["anger"], "source": "synthetic"}
+{"id": "en-04", "lang": "en", "text": "I stood at my friend's funeral, but nobody else seemed to notice she was gone. I felt alone and heavy.", "emotions": ["sadness"], "source": "synthetic"}
+{"id": "en-05", "lang": "en", "text": "The street signs changed words every time I looked at them and the map in my hand was blank. I could not tell where I was going.", "emotions": ["confusion"], "source": "synthetic"}
