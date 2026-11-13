@@ -36,6 +36,12 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _check_kind(kind: str) -> None:
+    from ..pipelines.registry import check  # late: the pipelines import the services, which import this
+
+    check(kind)
+
+
 class SupabaseJobs:
     def __init__(self, sb: Supabase):
         self.sb = sb
@@ -51,6 +57,7 @@ class SupabaseJobs:
         return rows
 
     async def create(self, user_id: str, kind: str, input: dict, total: int, request_id: str = "") -> Job:
+        _check_kind(kind)
         body = {"user_id": user_id, "kind": kind, "input": input, "total": total}
         if request_id:
             body["id"] = request_id
@@ -113,6 +120,7 @@ class MemoryJobs:
         self.leases: dict[str, datetime] = {}
 
     async def create(self, user_id: str, kind: str, input: dict, total: int, request_id: str = "") -> Job:
+        _check_kind(kind)
         if request_id and request_id in self.jobs:
             raise Busy()
         if await self.active(user_id):

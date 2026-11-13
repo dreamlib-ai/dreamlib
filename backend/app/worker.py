@@ -10,8 +10,8 @@ import secrets
 import socket
 from datetime import datetime, timedelta, timezone
 
-from .pipelines import image, manga
 from .pipelines.context import JobContext, JobFailed, LostLease
+from .pipelines.registry import KINDS, UNKNOWN
 from .services import remove_files
 from .store.jobstore import Job
 
@@ -23,11 +23,6 @@ MAX_ATTEMPTS = 3
 IDLE = 5  # seconds between looks at an empty queue; a job made here wakes the worker at once
 KEEP_JOBS = timedelta(days=7)  # finished jobs are swept after this; pictures never saved to a dream go with them
 SWEEP_EVERY = 6 * 3600
-
-PIPELINES = {
-    "manga": (manga.run, manga.MANGA_TIMEOUT, manga.FAILED),
-    "image": (image.run, 3 * 60, image.FAILED),
-}
 
 
 class Worker:
@@ -73,8 +68,13 @@ class Worker:
         self._slots.release()
 
     async def run_one(self, job: Job) -> None:
-        pipeline, timeout, failed = PIPELINES[job.kind]
         ctx = JobContext(self.s, job, self.name, LEASE)
+        kind = KINDS.get(job.kind)
+        if not kind:  # queued by a newer or older build
+            log.error("worker: job %s has unknown kind %r", job.id, job.kind)
+            await self._fail(ctx, UNKNOWN)
+            return
+        pipeline, timeout, failed = kind.run, kind.timeout, kind.failed
         lost = asyncio.Event()
         work = asyncio.create_task(pipeline(ctx))
         beat = asyncio.create_task(self._heartbeat(ctx, work, lost))

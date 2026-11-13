@@ -17,7 +17,7 @@ tarayıcı ──GET /api/jobs/{id} ile izler
 | Klasör | Ne durur |
 | --- | --- |
 | `routes/` | Yalnız HTTP: doğrulama, giriş, yanıt biçimi. İş başlatan uçlar kuyruğa satır yazar, çizim yapmaz |
-| `pipelines/` | İşin kendisi: `manga.py` (taslak → paneller), `image.py`; `context.py` iş durumunu kaydetme |
+| `pipelines/` | İşin kendisi: `manga.py` (taslak → paneller), `image.py`; `context.py` iş durumunu kaydetme; `registry.py` iş türleri kaydı (`KINDS`), kuyruk ve worker buradan doğrular |
 | `providers/` | Dış servis istemcileri: `openrouter.py`, `fal.py` (kuyruk API'si, fiyat tablosu) |
 | `store/` | `supabase.py` (rüyalar, Storage, token), `jobstore.py` (kuyruk), `devstore.py` (yerel sahte hesap) |
 | `worker.py` | Kuyruktan iş alır, lease ile tutar, hata olursa yeniden dener |
