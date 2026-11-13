@@ -10,6 +10,7 @@ Cenker bir hatayı düzelttiğinde düzeltmenin kalıbı buraya tek satır yazı
 - Ekranlar kalabalıktı → referanslardaki sadelik: az eleman, büyük yazı, her şey rahat görünür; karakter ve tek ana aksiyon öne çıkar.
 - Referans: `kaynak/referans/` (Pinterest "dreamlib type"); en net beğenilenler pin 01, 14, 20, 27, 29.
 - 2026-10-17: Web tasarımı statik bulundu; Cenker Duolingo gibi belirgin bir iyileştirme istedi → Progress lila/gece kimliği ve seçilmiş koala korunur; sıcak açık zemin, Nunito, basılabilen tok kontroller, etkileşime tepki veren maskot, masaüstü sol / mobil alt gezinme. Yalnız yavaş yüzdürme animasyonu canlılık için yeterli değil.
+- 2026-10-24: Yeni web arayüzünde marka noktası, header aşamaları, süre/giriş etiketleri ve eylem/kısayol alt yazıları reddedildi → Toolpool `no-ai-slop.md` her yeni web işinde uygulanır; geri sol üstte yalnız erişilebilir chevron, başlangıçta başlık ve tek cümle.
 - 2026-10-25: Eski Nunito/lila yönü güncel sanıldı → `dreamlib-vibe` çalışmasındaki Unbounded fontunu, kobalt paletini ve `Işıklı bulut / kuru pastel` + `Eldeki gece` koala temalarını web arayüzüne taşı.
 
 - 2026-10-25: Koalayı çerçeveli kartta sallandırmak yerine kuru pastel çizgisini ve kâğıt dokusunu bütün arayüze taşı; Unbounded/kobalt/asit yeşilini koru. Yeni sahneler aynı referanslarla imagegen üzerinden üretilebilir. Hazır olmayan özellik ve dolgu metin gösterme; Toolpool No AI Slop ve Cenker pattern’ini uygula.
