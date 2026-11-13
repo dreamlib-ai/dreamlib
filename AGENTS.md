@@ -31,6 +31,7 @@ Kökte (PowerShell betiklerini çağırır):
 - `npm run setup`: bir kez; frontend paketleri, `backend/.venv` ve paketleri, yoksa `backend/.env`
 - `npm run dev`: backend (`http://127.0.0.1:8080`, şema `/docs`) ve frontend (`http://localhost:5173`, `/api` backend'e yönlenir) ayrı pencerelerde. Vite `strictPort` kullanır: 5173 doluysa eski Vite'ı kapat.
 - `npm run check`: pytest + frontend oturum testleri, tip kontrolü ve build. Her değişiklikten sonra çalıştır.
+- `npm run test:db`: Docker'da Supabase Postgres ve PostgREST'i kaldırır, bütün migration'ları sırayla uygular, `backend/tests/db` testlerini gerçek veritabanına karşı koşar ve yığını kapatır (`--keep` açık bırakır, `--reuse` yalnız testleri koşar). Migration ya da veritabanına yazan kod değişince çalıştır; CI'da `database` işi.
 
 Elle: `backend/` içinde `.venv\Scripts\python -m app`, `.venv\Scripts\python -m pytest -q`; `frontend/` içinde `npm run dev`, `npm run build`. Anahtarlar için `backend/env.example` → `backend/.env`.
 

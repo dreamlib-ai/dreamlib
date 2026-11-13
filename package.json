@@ -5,6 +5,7 @@
   "scripts": {
     "setup": "powershell -NoProfile -File scripts/setup.ps1",
     "dev": "powershell -NoProfile -File scripts/dev.ps1",
-    "check": "powershell -NoProfile -File scripts/check.ps1"
+    "check": "powershell -NoProfile -File scripts/check.ps1",
+    "test:db": "python scripts/db_test.py"
   }
 }
