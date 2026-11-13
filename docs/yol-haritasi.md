@@ -35,7 +35,7 @@ Amaç: anlat → akışlı yorum → dergi → kütüphane → linkle paylaş ak
 | İş sistemi | Tür kaydı, bekleme, zincir, tür başına eşzamanlılık, `usage` defteri |
 | LLM | Görev tablosu, şemalı çıktı, akış, yedek model, embedding |
 | Yorum | `analyses` tablosu, çıkar → getir → sentezle hattı (sözlük ve kişisel bağlam) |
-| Motor | `entities`, `dream_entities`, `edges`, pgvector; kişinin kendi benzer rüyaları |
+| Motor | `entities`, `dream_entities`, `edges`, pgvector; LLM'siz çıkarım ve indeks (benzer rüyalar betadan sonra) |
 | Rıza | Üç kademe, rıza defteri, veriyi indir ve sil |
 | İkon | Üslup şablonu, en sık semboller için toplu üretim |
 | Dergi | `magazines`, kapak, okuyucu, otomatik kayıt, linkle paylaşım |
@@ -85,6 +85,8 @@ Amaç: kullanıcılar arası bağ. Beta kullanıcıları `collective` rızası v
 | CI/CD | Yalnız kontrol | Otomatik yayın | Birden çok kişi yayın yapınca |
 
 ## Betadan sonra beklenenler
+
+- **Benzerlik ve gerçek veri.** Kişinin kendi benzer rüyaları, vektörleme ve lab'ın gerçek veriyle ölçümü betadan sonraki ilk büyük iş ([görevler](gorevler.md), Sonraki major).
 
 - **Veri gelir, varsayımlar değişir.** Benzerlik ağırlıkları ve eşikler çevrimdışı sayılardan gerçek rızalı rüyalara taşınır; ilk haftalarda oranlar oynar, `algo_version` bunu izlenebilir kılar.
 - **Sözlük büyür.** Aday düğümler birikir; birleştirme ve onay bir bakım işi olur. Topluluk burada en çok işe yarar.
