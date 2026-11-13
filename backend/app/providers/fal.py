@@ -22,8 +22,9 @@ PRICES = {"fal-ai/flux/schnell": 0.003, "fal-ai/flux/dev": 0.025, "fal-ai/nano-b
 
 
 class Fal:
-    def __init__(self, key: str, model: str):
-        self.key, self.model = key, model
+    def __init__(self, key: str, model: str, task: str = ""):
+        self.key, self.model, self.task = key, model, task  # task: image, edit or speech, for usage rows
+        self.meter = None  # app.usage.Meter, set by build_services
         self.http = httpx.AsyncClient(timeout=60)
 
     @property
@@ -55,6 +56,9 @@ class Fal:
         d = res.json()
         if not d.get("status_url") or not d.get("response_url"):
             raise RuntimeError("fal: bad queue reply")
+        if self.meter:  # counted when queued: a restart reads the same request again without paying
+            n = body.get("num_images", 1)
+            await self.meter.record("fal", self.model, self.task, n, "images", self.price * n)
         return {"status_url": d["status_url"], "response_url": d["response_url"]}
 
     async def images(self, handle: dict, wait_for: float = WAIT_FOR) -> list[str]:
@@ -86,6 +90,8 @@ class Fal:
         res = await self.http.post(f"https://fal.run/{self.model}", json=body, headers=self._auth, timeout=180)
         if res.status_code // 100 != 2:
             raise ProviderError(f"fal: status {res.status_code}: {res.text[:300]}", res.status_code)
+        if self.meter:
+            await self.meter.record("fal", self.model, self.task, 1, "requests", 0.0)
         return res.json().get("text", "").strip()
 
     async def _upload(self, data: bytes, content_type: str) -> str:
