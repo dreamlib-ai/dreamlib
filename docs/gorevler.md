@@ -6,15 +6,14 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 
 ## Faz 0: araştırma
 
-İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13). Kalanlar:
+İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13); HVdC insanlar arası uyum, duygularda %63 (A15). Kalanlar:
 
 | No | Görev |
 | --- | --- |
 | A4 | Mirror, Oniri, The Dream Drop, Remora ve Türkiye'deki rüya uygulamalarını elle dene; karşılaştırma kartını tamamla |
 | A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
 | A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
-| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini oku; pratik listesini halkbilimi kartına ekle |
-| A15 | HVdC duygu kodlamasında insanlar arası uyum (κ) kaynağını bul; eval hedefinin tavanını koy |
+| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini indir (Açık Bilim, CC BY 4.0 görünüyor); lisansı teyit et, pratik listesini halkbilimi kartına ve korpus atlasına ekle |
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
@@ -34,13 +33,7 @@ Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici
 
 ### LLM
 
-Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); Pydantic'ten şemalı çıktı ve JSON modu yedeği (L2); prompt'lar görev dosyalarında, sürümlü (L5).
-
-| No | Görev | Önce |
-| --- | --- | --- |
-| L3 | Akışlı çağrı ve SSE'ye çeviri | L1 |
-| L4 | Embedding çağrısı | L1 |
-| L6 | 🌱 `evals/` iskeleti, kayıtlı yanıtla koşan ilk çıkarım seti | L2 |
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); Pydantic'ten şemalı çıktı ve JSON modu yedeği (L2); prompt'lar görev dosyalarında, sürümlü (L5); embedding çağrısı (L4); akışlı çağrı ve SSE yardımcısı (L3, uca bağlanması yorum ucuyla); eval iskeleti ve ilk çıkarım seti (L6).
 
 ### Motor ve yorum
 

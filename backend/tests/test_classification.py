@@ -46,3 +46,10 @@ def test_old_records_do_not_acquire_invented_classifications(api):
     client, _ = api
     saved = client.post('/api/dreams', headers=auth(), json={**ANALYSIS,'originalText':'Bir ev.'}).json()
     assert saved['features']['version'] == 0 and saved['features']['genres'] == []
+
+
+def test_english_claims_match_despite_turkish_lower_casing():
+    # normalized() lowers I to ı; English markers ('knew i was dreaming') must still be found
+    text = 'I knew I was dreaming, so I flew. I had the same dream again.'
+    f = Features(experiences=[{'kind': 'lucid', 'quote': 'I knew I was dreaming'}, {'kind': 'recurring', 'quote': 'I had the same dream again'}])
+    assert [e.kind for e in grounded_features(f, text).experiences] == ['lucid', 'recurring']
