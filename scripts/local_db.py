@@ -47,6 +47,19 @@ def local_key(role: str) -> str:
 
 
 ANON_KEY, SERVICE_KEY = local_key("anon"), local_key("service_role")
+SECRETS = COMPOSE.with_name(".env")  # git-ignored: DREAMLIB_GOOGLE_ENABLED, _CLIENT_ID, _SECRET for local Google sign-in
+
+
+def local_secrets() -> dict:
+    """KEY=VALUE lines of supabase/local/.env; the shell's own variables win over them."""
+    if not SECRETS.is_file():
+        return {}
+    out = {}
+    for line in SECRETS.read_text(encoding="utf-8-sig").splitlines():
+        key, sep, val = line.strip().partition("=")
+        if sep and key and not key.startswith("#"):
+            out[key.strip()] = val.strip().strip("\"'")
+    return out
 
 
 @dataclass(frozen=True)
@@ -65,7 +78,7 @@ class Stack:
         return f"http://127.0.0.1:{self.api_port}"
 
     def env(self) -> dict:
-        return {**os.environ, "DREAMLIB_DB_NAME": self.name, "DREAMLIB_DB_PORT": str(self.db_port),
+        return {**local_secrets(), **os.environ, "DREAMLIB_DB_NAME": self.name, "DREAMLIB_DB_PORT": str(self.db_port),
                 "DREAMLIB_REST_PORT": str(self.rest_port), "DREAMLIB_API_PORT": str(self.api_port or 55431),
                 "DREAMLIB_ANON_KEY": ANON_KEY, "DREAMLIB_SERVICE_KEY": SERVICE_KEY}
 

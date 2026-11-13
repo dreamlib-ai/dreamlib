@@ -7,6 +7,10 @@
     "dev": "powershell -NoProfile -File scripts/dev.ps1",
     "check": "powershell -NoProfile -File scripts/check.ps1",
     "test:db": "python scripts/db_test.py",
-    "db": "python scripts/local_db.py"
+    "db": "python scripts/local_db.py",
+    "dreamlib": "python scripts/local_db.py app",
+    "dreamlib:stop": "python scripts/local_db.py down",
+    "dreamlib:logs": "python scripts/local_db.py logs backend frontend",
+    "start": "python scripts/local_db.py app"
   }
 }
