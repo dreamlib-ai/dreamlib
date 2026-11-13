@@ -1,0 +1,7 @@
+{"id": "s01->s02", "anchor": "s01", "expected": "s02", "lang": "tr"}
+{"id": "s03->s04", "anchor": "s03", "expected": "s04", "lang": "tr"}
+{"id": "s05->s06", "anchor": "s05", "expected": "s06", "lang": "tr"}
+{"id": "s07->s08", "anchor": "s07", "expected": "s08", "lang": "tr"}
+{"id": "s09->s10", "anchor": "s09", "expected": "s10", "lang": "tr"}
+{"id": "s02->s01", "anchor": "s02", "expected": "s01", "lang": "tr"}
+{"id": "s06->s05", "anchor": "s06", "expected": "s05", "lang": "tr"}
