@@ -33,8 +33,12 @@ class Unauthorized(Exception):
 class Supabase:
     """Accounts, dream store and picture storage in one client."""
 
-    def __init__(self, url: str, service_key: str, allow_http: bool = False, transport: httpx.AsyncBaseTransport | None = None):
+    def __init__(self, url: str, service_key: str, allow_http: bool = False, transport: httpx.AsyncBaseTransport | None = None,
+                 public_url: str = ""):
         self.url, self.key = url.rstrip("/"), service_key
+        # Where browsers reach the same project. Only differs locally, where the API container talks to the
+        # gateway by its Docker name but signed picture links must open on the host (SUPABASE_PUBLIC_URL).
+        self.public_url = (public_url or url).rstrip("/")
         self.allow_http = allow_http  # tests only: let save_image fetch from a plain http server
         self.http = httpx.AsyncClient(timeout=15, transport=transport)
         self.cache: dict[str, tuple[str, float]] = {}  # token -> (user id, expires): one auth call per minute, not per request
@@ -296,7 +300,7 @@ class Supabase:
         res = await self._do("POST", f"/storage/v1/object/sign/{BUCKET}", self.key, json_body={"expiresIn": SIGNED_FOR, "paths": paths})
         if res.status_code != 200:
             raise RuntimeError(f"storage: sign status {res.status_code}")
-        by_path = {o["path"]: f"{self.url}/storage/v1{o['signedURL']}" for o in res.json() if not o.get("error") and o.get("signedURL")}
+        by_path = {o["path"]: f"{self.public_url}/storage/v1{o['signedURL']}" for o in res.json() if not o.get("error") and o.get("signedURL")}
         return [by_path.get(p, "") for p in paths]
 
     async def remove(self, paths: list[str]) -> None:

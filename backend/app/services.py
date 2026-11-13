@@ -132,7 +132,7 @@ def build_services(cfg: Settings) -> Services:
     def on(client):
         return client if client.enabled else None
 
-    sb = Supabase(cfg.supabase_url, cfg.supabase_service_key)
+    sb = Supabase(cfg.supabase_url, cfg.supabase_service_key, public_url=cfg.supabase_public_url)
     s = Services(
         llm=on(OpenRouter(cfg.openrouter_key, cfg.openrouter_model, cfg.openrouter_routes)),
         images=on(Fal(cfg.fal_key, resolve(cfg.fal_image_model, "image"))),
