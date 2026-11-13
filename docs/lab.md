@@ -68,6 +68,10 @@ L4 istemcisi hazır ama model seçilmedi; seçilene kadar vektör üretilmez. LL
 
 ## Sıradaki adımlar
 
-1. Setin gerçek, görülmemiş raporlarla büyütülmesi (kurallar o set görülmeden yazılır).
-2. Benzerlik altın çiftlerinin gerçek raporlarla büyütülmesi; eş anlam kaybı ölçülünce B yolunun (yerel model, onay gerekir) değerlendirilmesi.
+Beta için: lab motorları M4 `index` işinde çıkarımı yapar (duygu, bakış açısı, beyanlar).
+
+Sonraki major'de ([görevler](gorevler.md)):
+
+1. Setin gerçek, görülmemiş raporlarla büyütülmesi (LB1; kurallar o set görülmeden yazılır).
+2. Benzerlik (M5, M9) ve vektörleme (M10); eş anlam kaybı ölçülünce B yolunun (yerel model, onay gerekir) değerlendirilmesi.
 3. Nesne, mekân ve karakter sözlükleri.

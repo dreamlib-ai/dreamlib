@@ -42,12 +42,10 @@ Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_alias
 | No | Görev | Önce |
 | --- | --- | --- |
 | M3 | `analyses` tablosu; yorum yeni satır yazsın, eski alanlar okunmaya devam etsin | Z1 |
-| M4 | `index` işi: çıkar, normalize et, vektörle | M1, L2, L4, B3 |
-| M5 | `similar` puanlayıcısı ve kanıt; kişinin kendi rüyaları arasında | M2, M4 |
+| M4 | `index` işi: çıkar ve normalize et; çıkarım LLM'siz lab motorlarıyla ([lab](lab.md)), vektörleme sonraki major'de | M1, L2, B3 |
 | M6 | Sözlük: A kademesi ilk dışa aktarım, `lexicon_entries`, düğüm tohumu | M1 |
-| M7 | Kümülatif yorum hattı: sözlük ve kişisel bağlamla getir, sentezle | M3, M5, M6, L3 |
+| M7 | Kümülatif yorum hattı: sözlük ve kişisel bağlamla getir, sentezle (benzer rüyalar M5 gelince) | M3, M6, L3 |
 | M8 | Mevcut `features` ve `objects` alanlarını `dream_entities`'e açan geçiş | M4 |
-| M9 | 🌱 Altın benzerlik çiftleri ve puanlayıcı testi | M5 |
 
 ### Rıza ve hesap
 
@@ -92,6 +90,17 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 | F4 | Kâbus sonrası "sonunu yeniden yaz"; ilk anlatım korunur | R3 |
 | F5 | Onboarding'de isteğe bağlı "hangilerini gördün" tipik tema seçimi | G1 |
 | F6 | `features` sürüm 2: karakter rolü, etkileşim, sonuç, mekân tanıdıklığı, eylemlilik | L2 |
+
+## Sonraki major (betadan sonra)
+
+Beta, anlat → yorum → dergi → kütüphane akışına odaklanır; benzerlik ve lab'ın gerçek veri işi buraya alındı (Cenker, 2026-11-14).
+
+| No | Görev | Önce |
+| --- | --- | --- |
+| M5 | `similar` puanlayıcısı ve kanıt; kişinin kendi rüyaları arasında (lab v0: `app/lab/similarity.py`) | M2, M4 |
+| M9 | 🌱 Altın benzerlik çiftleri ve puanlayıcı testi | M5 |
+| M10 | Vektörleme: `dream_embeddings` doldurma; embedding modeli (L4) ya da yerel model kararı ([lab](lab.md), A/B/C) | M4 |
+| LB1 | Lab gerçek veri: kurallar yazılırken görülmemiş gerçek raporlar, HVdC'ye göre iki kodlayıcı; kaynaklar tez (A14), DreamBank | — |
 
 ## Faz 3: kolektif
 
