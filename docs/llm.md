@@ -26,7 +26,7 @@ Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde 
 - **Sağlayıcı tercihi:** rüya metni hassas veridir. İstekler, girdiyi saklamayan ve eğitimde kullanmayan sağlayıcılarla sınırlanır; bu koşulu sağlamayan model aday olmaz.
 - **Zaman aşımı:** görev başına ayrı: `clean` 30, `extract` 60, `interpret` ve `storyboard` 120, `embed` 30, `moderate` 20 saniye.
 - **Tekrar:** 429, 5xx ve zaman aşımında üstel bekleme ve jitter ile en çok üç deneme; 4xx içerik hatasında tekrar yok. Sınıflandırma [üretim](uretim.md) belgesindeki hata sınıflarıyla aynıdır.
-- **Kullanım:** her yanıtın jeton ve maliyet bilgisi `usage` tablosuna yazılır; log satırı kalır.
+- **Kullanım:** her yanıtın jeton ve maliyet bilgisi `usage` tablosuna yazılır (`app/usage.py`, B4); kullanıcı ve iş kimliği istek ya da iş bağlamından gelir. Log satırı kalır.
 - **Önbellek:** uzun sistem istemleri değişmeyen önek olarak tutulur ki sağlayıcı önbelleği çalışsın; değişken bağlam sona eklenir.
 
 ## Akış

@@ -16,6 +16,7 @@ from .providers.errors import is_transient
 from .pipelines.registry import KINDS, UNKNOWN
 from .services import remove_files
 from .store.jobstore import Job
+from .usage import set_scope
 
 log = logging.getLogger("dreamlib")
 
@@ -79,6 +80,7 @@ class Worker:
             return
         pipeline, timeout, failed = kind.run, kind.timeout, kind.failed
         lost = asyncio.Event()
+        set_scope(user_id=job.user_id, job_id=job.id)  # copied into the pipeline task below
         work = asyncio.create_task(pipeline(ctx))
         beat = asyncio.create_task(self._heartbeat(ctx, work, lost))
         log.info("worker: %s job %s (try %d)", job.kind, job.id, job.attempts)

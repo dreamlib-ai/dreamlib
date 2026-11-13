@@ -31,6 +31,7 @@ Routes = dict[str, tuple[str, tuple[str, ...]]]  # task -> (model, fallbacks)
 class OpenRouter:
     def __init__(self, key: str, model: str, routes: Routes | None = None):
         self.key, self.model, self.routes = key, model, routes or {}
+        self.meter = None  # app.usage.Meter, set by build_services
         self.http = httpx.AsyncClient()
 
     @property
@@ -71,6 +72,9 @@ class OpenRouter:
         usage = body.get("usage") or {}
         log.info("openrouter: %s %s %.1fs %s tokens $%s", task, body.get("model", models[0]), time.monotonic() - started,
                  usage.get("total_tokens", "?"), usage.get("cost", "?"))
+        if self.meter:
+            await self.meter.record("openrouter", body.get("model", models[0]), task,
+                                    usage.get("total_tokens") or 0, "tokens", float(usage.get("cost") or 0))
         choices = body.get("choices") or []
         if not choices:
             raise RuntimeError("openrouter: empty choices")
