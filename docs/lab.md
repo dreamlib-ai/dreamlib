@@ -23,7 +23,7 @@ Rüya metninin analizini mümkün olduğunca dil modeli olmadan, kurallar ve sö
 | Talih, başarı, başarısızlık | Kalıp + fiil sözlüğü | Orta |
 | Beyanlar (lucid, tekrar, kâbus) | Uygulamanın kendi işaret listesi (`classification.MARKERS`), cümle birebir alıntı, inkâr eden cümle sayılmaz | v0: `backend/app/lab/experiences.py`; `evals/quote` 13 sentetik örnekte kesinlik ve birebirlik 1,00 |
 | Temalar, tür | Sözlük kümeleri ve yukarıdaki kodların birleşimi | Ölçümden sonra |
-| Benzerlik | HVdC kod sayıları vektörü + TF-IDF/BM25 | Yapılabilir, aşağıda |
+| Benzerlik | TF-IDF (ilk 5 harf kök) %70 + lab kodlarının (duygu, bakış, beyan) Jaccard örtüşmesi %30, gerekçesiyle | v0: `backend/app/lab/similarity.py`; `evals/similar` 7 altın çiftte ilk sıra 0,86, MRR 0,90 |
 
 ### Duygu v0'ın ilk ölçümü
 
@@ -40,6 +40,10 @@ Uygulamanın `classification.normalized` işlevi her `I`'yı Türkçe kuralla `�
 ### Yeniden kodlama (HVdC: yalnız söylenen duygu)
 
 Sentetik `extract` seti yeniden kodlandı: davranış (bağırma, gülümseme, kovalanma) ve mecaz cümleler duygu sayılmıyor (`"coding": "hvdc-stated"`); "smiling" sözlükten çıktı. Lab motoru bu sette duygu satırlarının hepsinde 1,00 alıyor, ama bu sayı anlamsız: sözlük bu örneklere bakılarak kuruldu. Gerçek ölçüm, kurallar yazılırken görülmemiş gerçek raporlarla yapılır. Kayıtlı örnek model yanıtları 0,47'ye düştü: duyguyu davranıştan çıkarıyorlar, HVdC kuralıyla bunlar yanlış pozitif. Bu, modele "yalnız söylenen duygu" talimatı verilmesi gerektiğini de gösteriyor.
+
+### Benzerlik v0'ın ilk ölçümü
+
+12 sentetik rapor, 7 altın çift (`python evals/run.py --set similar --engine lexicon`): ilk sıra isabeti 0,86, MRR 0,90. Gerekçeler okunur ("orman, ağaç, kaygı ortak"; "dede, özlem, üzüntü ortak"). Kaçan tek çift bilerek konmuş eş anlam tuzağı: deniz/okyanus ortak sözcük taşımıyor, A yolu bunu göremez; B yolunun (anlam vektörü) ölçülecek ilk kazancı bu tür çiftler olur. Hedefler (`similar_*`) geçici, gerçek altın çiftlerle gözden geçirilir. Türkçe ve İngilizce rapor arasında benzerlik A ile kurulamaz.
 
 ## Yapıyı beslemek için gerekenler
 
@@ -65,5 +69,5 @@ L4 istemcisi hazır ama model seçilmedi; seçilene kadar vektör üretilmez. LL
 ## Sıradaki adımlar
 
 1. Setin gerçek, görülmemiş raporlarla büyütülmesi (kurallar o set görülmeden yazılır).
-2. Kod vektörü + TF-IDF benzerliği (A), altın çiftlerle ölçüm.
+2. Benzerlik altın çiftlerinin gerçek raporlarla büyütülmesi; eş anlam kaybı ölçülünce B yolunun (yerel model, onay gerekir) değerlendirilmesi.
 3. Nesne, mekân ve karakter sözlükleri.

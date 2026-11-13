@@ -221,6 +221,25 @@ def score_quote(cases: list[dict], preds: dict[str, Claims | None]) -> tuple[dic
                      "unreadable": 0, "claims": made}
 
 
+def score_similar(cases: list[dict]) -> tuple[dict[str, float], dict]:
+    """The lab's similarity (app/lab/similarity.py) on gold pairs: is the expected report first, and
+    the mean of 1/rank. Reports come from evals/similar/reports.jsonl."""
+    from app.lab.similarity import Library
+
+    reports = read_jsonl(EVALS / "similar" / "reports.jsonl")
+    lib = Library(reports)
+    top1 = rr = 0.0
+    for case in cases:
+        ranked = [m.id for m in lib.neighbours(case["anchor"], limit=len(reports))]
+        rank = ranked.index(case["expected"]) + 1 if case["expected"] in ranked else None
+        top1 += rank == 1
+        rr += 1 / rank if rank else 0.0
+    n = len(cases)
+    results = {"similar_top1_accuracy": top1 / n, "similar_mrr": rr / n} if n else {}
+    langs = [c.get("lang", "tr") for c in cases]
+    return results, {"cases": n, "tr": langs.count("tr"), "en": langs.count("en"), "missing": 0, "unreadable": 0}
+
+
 def table(targets: list[Target], results: dict[str, float], only_set: str) -> tuple[str, int]:
     rows = ["| Parametre | Ölçüt | Hedef | Sonuç | Durum |", "| --- | --- | --- | --- | --- |"]
     missed = 0
@@ -240,7 +259,7 @@ def table(targets: list[Target], results: dict[str, float], only_set: str) -> tu
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--set", default="extract", choices=["extract", "quote"])
+    ap.add_argument("--set", default="extract", choices=["extract", "quote", "similar"])
     ap.add_argument("--recorded", type=Path, help="replies file (default: evals/<set>/recorded/sample.jsonl)")
     ap.add_argument("--live", action="store_true", help="ask the model instead of reading recorded replies (paid)")
     ap.add_argument("--record", type=Path, help="with --live: write the replies here")
@@ -255,7 +274,9 @@ def main(argv: list[str] | None = None) -> int:
     cases = read_jsonl(folder / "cases.jsonl")
     if args.engine == "lexicon":
         source = "lab kural motorları (app/lab/)"
-        if args.set == "quote":
+        if args.set == "similar":
+            results, info = score_similar(cases)
+        elif args.set == "quote":
             results, info = score_quote(cases, lexicon_claims(cases))
         else:
             results, info = score(cases, lexicon_predictions(cases))
@@ -272,7 +293,10 @@ def main(argv: list[str] | None = None) -> int:
             source = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
             if not path.is_file():
                 source += " (yok)"
-        if args.set == "quote":
+        if args.set == "similar":
+            results, info = {}, {"cases": len(cases), "tr": 0, "en": 0, "missing": len(cases), "unreadable": 0}
+            source = "modelin benzerlik ölçümü yok; --engine lexicon"
+        elif args.set == "quote":
             preds = {c["id"]: reply_claims(replies[c["id"]]) for c in cases if c["id"] in replies}
             results, info = score_quote(cases, preds)
             info["missing"] = sum(c["id"] not in replies for c in cases)
