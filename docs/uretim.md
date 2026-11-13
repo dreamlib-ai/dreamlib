@@ -25,7 +25,7 @@ anlatım ─> akışlı yorum (senkron, SSE)
 
 ## Hata ve tekrar
 
-Hatalar iki sınıftır; sınıfı sağlayıcı istemcisi belirler (`providers/errors.py`, `ProviderError.status`), worker yalnız uygular. Bilinmeyen hata geçici sayılır: en çok üç denemeyle sınırlı. OpenRouter istemcisi L1 birleşince aynı sınıfa geçer.
+Hatalar iki sınıftır; sınıfı sağlayıcı istemcisi belirler (`providers/errors.py`, `ProviderError.status`), worker yalnız uygular. Bilinmeyen hata geçici sayılır: en çok üç denemeyle sınırlı. fal ve OpenRouter istemcileri bu sınıfla hata verir.
 
 | Sınıf | Örnek | Davranış |
 | --- | --- | --- |

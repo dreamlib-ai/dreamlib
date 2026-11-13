@@ -64,3 +64,15 @@ def test_routes_are_read_from_the_environment():
         "OPENROUTER_MODEL_NOPE": "ignored/model",
     }.get
     assert llm_routes(env) == {"clean": ("cheap/model", ()), "interpret": ("", ("a/one", "b/two"))}
+
+
+def test_provider_status_decides_the_error_class(monkeypatch):
+    monkeypatch.setattr("app.providers.openrouter.RETRY_AFTER", 0)
+    from app.providers.errors import ProviderError, is_transient
+
+    for status, transient in [(503, True), (400, False)]:
+        llm = OpenRouter("key", "m")
+        llm.http = httpx.AsyncClient(transport=httpx.MockTransport(lambda req, st=status: httpx.Response(st, text="no")))
+        with pytest.raises(ProviderError) as err:
+            asyncio.run(llm.chat([], task="clean"))
+        assert err.value.status == status and is_transient(err.value) is transient
