@@ -15,7 +15,7 @@ Her çağrı bir göreve aittir. Model adı görevden okunur; kodda model adı g
 | `embed` | Rüya ve düğüm vektörü | Çok dilli, sabit boyut | — |
 | `moderate` | Paylaşım öncesi içerik kontrolü | Ucuz, şemalı | Hayır |
 
-Ayar ortam değişkenleriyle: `OPENROUTER_MODEL_<GÖREV>` ve yedekler için `OPENROUTER_FALLBACK_<GÖREV>` (virgüllü liste). Görev ayarı yoksa `OPENROUTER_MODEL` kullanılır; mevcut kurulum bozulmaz. Bugün çağrılan görevler: `clean`, `interpret` (yorum ve çıkarım şimdilik tek çağrıda), `storyboard`.
+Ayar ortam değişkenleriyle: `OPENROUTER_MODEL_<GÖREV>` ve yedekler için `OPENROUTER_FALLBACK_<GÖREV>` (virgüllü liste). Görev ayarı yoksa `OPENROUTER_MODEL` kullanılır; mevcut kurulum bozulmaz. Bugün çağrılan görevler: `clean`, `interpret` (yorum ve çıkarım şimdilik tek çağrıda), `storyboard`; `embed` istemcide hazır (`OpenRouter.embed`), henüz bir işten çağrılmıyor (M4).
 
 Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde koşulur ve seçim tabloya tarihle yazılır.
 
@@ -40,6 +40,9 @@ Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 ## Embedding
 
 - Tek model, tek boyut; model adı her vektörle birlikte saklanır ([motor](motor.md)).
+- İstek `POST /api/v1/embeddings` (`model`, `input` listesi, `encoding_format: float`), 64'erli parçalarla; yanıt `data[].embedding`, `index`'e göre sıralanır. Sayı, boş vektör ya da farklı boyut tutmazsa hata.
+- `embed` görevinin yedek modelleri denenmez: başka modelin vektörü saklananlarla karşılaştırılamaz, hata model değiştirmenin yerine geçmez. Model `OPENROUTER_MODEL_EMBED` ile seçilir; seçim eval'le yapılana kadar boş kalabilir.
+- `DREAMLIB_FAKE_AI=1` modunda metinden türeyen 8 boyutlu sabit birim vektörler döner (model `fake`).
 - Türkçe ve İngilizce aynı uzayda olmalı; seçim çok dilli altın çiftlerle doğrulanır.
 - Model değişirse yeni vektörler yanına yazılır, arama yeni modele geçince eskiler süpürülür.
 - Vektörlenen metin temizlenmiş anlatımdır; kişi adları çıkarılmaz ama vektör kimseye gösterilmez.
@@ -64,7 +67,9 @@ Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 | Güvenlik | Talimat sızdırma, hassas içerik davranışı | Elle |
 | Yorum | Bağlama sadakat, uydurma bağ | Model hakemli + elle örneklem |
 
-**Duygu hedefi (A13):** çıkarımın beş HVdC duygusuna eşlenen çıktısı, elle kodlanmış İngilizce örneklerde rapor başına var/yok olarak makro F1 ≥ 0,80; üzüntü ayrıca raporlanır ve ≥ 0,70 olmalı. Referans: ince ayarlı BERT DreamBank'te makro F1 0,85–0,86, üzüntüde 0,77–0,80 ([kart](arastirma/notlar/olcum-llm-kodlama.md)). Türkçe set için hedef İngilizce sonuçtan en çok 0,05 düşük. Mutluluk gibi olumlu duygunun kaçırılması ayrı izlenir; hazır duygu modellerinin en zayıf yeri bu.
+**Duygu hedefi (A13):** çıkarımın beş HVdC duygusuna eşlenen çıktısı, elle kodlanmış İngilizce örneklerde rapor başına var/yok olarak makro F1 ≥ 0,80; üzüntü ayrıca raporlanır ve ≥ 0,70 olmalı. Referans: ince ayarlı BERT DreamBank'te makro F1 0,85–0,86, üzüntüde 0,77–0,80 ([kart](arastirma/notlar/olcum-llm-kodlama.md)). Türkçe set için hedef İngilizce sonuçtan en çok 0,05 düşük. Mutluluk gibi olumlu duygunun kaçırılması ayrı izlenir; hazır duygu modellerinin en zayıf yeri bu. Tavan: HVdC'nin kendi kodlayıcıları duygularda yalnız %63 tam uyum sağladı (A15); eval seti iki kişiyle kodlanır, model insanlar arası uyumu geçmesi beklenmeyen bir ölçüde değerlendirilir.
+
+Duygu tek parametre değil: karakter, etkileşim, talih, mekân, tema, tür, bakış açısı, beyan, güvenlik ve süre tahmini dahil 30'dan fazla parametrenin hedefi [eval hedefleri](eval-hedefleri.md) belgesinde ve `evals/targets.toml` dosyasında; insan tavanı olanlarda hedef insan uyumunun %90'ı.
 
 CI kayıtlı yanıtlarla koşar ve ücretli çağrı yapmaz. Canlı koşu elle tetiklenir; model ya da prompt değişikliği sonuç tablosuyla birlikte gelir. Yeni bir zor rüya örneği eklemek dışarıdan katkıya açık en kolay iştir.
 
