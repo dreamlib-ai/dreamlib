@@ -43,9 +43,10 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 
 ### LLM
 
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1).
+
 | No | Görev | Önce |
 | --- | --- | --- |
-| L1 | Görev tablosu ve görev başına model, zaman aşımı, yedek dizi | — |
 | L2 | Şemalı çıktı (Pydantic'ten şema), ayrıştırıcı yedeği | L1 |
 | L3 | Akışlı çağrı ve SSE'ye çeviri | L1 |
 | L4 | Embedding çağrısı | L1 |

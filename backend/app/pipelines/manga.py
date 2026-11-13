@@ -74,7 +74,7 @@ async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list
         system += '\nThe dreamer uses this fixed character appearance. Preserve it; do not replace them with an unrelated character. ' + avatar_prompt(appearance)
     try:
         reply = await s.llm.chat(
-            [{"role": "system", "content": system}, {"role": "user", "content": f"{input.get('title', '')}\n\n{input['text']}"}], True
+            [{"role": "system", "content": system}, {"role": "user", "content": f"{input.get('title', '')}\n\n{input['text']}"}], True, task="storyboard"
         )
     except Exception as e:
         raise RuntimeError(f"storyboard failed: {e}") from e  # worth another try
