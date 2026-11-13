@@ -55,4 +55,30 @@ def test_runner_scores_the_lexicon_engine(capsys):
     spec.loader.exec_module(run)
     assert run.main(["--engine", "lexicon"]) == 0
     out = capsys.readouterr().out
-    assert "lab sözlük motoru" in out and "| emotion_sadness_f1 | f1 | ≥ 0.70 | 1.00 | tuttu |" in out
+    assert "lab kural motorları" in out and "| emotion_sadness_f1 | f1 | ≥ 0.70 | 1.00 | tuttu |" in out
+
+
+def load_runner():
+    spec = importlib.util.spec_from_file_location("eval_run_quote", ROOT / "evals" / "run.py")
+    run = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(run)
+    return run
+
+
+def test_quote_scores_precision_and_verbatim_quotes():
+    run = load_runner()
+    cases = [{"id": "a", "lang": "tr", "text": "Yine  aynı rüyayı gördüm.", "experiences": ["recurring"]},
+             {"id": "b", "lang": "en", "text": "It was fine.", "experiences": []}]
+    results, info = run.score_quote(cases, {"a": [("recurring", "Yine aynı rüyayı gördüm.")],
+                                            "b": [("nightmare", "It was a nightmare.")]})
+    assert info["claims"] == 2
+    assert results == {"experience_claim_precision": 0.5, "experience_quote_verbatim": 0.5}
+    assert run.score_quote(cases, {})[0] == {}  # no claims, nothing to measure
+
+
+def test_runner_measures_the_quote_set_with_the_lab_engine(capsys):
+    run = load_runner()
+    assert run.main(["--set", "quote", "--engine", "lexicon", "--strict"]) == 0
+    out = capsys.readouterr().out
+    assert "| experience_claim_precision | precision | ≥ 0.95 | 1.00 | tuttu |" in out
+    assert run.main(["--set", "quote"]) == 0 and "ölçülmedi" in capsys.readouterr().out  # no recorded replies yet

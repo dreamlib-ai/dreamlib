@@ -183,6 +183,44 @@ async def live_replies(cases: list[dict]) -> dict[str, str]:
     return out
 
 
+Claims = list[tuple[str, str]]  # (kind, quote) per experience claim
+
+
+def reply_claims(reply: str) -> Claims | None:
+    """The experience claims a reply makes, as the model wrote them (before the app's grounding)."""
+    from pydantic import ValidationError
+
+    from app.models import Analysis
+    from app.services import extract_json
+
+    try:
+        analysis = Analysis.model_validate(extract_json(reply))
+    except (ValueError, ValidationError):
+        return None
+    return [(e.kind, e.quote) for e in analysis.features.experiences]
+
+
+def lexicon_claims(cases: list[dict]) -> dict[str, Claims]:
+    from app.lab.experiences import claims
+
+    return {c["id"]: [(e.kind, e.quote) for e in claims(c["text"])] for c in cases}
+
+
+def score_quote(cases: list[dict], preds: dict[str, Claims | None]) -> tuple[dict[str, float], dict]:
+    """Precision of the claimed kinds against the coding, and the share of quotes found word for word."""
+    made = right = verbatim = 0
+    for case in cases:
+        text = " ".join(case["text"].split())
+        for kind, quote in preds.get(case["id"]) or []:
+            made += 1
+            right += kind in case["experiences"]
+            verbatim += bool(quote.strip()) and " ".join(quote.split()) in text
+    results = {"experience_claim_precision": right / made, "experience_quote_verbatim": verbatim / made} if made else {}
+    langs = [c["lang"] for c in cases]
+    return results, {"cases": len(cases), "tr": langs.count("tr"), "en": langs.count("en"), "missing": 0,
+                     "unreadable": 0, "claims": made}
+
+
 def table(targets: list[Target], results: dict[str, float], only_set: str) -> tuple[str, int]:
     rows = ["| Parametre | Ölçüt | Hedef | Sonuç | Durum |", "| --- | --- | --- | --- | --- |"]
     missed = 0
@@ -202,7 +240,7 @@ def table(targets: list[Target], results: dict[str, float], only_set: str) -> tu
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--set", default="extract", choices=["extract"])
+    ap.add_argument("--set", default="extract", choices=["extract", "quote"])
     ap.add_argument("--recorded", type=Path, help="replies file (default: evals/<set>/recorded/sample.jsonl)")
     ap.add_argument("--live", action="store_true", help="ask the model instead of reading recorded replies (paid)")
     ap.add_argument("--record", type=Path, help="with --live: write the replies here")
@@ -216,8 +254,11 @@ def main(argv: list[str] | None = None) -> int:
     folder = EVALS / args.set
     cases = read_jsonl(folder / "cases.jsonl")
     if args.engine == "lexicon":
-        results, info = score(cases, lexicon_predictions(cases))
-        source = "lab sözlük motoru (app/lab/emotions.py)"
+        source = "lab kural motorları (app/lab/)"
+        if args.set == "quote":
+            results, info = score_quote(cases, lexicon_claims(cases))
+        else:
+            results, info = score(cases, lexicon_predictions(cases))
     else:
         if args.live:
             replies = asyncio.run(live_replies(cases))
@@ -227,9 +268,17 @@ def main(argv: list[str] | None = None) -> int:
             source = "canlı"
         else:
             path = args.recorded or folder / "recorded" / "sample.jsonl"
-            replies = {r["id"]: r["reply"] for r in read_jsonl(path)}
+            replies = {r["id"]: r["reply"] for r in read_jsonl(path)} if path.is_file() else {}
             source = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
-        results, info = measure_extract(cases, replies)
+            if not path.is_file():
+                source += " (yok)"
+        if args.set == "quote":
+            preds = {c["id"]: reply_claims(replies[c["id"]]) for c in cases if c["id"] in replies}
+            results, info = score_quote(cases, preds)
+            info["missing"] = sum(c["id"] not in replies for c in cases)
+            info["unreadable"] = sum(v is None for v in preds.values())
+        else:
+            results, info = measure_extract(cases, replies)
     text, missed = table(load_targets(), results, args.set)
     print(f"Set: {args.set} · yanıtlar: {source} · {info['cases']} örnek ({info['tr']} TR, {info['en']} EN)"
           f" · yanıtsız {info['missing']} · okunamayan {info['unreadable']}\n")

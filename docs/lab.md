@@ -21,7 +21,7 @@ Rüya metninin analizini mümkün olduğunca dil modeli olmadan, kurallar ve sö
 | Karakterler | Akrabalık, meslek, zamir sözlükleri, sayı; cinsiyet Türkçede çoğu zaman yazılmaz | Orta |
 | Etkileşimler (saldırı, dostluk, cinsellik) | Fiil sözlükleri; kimin kime yaptığı için cümle çözümleme gerekir | Zor |
 | Talih, başarı, başarısızlık | Kalıp + fiil sözlüğü | Orta |
-| Beyanlar (lucid, tekrar, kâbus) | Uygulamanın kendi işaret listesi (`classification.MARKERS`), cümle birebir alıntı, inkâr eden cümle sayılmaz | v0: `backend/app/lab/experiences.py`; ölçüm `quote` setini bekliyor |
+| Beyanlar (lucid, tekrar, kâbus) | Uygulamanın kendi işaret listesi (`classification.MARKERS`), cümle birebir alıntı, inkâr eden cümle sayılmaz | v0: `backend/app/lab/experiences.py`; `evals/quote` 13 sentetik örnekte kesinlik ve birebirlik 1,00 |
 | Temalar, tür | Sözlük kümeleri ve yukarıdaki kodların birleşimi | Ölçümden sonra |
 | Benzerlik | HVdC kod sayıları vektörü + TF-IDF/BM25 | Yapılabilir, aşağıda |
 
@@ -60,7 +60,6 @@ L4 istemcisi hazır ama model seçilmedi; seçilene kadar vektör üretilmez. LL
 
 ## Sıradaki adımlar
 
-1. Beyanlar için `quote` eval seti (kesinlik hedefi 0,95).
-2. Sentetik setin HVdC kuralına göre yeniden kodlanması ve gerçek örneklerle büyütülmesi.
-3. Kod vektörü + TF-IDF benzerliği (A), altın çiftlerle ölçüm.
-4. Nesne, mekân ve karakter sözlükleri.
+1. Sentetik setin HVdC kuralına göre yeniden kodlanması ve gerçek örneklerle büyütülmesi.
+2. Kod vektörü + TF-IDF benzerliği (A), altın çiftlerle ölçüm.
+3. Nesne, mekân ve karakter sözlükleri.
