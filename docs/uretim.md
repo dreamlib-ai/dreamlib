@@ -6,7 +6,7 @@ Uzun süren her şey (indeksleme, ikon, dergi, video) Postgres `jobs` kuyruğund
 
 | Değişiklik | Bugün | Hedef |
 | --- | --- | --- |
-| İş türü | `kind` sütununda sabit check (`manga`, `image`) | Check kalkar; türler kodda `PIPELINES` kaydından doğrulanır |
+| İş türü | Yapıldı (B1): türler `pipelines/registry.py` içindeki `KINDS` kaydında; sütunda yalnız biçim check'i | Yeni tür bir kayıt satırıdır |
 | Eşzamanlılık | Kullanıcı başına tek aktif iş | Tür başına kural: ücretli çizimde tek, `index` ve `glyph` serbest |
 | Bekleme | Hata sonrası hemen kuyruğa döner | `run_after` sütunu; üstel bekleme ve jitter |
 | Zincir | Yok | `dream_id`, `parent_id`; biten iş sonrakini kuyruğa yazar |
