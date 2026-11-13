@@ -108,14 +108,33 @@ def macro_f1(cases: list[tuple[set[str], set[str]]]) -> float | None:
 
 
 def measure_extract(cases: list[dict], replies: dict[str, str]) -> tuple[dict[str, float], dict]:
-    """Emotion rows of the extract set. A missing or unreadable reply counts as naming no emotion."""
-    pairs: dict[str, list[tuple[set[str], set[str]]]] = {"all": [], "tr": [], "en": []}
-    unreadable = missing = 0
+    """Emotion rows of the extract set from model replies. A missing or unreadable reply counts as
+    naming no emotion."""
+    preds: dict[str, set[str] | None] = {}
+    missing = unreadable = 0
     for case in cases:
         reply = replies.get(case["id"])
-        got = predicted(reply) if reply is not None else None
-        missing += reply is None
-        unreadable += reply is not None and got is None
+        if reply is None:
+            missing += 1
+            continue
+        preds[case["id"]] = predicted(reply)
+        unreadable += preds[case["id"]] is None
+    results, info = score(cases, preds)
+    return results, {**info, "missing": missing, "unreadable": unreadable}
+
+
+def lexicon_predictions(cases: list[dict]) -> dict[str, set[str]]:
+    """The lab's rule engine (app/lab/emotions.py): no model, no reply files."""
+    from app.lab.emotions import classes
+
+    return {c["id"]: classes(c["text"], c["lang"]) for c in cases}
+
+
+def score(cases: list[dict], preds: dict[str, set[str] | None]) -> tuple[dict[str, float], dict]:
+    """Emotion rows of the extract set for the predicted HVdC classes per case id."""
+    pairs: dict[str, list[tuple[set[str], set[str]]]] = {"all": [], "tr": [], "en": []}
+    for case in cases:
+        got = preds.get(case["id"])
         pair = (set(case["emotions"]), got or set())
         pairs["all"].append(pair)
         pairs.setdefault(case["lang"], []).append(pair)
@@ -128,8 +147,7 @@ def measure_extract(cases: list[dict], replies: dict[str, str]) -> tuple[dict[st
     tr, en = macro_f1(pairs["tr"]), macro_f1(pairs["en"])
     if tr is not None and en is not None:
         results["emotion_tr_gap"] = max(0.0, en - tr)
-    return results, {"cases": len(cases), "tr": len(pairs["tr"]), "en": len(pairs["en"]),
-                     "missing": missing, "unreadable": unreadable}
+    return results, {"cases": len(cases), "tr": len(pairs["tr"]), "en": len(pairs["en"]), "missing": 0, "unreadable": 0}
 
 
 async def live_replies(cases: list[dict]) -> dict[str, str]:
@@ -174,6 +192,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--recorded", type=Path, help="replies file (default: evals/<set>/recorded/sample.jsonl)")
     ap.add_argument("--live", action="store_true", help="ask the model instead of reading recorded replies (paid)")
     ap.add_argument("--record", type=Path, help="with --live: write the replies here")
+    ap.add_argument("--engine", choices=["model", "lexicon"], default="model",
+                    help="lexicon: the lab's rule engine instead of model replies (no files, no calls)")
     ap.add_argument("--strict", action="store_true", help="exit 1 when a measured target is missed")
     args = ap.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
@@ -181,17 +201,21 @@ def main(argv: list[str] | None = None) -> int:
 
     folder = EVALS / args.set
     cases = read_jsonl(folder / "cases.jsonl")
-    if args.live:
-        replies = asyncio.run(live_replies(cases))
-        if args.record:
-            args.record.write_text("".join(json.dumps({"id": k, "reply": v}, ensure_ascii=False) + "\n"
-                                           for k, v in replies.items()), encoding="utf-8")
-        source = "canlı"
+    if args.engine == "lexicon":
+        results, info = score(cases, lexicon_predictions(cases))
+        source = "lab sözlük motoru (app/lab/emotions.py)"
     else:
-        path = args.recorded or folder / "recorded" / "sample.jsonl"
-        replies = {r["id"]: r["reply"] for r in read_jsonl(path)}
-        source = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
-    results, info = measure_extract(cases, replies)
+        if args.live:
+            replies = asyncio.run(live_replies(cases))
+            if args.record:
+                args.record.write_text("".join(json.dumps({"id": k, "reply": v}, ensure_ascii=False) + "\n"
+                                               for k, v in replies.items()), encoding="utf-8")
+            source = "canlı"
+        else:
+            path = args.recorded or folder / "recorded" / "sample.jsonl"
+            replies = {r["id"]: r["reply"] for r in read_jsonl(path)}
+            source = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        results, info = measure_extract(cases, replies)
     text, missed = table(load_targets(), results, args.set)
     print(f"Set: {args.set} · yanıtlar: {source} · {info['cases']} örnek ({info['tr']} TR, {info['en']} EN)"
           f" · yanıtsız {info['missing']} · okunamayan {info['unreadable']}\n")
