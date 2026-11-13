@@ -79,8 +79,14 @@ def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def predicted(reply: str) -> set[str] | None:
-    """The HVdC classes a reply names; None when the reply cannot be read as the app's Analysis."""
+@dataclass(frozen=True)
+class Prediction:
+    emotions: set[str]  # HVdC classes
+    perspective: str  # first-person | observer | mixed | unknown
+
+
+def predicted(reply: str) -> Prediction | None:
+    """What a reply says; None when it cannot be read as the app's Analysis."""
     from pydantic import ValidationError
 
     from app.models import Analysis
@@ -90,7 +96,8 @@ def predicted(reply: str) -> set[str] | None:
         analysis = Analysis.model_validate(extract_json(reply))
     except (ValueError, ValidationError):
         return None
-    return {c for e in analysis.emotions if e.pct >= MIN_PCT and (c := hvdc_class(e.label))}
+    return Prediction({c for e in analysis.emotions if e.pct >= MIN_PCT and (c := hvdc_class(e.label))},
+                      analysis.features.perspective)
 
 
 def f1(cases: list[tuple[set[str], set[str]]], cls: str) -> float | None:
@@ -108,18 +115,44 @@ def macro_f1(cases: list[tuple[set[str], set[str]]]) -> float | None:
 
 
 def measure_extract(cases: list[dict], replies: dict[str, str]) -> tuple[dict[str, float], dict]:
-    """Emotion rows of the extract set. A missing or unreadable reply counts as naming no emotion."""
-    pairs: dict[str, list[tuple[set[str], set[str]]]] = {"all": [], "tr": [], "en": []}
-    unreadable = missing = 0
+    """Emotion rows of the extract set from model replies. A missing or unreadable reply counts as
+    naming no emotion."""
+    preds: dict[str, Prediction | None] = {}
+    missing = unreadable = 0
     for case in cases:
         reply = replies.get(case["id"])
-        got = predicted(reply) if reply is not None else None
-        missing += reply is None
-        unreadable += reply is not None and got is None
-        pair = (set(case["emotions"]), got or set())
+        if reply is None:
+            missing += 1
+            continue
+        preds[case["id"]] = predicted(reply)
+        unreadable += preds[case["id"]] is None
+    results, info = score(cases, preds)
+    return results, {**info, "missing": missing, "unreadable": unreadable}
+
+
+def lexicon_predictions(cases: list[dict]) -> dict[str, Prediction]:
+    """The lab's rule engines (app/lab/): no model, no reply files."""
+    from app.lab.emotions import classes
+    from app.lab.perspective import perspective
+
+    return {c["id"]: Prediction(classes(c["text"], c["lang"]), perspective(c["text"], c["lang"])) for c in cases}
+
+
+def score(cases: list[dict], preds: dict[str, Prediction | None]) -> tuple[dict[str, float], dict]:
+    """Extract-set rows for the predictions per case id; a missing prediction is wrong on every row."""
+    pairs: dict[str, list[tuple[set[str], set[str]]]] = {"all": [], "tr": [], "en": []}
+    coded = right = 0
+    for case in cases:
+        got = preds.get(case["id"])
+        pair = (set(case["emotions"]), got.emotions if got else set())
         pairs["all"].append(pair)
         pairs.setdefault(case["lang"], []).append(pair)
+        if "perspective" in case:
+            coded += 1
+            right += bool(got and got.perspective == case["perspective"])
     results: dict[str, float] = {}
+    if coded:
+        results["perspective_accuracy"] = right / coded
     for name, value in (("emotion_presence_macro_f1", macro_f1(pairs["all"])),
                         ("emotion_sadness_f1", f1(pairs["all"], "sadness")),
                         ("emotion_positive_f1", f1(pairs["all"], "happiness"))):
@@ -128,8 +161,7 @@ def measure_extract(cases: list[dict], replies: dict[str, str]) -> tuple[dict[st
     tr, en = macro_f1(pairs["tr"]), macro_f1(pairs["en"])
     if tr is not None and en is not None:
         results["emotion_tr_gap"] = max(0.0, en - tr)
-    return results, {"cases": len(cases), "tr": len(pairs["tr"]), "en": len(pairs["en"]),
-                     "missing": missing, "unreadable": unreadable}
+    return results, {"cases": len(cases), "tr": len(pairs["tr"]), "en": len(pairs["en"]), "missing": 0, "unreadable": 0}
 
 
 async def live_replies(cases: list[dict]) -> dict[str, str]:
@@ -151,6 +183,63 @@ async def live_replies(cases: list[dict]) -> dict[str, str]:
     return out
 
 
+Claims = list[tuple[str, str]]  # (kind, quote) per experience claim
+
+
+def reply_claims(reply: str) -> Claims | None:
+    """The experience claims a reply makes, as the model wrote them (before the app's grounding)."""
+    from pydantic import ValidationError
+
+    from app.models import Analysis
+    from app.services import extract_json
+
+    try:
+        analysis = Analysis.model_validate(extract_json(reply))
+    except (ValueError, ValidationError):
+        return None
+    return [(e.kind, e.quote) for e in analysis.features.experiences]
+
+
+def lexicon_claims(cases: list[dict]) -> dict[str, Claims]:
+    from app.lab.experiences import claims
+
+    return {c["id"]: [(e.kind, e.quote) for e in claims(c["text"])] for c in cases}
+
+
+def score_quote(cases: list[dict], preds: dict[str, Claims | None]) -> tuple[dict[str, float], dict]:
+    """Precision of the claimed kinds against the coding, and the share of quotes found word for word."""
+    made = right = verbatim = 0
+    for case in cases:
+        text = " ".join(case["text"].split())
+        for kind, quote in preds.get(case["id"]) or []:
+            made += 1
+            right += kind in case["experiences"]
+            verbatim += bool(quote.strip()) and " ".join(quote.split()) in text
+    results = {"experience_claim_precision": right / made, "experience_quote_verbatim": verbatim / made} if made else {}
+    langs = [c["lang"] for c in cases]
+    return results, {"cases": len(cases), "tr": langs.count("tr"), "en": langs.count("en"), "missing": 0,
+                     "unreadable": 0, "claims": made}
+
+
+def score_similar(cases: list[dict]) -> tuple[dict[str, float], dict]:
+    """The lab's similarity (app/lab/similarity.py) on gold pairs: is the expected report first, and
+    the mean of 1/rank. Reports come from evals/similar/reports.jsonl."""
+    from app.lab.similarity import Library
+
+    reports = read_jsonl(EVALS / "similar" / "reports.jsonl")
+    lib = Library(reports)
+    top1 = rr = 0.0
+    for case in cases:
+        ranked = [m.id for m in lib.neighbours(case["anchor"], limit=len(reports))]
+        rank = ranked.index(case["expected"]) + 1 if case["expected"] in ranked else None
+        top1 += rank == 1
+        rr += 1 / rank if rank else 0.0
+    n = len(cases)
+    results = {"similar_top1_accuracy": top1 / n, "similar_mrr": rr / n} if n else {}
+    langs = [c.get("lang", "tr") for c in cases]
+    return results, {"cases": n, "tr": langs.count("tr"), "en": langs.count("en"), "missing": 0, "unreadable": 0}
+
+
 def table(targets: list[Target], results: dict[str, float], only_set: str) -> tuple[str, int]:
     rows = ["| Parametre | Ölçüt | Hedef | Sonuç | Durum |", "| --- | --- | --- | --- | --- |"]
     missed = 0
@@ -170,10 +259,12 @@ def table(targets: list[Target], results: dict[str, float], only_set: str) -> tu
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--set", default="extract", choices=["extract"])
+    ap.add_argument("--set", default="extract", choices=["extract", "quote", "similar"])
     ap.add_argument("--recorded", type=Path, help="replies file (default: evals/<set>/recorded/sample.jsonl)")
     ap.add_argument("--live", action="store_true", help="ask the model instead of reading recorded replies (paid)")
     ap.add_argument("--record", type=Path, help="with --live: write the replies here")
+    ap.add_argument("--engine", choices=["model", "lexicon"], default="model",
+                    help="lexicon: the lab's rule engine instead of model replies (no files, no calls)")
     ap.add_argument("--strict", action="store_true", help="exit 1 when a measured target is missed")
     args = ap.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
@@ -181,17 +272,37 @@ def main(argv: list[str] | None = None) -> int:
 
     folder = EVALS / args.set
     cases = read_jsonl(folder / "cases.jsonl")
-    if args.live:
-        replies = asyncio.run(live_replies(cases))
-        if args.record:
-            args.record.write_text("".join(json.dumps({"id": k, "reply": v}, ensure_ascii=False) + "\n"
-                                           for k, v in replies.items()), encoding="utf-8")
-        source = "canlı"
+    if args.engine == "lexicon":
+        source = "lab kural motorları (app/lab/)"
+        if args.set == "similar":
+            results, info = score_similar(cases)
+        elif args.set == "quote":
+            results, info = score_quote(cases, lexicon_claims(cases))
+        else:
+            results, info = score(cases, lexicon_predictions(cases))
     else:
-        path = args.recorded or folder / "recorded" / "sample.jsonl"
-        replies = {r["id"]: r["reply"] for r in read_jsonl(path)}
-        source = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
-    results, info = measure_extract(cases, replies)
+        if args.live:
+            replies = asyncio.run(live_replies(cases))
+            if args.record:
+                args.record.write_text("".join(json.dumps({"id": k, "reply": v}, ensure_ascii=False) + "\n"
+                                               for k, v in replies.items()), encoding="utf-8")
+            source = "canlı"
+        else:
+            path = args.recorded or folder / "recorded" / "sample.jsonl"
+            replies = {r["id"]: r["reply"] for r in read_jsonl(path)} if path.is_file() else {}
+            source = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+            if not path.is_file():
+                source += " (yok)"
+        if args.set == "similar":
+            results, info = {}, {"cases": len(cases), "tr": 0, "en": 0, "missing": len(cases), "unreadable": 0}
+            source = "modelin benzerlik ölçümü yok; --engine lexicon"
+        elif args.set == "quote":
+            preds = {c["id"]: reply_claims(replies[c["id"]]) for c in cases if c["id"] in replies}
+            results, info = score_quote(cases, preds)
+            info["missing"] = sum(c["id"] not in replies for c in cases)
+            info["unreadable"] = sum(v is None for v in preds.values())
+        else:
+            results, info = measure_extract(cases, replies)
     text, missed = table(load_targets(), results, args.set)
     print(f"Set: {args.set} · yanıtlar: {source} · {info['cases']} örnek ({info['tr']} TR, {info['en']} EN)"
           f" · yanıtsız {info['missing']} · okunamayan {info['unreadable']}\n")

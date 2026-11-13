@@ -222,3 +222,16 @@ metric = "mape"
 target = 0.25
 set = "production"
 note = "fal süre tahmini, app/eta.py; canlı gözlemlerden"
+
+# --- Benzerlik (lab; altın çiftlerde sıralama) ---
+[similar_top1_accuracy]
+metric = "accuracy"
+target = 0.80
+set = "similar"
+note = "Geçici hedef: çapanın en benzeri ilk sırada mı; gerçek altın çiftlerle gözden geçirilir (docs/lab.md)"
+
+[similar_mrr]
+metric = "rate"
+target = 0.85
+set = "similar"
+note = "Geçici hedef: beklenen raporun sırasının tersinin ortalaması"
