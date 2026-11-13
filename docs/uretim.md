@@ -7,11 +7,11 @@ Uzun süren her şey (indeksleme, ikon, dergi, video) Postgres `jobs` kuyruğund
 | Değişiklik | Bugün | Hedef |
 | --- | --- | --- |
 | İş türü | Yapıldı (B1): türler `pipelines/registry.py` içindeki `KINDS` kaydında; sütunda yalnız biçim check'i | Yeni tür bir kayıt satırıdır |
-| Eşzamanlılık | Kullanıcı başına tek aktif iş | Tür başına kural: ücretli çizimde tek, `index` ve `glyph` serbest |
+| Eşzamanlılık | Yapıldı (B3): tek aktif iş kuralı yalnız `exclusive` türlerde (`manga`, `image`) | `index` ve `glyph` kayda `exclusive=False` ile girer |
 | Bekleme | Yapıldı (B2): geçici hatada `run_after` ile 5, 20, 80 sn (±%25) bekleme; kalıcı hatada tekrar yok | — |
-| Zincir | Yok | `dream_id`, `parent_id`; biten iş sonrakini kuyruğa yazar |
-| Tekrar koruması | Manga için `requestId` | Tüm türlerde `dedupe_key` |
-| Öncelik | Geliş sırası | `priority`; kullanıcının beklediği iş arka plan işinin önüne geçer |
+| Zincir | Sütunlar var (B3): `dream_id`, `parent_id` | Biten iş sonrakini kuyruğa yazar (`index` işiyle, M4) |
+| Tekrar koruması | Yapıldı (B3): kullanıcı, tür ve `dedupe_key` tekil; ikinci istek mevcut işi döner. Manga `requestId` ile sürüyor | — |
+| Öncelik | Yapıldı (B3): `priority` kayıttan; çizim 10, arka plan 0 | — |
 
 Bir rüyanın yolu:
 
