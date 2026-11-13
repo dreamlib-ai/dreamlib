@@ -7,6 +7,7 @@ import httpx
 from app import worker
 from app.pipelines.registry import KINDS, Kind
 from app.providers.fal import Fal
+from app.providers.image_models import resolve
 from app.providers.openrouter import OpenRouter
 from app.store.jobstore import MemoryJobs
 from app.store.supabase import Supabase
@@ -37,7 +38,7 @@ def test_openrouter_writes_tokens_and_cost_for_the_user_in_scope():
 
 def test_fal_counts_pictures_when_queued_not_when_read_again():
     sink = MemoryUsage()
-    fal = Fal("key", "fal-ai/flux/schnell", "image")
+    fal = Fal("key", resolve("fast", "image"))
     fal.meter = Meter(sink)
 
     def handler(req: httpx.Request):
