@@ -69,7 +69,7 @@ Bugün tek dosya (`backend/app/prompts.py`). Hedef:
 
 Duygu tek parametre değil: karakter, etkileşim, talih, mekân, tema, tür, bakış açısı, beyan, güvenlik ve süre tahmini dahil 30'dan fazla parametrenin hedefi [eval hedefleri](eval-hedefleri.md) belgesinde ve `evals/targets.toml` dosyasında; insan tavanı olanlarda hedef insan uyumunun %90'ı.
 
-CI kayıtlı yanıtlarla koşar ve ücretli çağrı yapmaz. Canlı koşu elle tetiklenir; model ya da prompt değişikliği sonuç tablosuyla birlikte gelir. Yeni bir zor rüya örneği eklemek dışarıdan katkıya açık en kolay iştir.
+Koşucu `evals/run.py` (backend'in Python'uyla): `targets.toml`'u okur, seti ölçer ve her satırı hedefle karşılaştıran tabloyu basar; ölçülemeyen satırlar "ölçülmedi" görünür, `--strict` kaçan hedefte 1 döner. Set klasörü `evals/<set>/`: `cases.jsonl` (girdi ve elle kodlama) ve `recorded/*.jsonl` (örnek başına bir model yanıtı). İlk set `extract` (L6): uygulamanın serbest duygu etiketleri HVdC'nin beş sınıfına sözcük köküyle eşlenir (payı %10'un altındaki duygu yok sayılır; merak HVdC sınıfı değildir), rapor başına var/yok F1, makro F1 (hiç geçmeyen sınıf dışarıda) ve TR–EN farkı ölçülür. Bugünkü 10 örnek ve `recorded/sample.jsonl` elle yazılmış sentetik örneklerdir, model koşusu değildir; koşucunun doğruluğunu sınar, model kalitesini değil. Gerçek set elle kodlanınca (iki kodlayıcı) yerini alır. CI kayıtlı yanıtlarla koşar (`backend/tests/test_evals.py`) ve ücretli çağrı yapmaz; `--live --record` elle tetiklenir. Canlı koşu elle tetiklenir; model ya da prompt değişikliği sonuç tablosuyla birlikte gelir. Yeni bir zor rüya örneği eklemek dışarıdan katkıya açık en kolay iştir.
 
 ## Maliyet görünümü
 
