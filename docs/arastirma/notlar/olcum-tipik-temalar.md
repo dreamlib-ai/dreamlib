@@ -9,6 +9,8 @@
 - Yu, Hong Kong ve kültürler arası tipik rüya karşılaştırması — hakemli (dolaylı). [UIC](https://indigo.uic.edu/articles/journal_contribution/Typical_Dreams_A_Comparison_of_Dreams_Across_Cultures/10760462)
 - Psychology Today, en yaygın rüya temaları — popüler yazı, iz sürmek için.
 
+**Tam madde listesi (A12):** TDQ'nun 56 maddelik sürümü Nielsen (2012), "Variations in dream recall frequency and dream theme diversity by age and sex", *Frontiers in Neurology* 3:106, ekinde yayımlı (28.888 kişi, 10–79 yaş, çevrimiçi). Yaşla birlikte tema çeşitliliği düşüyor: en genç grupta maddelerin %35'i, en yaşlıda %24'ü görülmüş. Maddeler [tema listesine](../temalar.md) eşlendi; 11 yeni tema eklendi. [Frontiers](https://www.frontiersin.org/articles/10.3389/fneur.2012.00106/full) — hakemli.
+
 **Güven:** orta. Rakamlar birden çok kaynakta tutarlı; tam metinler okunmadı.
 
 **Motora etkisi:**

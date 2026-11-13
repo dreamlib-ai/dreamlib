@@ -43,6 +43,39 @@ Bu liste sınıflandırma için değil, başlangıç içindir: model tema adayla
 | `sounds` | Sesler, sessizlik | Reddit | Etkinlik (işitme) | Düşük |
 | `control` | Rüyayı kontrol etmek, fark etmek | Reddit (lucid) | — | Düşük |
 | `life_events` | Düğün, taşınma, mezuniyet | Reddit | Hayat olayı | Orta |
+| `trapped` | Kapana kısılmak, kilitli ya da bağlı kalmak, nefes alamamak | TDQ | Talihsizlik | Bilinmiyor |
+| `own_death` | Öldürülmek, kendini ölü görmek | TDQ | Talihsizlik | Bilinmiyor |
+| `killing` | Birini öldürmek | TDQ | Etkileşim (saldırgan) | Bilinmiyor |
+| `repetition` | Bir şeyi tekrar tekrar denemek | TDQ | Başarısızlık | Bilinmiyor |
+| `powers` | Büyülü güç, üstün bilgi | TDQ | Başarı | Bilinmiyor |
+| `transformation` | Başka biri ya da bir şey olmak: karşı cins, hayvan, nesne, yeniden çocuk | TDQ | Karakterler (rüyacı) | Bilinmiyor |
+| `presence` | Odada bir varlık sezmek, çok yakında bir yüz görmek | TDQ | Karakterler | Bilinmiyor |
+| `food` | Yemek, lezzetli yiyecekler | TDQ | Yeme-içme | Bilinmiyor |
+| `money` | Para bulmak | TDQ | İyi talih | Bilinmiyor |
+| `toilet` | Tuvalet bulamamak ya da utanmak | TDQ | Talihsizlik | Bilinmiyor |
+| `mirror` | Kendini aynada görmek | TDQ | Nesne | Bilinmiyor |
+
+## TDQ eşlemesi (A12)
+
+Tipik Rüyalar Anketi'nin 56 maddelik sürümü (Nielsen 2012, ek; yanıt 0 hiç – 4 on bir ve üstü) her maddesiyle bir anahtara bağlandı:
+
+- `chased` 1 · `violence_death` 2 · `repetition` 3 · `paralysis` 4, 44 · `food` 5 · `late` 6 · `water` 7, 21 · `trapped` 8, 15, 39
+- `animals` 9, 24, 40 · `money` 10 · `flying` 11 · `falling` 12, 37 · `naked_public` 13, 14 · `powers` 16, 20 · `supernatural` 17, 56
+- `teeth` 18 · `mirror` 19 · `disaster` 21, 22, 23, 34, 54 · `transformation` 25, 26, 49, 50 · `own_death` 27, 28 · `presence` 29, 45
+- `toilet` 30 · `school` 31, 38 · `sexual` 32 · `vehicle` 33 · `deceased_visit` 35 · `death_of_loved` 36 · `technology` 41 · `killing` 42
+- `space_aliens` 46, 47, 48 · `religious` 51, 52 · `house_rooms` 53 · `pregnancy_birth` 55
+- Anahtarsız kalan madde: 43 (deliler). TDQ karşılığı olmayanlar (Reddit'ten): `work`, `relationships`, `cheating`, `body`, `lost`, `time`, `weather`, `sounds`, `control`, `life_events`, `war`
+
+Maddeler F5 onboarding sorusunun ("hangilerini gördün") ham listesidir; ölçeğin kendisi değil, yalnız tema adları kullanılır.
+
+## Aday temalar
+
+Çekirdeğe rızalı veride sıklık görülünce girer.
+
+| Anahtar | Etiket | Kaynak |
+| --- | --- | --- |
+| `deceased_request` | Ölmüş yakının bir şey istemesi ya da haber vermesi | Türk halkbilimi ([kart](notlar/kultur-turk-halkbilimi.md)) |
+| `omen_marriage` | Kısmet, evlenecek kişiyi görmek | Türk halkbilimi |
 
 ## Kurallar
 
@@ -55,6 +88,6 @@ Bu liste sınıflandırma için değil, başlangıç içindir: model tema adayla
 
 ## Eksikler
 
-- TDQ'nun tam madde listesi okunmadı; tablo arama parçalarından ve ikincil kaynaklardan derlendi. Tam liste görüldüğünde güncellenir.
+- TDQ maddelerinin tek tek yaygınlık oranları okunmadı (Nielsen 2003, Kanada; tam metin bot korumalı); yeni satırların yaygınlığı bilinmiyor.
 - Türk kültürüne özgü sık temalar (ör. rüyada ölmüş yakının bir şey istemesi, kutsal mekânlar, düğün) için Türkçe kaynak taranacak ([kart](notlar/kultur-paylasma.md)).
 - "Yaygınlık" sütunu nitel bir tahmin; oranlar kişiye gösterilmez.

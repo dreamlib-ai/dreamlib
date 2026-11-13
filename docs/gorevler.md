@@ -6,28 +6,25 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 
 ## Faz 0: araştırma
 
-İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. Kalanlar:
+İlk tur tamam (2026-11-13): 16 kart, [tema listesi](arastirma/temalar.md), HVdC eşlemesi, uygulama karşılaştırması (mağaza sayfalarından), korpus atlasına metin listesi, motif veri seti önerisi, [hassas içerik taslağı](hassas-icerik.md), fikir süzmesi. İkinci tur (aynı gün): Türk halkbilimi kartı (A10), `trilogy` ölçümü ve lisans çelişkisi (A11), TDQ'nun 56 maddesiyle tema listesi (A12), CLPsych rakamları ve duygu eval hedefi (A13). Kalanlar:
 
 | No | Görev |
 | --- | --- |
 | A4 | Mirror, Oniri, The Dream Drop, Remora ve Türkiye'deki rüya uygulamalarını elle dene; karşılaştırma kartını tamamla |
 | A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
 | A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
-| A10 | Türk halkbiliminde rüya pratikleri: YÖK Tez ve DergiPark taraması |
-| A11 | `trilogy` verisini indir; satır say, sık rüya temalarıyla motif örtüşmesini ölç |
-| A12 | Tipik Rüyalar Anketi'nin tam madde listesiyle tema listesini güncelle |
-| A13 | CLPsych 2024 makalesinden insan–model uyum rakamlarını oku; eval hedefini koy |
+| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini oku; pratik listesini halkbilimi kartına ekle |
+| A15 | HVdC duygu kodlamasında insanlar arası uyum (κ) kaynağını bul; eval hedefinin tavanını koy |
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
 ## Faz 1: zemin
 
-Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1, Z2); birleşmiş dallar silindi (Z3); migration'lar tek klasörde (Z4); yerel not ve env dosyaları git dışı (Z5); tüm geçmişte sır taraması temiz (Z6); yalnız kontrol çalıştıran CI, Actions açık (Z7); proje kimlikleri ve kişisel bilgiler repodan çıktı (Z8); `DREAMLIB_FAKE_AI=1` ile anahtarsız yerel akış (Z9); temiz geçmişli public repo, AGPL-3.0 ve şablonlar (Z10); tercih anketi sitesi duraklatıldı, sonuçlar veritabanında (Z11). Kalanlar:
+Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1, Z2); birleşmiş dallar silindi (Z3); migration'lar tek klasörde (Z4); yerel not ve env dosyaları git dışı (Z5); tüm geçmişte sır taraması temiz (Z6); yalnız kontrol çalıştıran CI, Actions açık (Z7); proje kimlikleri ve kişisel bilgiler repodan çıktı (Z8); `DREAMLIB_FAKE_AI=1` ile anahtarsız yerel akış (Z9); temiz geçmişli public repo, AGPL-3.0 ve şablonlar (Z10); tercih anketi sitesi duraklatıldı, sonuçlar veritabanında (Z11); ilk altı `good first issue` GitHub'da açık (Z12). Kalanlar:
 
 | No | Görev | Önce |
 | --- | --- | --- |
 | Z5b | Bakımcının yerel `dreamlib-vibe/` env dosyasındaki anahtarları sağlayıcı panellerinden döndür | — |
-| Z12 | İlk `good first issue` işlerini GitHub'da aç (🌱 satırlardan) | — |
 
 ## Faz 2: beta çekirdeği
 
@@ -42,9 +39,10 @@ Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici
 
 ### LLM
 
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1).
+
 | No | Görev | Önce |
 | --- | --- | --- |
-| L1 | Görev tablosu ve görev başına model, zaman aşımı, yedek dizi | — |
 | L2 | Şemalı çıktı (Pydantic'ten şema), ayrıştırıcı yedeği | L1 |
 | L3 | Akışlı çağrı ve SSE'ye çeviri | L1 |
 | L4 | Embedding çağrısı | L1 |
@@ -123,7 +121,7 @@ Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici
 | K10 | 🌱 Rüya bağışı formu ve açık veri seti dışa aktarımı | R3 |
 | K11 | Aday düğüm birleştirme önerileri ve onay akışı | M4 |
 | K12 | Rüya ikizi: rızalı benzer rüya bildirimi, yalnız ortak semboller | K1 |
-| K13 | `motif` düğümleri ve `evokes_motif` puanlayıcısı (Thompson dizini, seviye 1–3) | M4, A11 |
+| K13 | `motif` düğümleri ve `evokes_motif` puanlayıcısı (Thompson dizini, seviye 1–3) | M4, V6 (`trilogy` lisans teyidi) |
 | K14 | Çevre: küçük grupta paylaşım ve eşleşme; "benim rüyam olsaydı" tepkisi | R1, G6 |
 
 ## Veri işleri (koddan bağımsız, paralel)
@@ -135,7 +133,7 @@ Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici
 | V3 | A kademesi anlamları dışa aktar; kaynak ve yer bilgisiyle |
 | V4 | Internet Archive OCR metinlerini maddeye çevir |
 | V5 | Çevrimdışı: sembol IDF ve birliktelik, benzerlik eşiği, altın çiftler |
-| V6 | Hak sahiplerine izin yazıları; yanıtları kaydet |
+| V6 | Hak sahiplerine izin yazıları; yanıtları kaydet (ilk sırada `trilogy`: README CC BY-SA, `LICENSE.md` CC BY-NC-SA) |
 | V7 | 🌱 Yeni bir kültürün serbest lisanslı tabir kaynağını ekle |
 
 ## Topluluğa açık sürekli işler
