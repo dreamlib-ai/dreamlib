@@ -9,6 +9,8 @@ from dataclasses import dataclass
 
 import httpx
 
+from .errors import ProviderError
+
 log = logging.getLogger("dreamlib")
 
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
@@ -69,7 +71,7 @@ class OpenRouter:
                 continue
             break
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}")
+            raise ProviderError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}", res.status_code)
         return res
 
     async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str) -> str:
