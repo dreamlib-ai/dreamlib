@@ -1,4 +1,4 @@
-"""Fixtures for the real database tests (scripts/db_test.py starts the stack and sets the env).
+"""Fixtures for the real database tests (scripts/db_test.py builds the dreamlib-local-test stack and sets the env).
 
 Without DREAMLIB_DB_TEST=1 these tests are skipped, so the ordinary `pytest -q` stays fast and offline."""
 import asyncio
@@ -24,8 +24,9 @@ def pytest_collection_modifyitems(config, items):
 def sql(query: str) -> str:
     """Runs SQL as postgres in the test database and returns the unaligned output."""
     res = subprocess.run(
-        ["docker", "compose", "-f", os.environ["DREAMLIB_DB_COMPOSE"], "exec", "-T", "db",
-         "psql", "-U", "postgres", "-d", "postgres", "-qAt", "-v", "ON_ERROR_STOP=1", "-c", query],
+        ["docker", "compose", "-p", os.environ["DREAMLIB_DB_PROJECT"], "-f", os.environ["DREAMLIB_DB_COMPOSE"],
+         "exec", "-T", "db", "psql", "-U", "postgres", "-d", os.environ["DREAMLIB_DB_PROJECT"],
+         "-qAt", "-v", "ON_ERROR_STOP=1", "-c", query],
         capture_output=True, text=True, encoding="utf-8",
     )
     if res.returncode:
