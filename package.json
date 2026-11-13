@@ -10,7 +10,7 @@
     "db": "python scripts/local_db.py",
     "dreamlib": "python scripts/local_db.py app",
     "dreamlib:stop": "python scripts/local_db.py down",
-    "dreamlib:logs": "python scripts/local_db.py logs backend frontend",
+    "dreamlib:logs": "python scripts/local_db.py logs",
     "start": "python scripts/local_db.py app"
   }
 }

@@ -1,18 +1,23 @@
-"""The local database `dreamlib-local`: Supabase's Postgres image and PostgREST in Docker, kept
-between runs, with migrations tracked like the Supabase CLI does (supabase_migrations.schema_migrations).
+"""Dreamlib on this machine, in Docker, as two groups:
 
-    python scripts/local_db.py up        # start (creating the database the first time) and apply pending migrations
-    python scripts/local_db.py app       # `up`, then the backend (:8080) and the frontend (:5173) in Docker too
-    python scripts/local_db.py logs      # follow the logs (add service names: logs backend frontend)
+    dreamlib-supabase  local Supabase (supabase/local/compose.yml): db (database `dreamlib-local`, kept between
+                       runs), auth (GoTrue), storage (storage-api), rest (PostgREST) and the gateway in front
+    dreamlib-app       the app (compose.yml): api (backend, queue workers in the same process) and web (Vite)
+
+Migrations are tracked like the Supabase CLI does (supabase_migrations.schema_migrations).
+
+    python scripts/local_db.py up        # local Supabase: start (creating the database the first time), migrate
+    python scripts/local_db.py app       # `up`, then api (:8080) and web (:5173): what `npm start` runs
+    python scripts/local_db.py logs      # follow api and web; `logs supabase` for the other group, or name services
     python scripts/local_db.py env       # the backend/.env and frontend/.env.local lines that point the app here
     python scripts/local_db.py status    # applied and pending migrations
     python scripts/local_db.py migrate   # apply pending migrations only
     python scripts/local_db.py psql      # open a SQL shell
-    python scripts/local_db.py down      # stop; data is kept
+    python scripts/local_db.py down      # stop both groups; data is kept
     python scripts/local_db.py reset     # delete the data and start again from the migrations
 
 `npm run db -- <command>` does the same. Postgres listens on 127.0.0.1:55432, PostgREST on :55433, and
-the API on :55431: a gateway that serves PostgREST, GoTrue (sign-in) and storage-api (pictures) under
+Supabase's API on :55431: a gateway that serves PostgREST, GoTrue (sign-in) and storage-api (pictures) under
 Supabase's own paths (/rest/v1, /auth/v1, /storage/v1), so the app runs against it unchanged.
 Only the standard library is used."""
 import base64
@@ -29,6 +34,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPOSE = ROOT / "supabase" / "local" / "compose.yml"
+APP_COMPOSE = ROOT / "compose.yml"
+APP_PROJECT = "dreamlib-app"
+APP_SERVICES = {"api", "web"}
 BOOTSTRAP = COMPOSE.with_name("bootstrap.sql")
 MIGRATIONS = ROOT / "supabase" / "migrations"
 SECRET = "dreamlib-local-test-secret-not-for-production-use"
@@ -64,10 +72,15 @@ def local_secrets() -> dict:
 
 @dataclass(frozen=True)
 class Stack:
-    name: str  # compose project name and database name
+    name: str  # database name; also names the volumes and the network
     db_port: int
     rest_port: int
     api_port: int = 0  # 0: no sign-in, storage or gateway (the test stack)
+    project: str = ""  # compose project; the database name when empty
+
+    @property
+    def proj(self) -> str:
+        return self.project or self.name
 
     @property
     def rest_url(self) -> str:
@@ -83,10 +96,14 @@ class Stack:
                 "DREAMLIB_ANON_KEY": ANON_KEY, "DREAMLIB_SERVICE_KEY": SERVICE_KEY}
 
     def profiles(self) -> list[str]:
-        return ["--profile", "rest"] + (["--profile", "api", "--profile", "app"] if self.api_port else [])
+        return ["--profile", "rest"] + (["--profile", "api"] if self.api_port else [])
 
     def compose(self, *args: str, check: bool = True, **kw) -> subprocess.CompletedProcess:
-        return subprocess.run(["docker", "compose", "-p", self.name, "-f", str(COMPOSE), *self.profiles(), *args],
+        return subprocess.run(["docker", "compose", "-p", self.proj, "-f", str(COMPOSE), *self.profiles(), *args],
+                              check=check, env=self.env(), **kw)
+
+    def app_compose(self, *args: str, check: bool = True, **kw) -> subprocess.CompletedProcess:
+        return subprocess.run(["docker", "compose", "-p", APP_PROJECT, "-f", str(APP_COMPOSE), *args],
                               check=check, env=self.env(), **kw)
 
     def psql(self, sql: str | None = None, file: Path | None = None, user: str = "postgres",
@@ -106,7 +123,19 @@ class Stack:
         return res.stdout.strip()
 
 
-LOCAL = Stack("dreamlib-local", 55432, 55433, api_port=55431)
+LOCAL = Stack("dreamlib-local", 55432, 55433, api_port=55431, project="dreamlib-supabase")
+OLD_PROJECT = "dreamlib-local"  # before the split everything ran as one compose project of this name
+
+
+def retire_old_project() -> None:
+    """Removes the containers of the old single group, once; the data volume is reused by name."""
+    ids = subprocess.run(["docker", "ps", "-aq", "--filter", f"label=com.docker.compose.project={OLD_PROJECT}"],
+                         capture_output=True, text=True).stdout.split()
+    if ids:
+        subprocess.run(["docker", "rm", "-f", *ids], capture_output=True)
+        subprocess.run(["docker", "volume", "rm", f"{OLD_PROJECT}_node_modules"], capture_output=True)
+        subprocess.run(["docker", "network", "rm", f"{OLD_PROJECT}_default"], capture_output=True)
+        print(f"removed the old {OLD_PROJECT} containers; data kept")
 
 
 def exists(stack: Stack) -> bool:
@@ -189,12 +218,9 @@ def wait_http(url: str, what: str, seconds: float = 60) -> None:
     raise SystemExit(f"{what} did not come up")
 
 
-def running(stack: Stack, service: str) -> bool:
-    res = stack.compose("ps", "-q", "--status", "running", service, check=False, capture_output=True, text=True)
-    return bool(res.stdout.strip())
-
-
 def up(stack: Stack) -> None:
+    if stack.api_port:
+        retire_old_project()
     stack.compose("up", "-d", "--wait", "db")
     if not exists(stack):
         create(stack)
@@ -208,10 +234,6 @@ def up(stack: Stack) -> None:
                               user="supabase_admin"), "storage grants")
     migrate(stack)
     stack.compose("up", "-d", "rest", *(["gateway"] if stack.api_port else []))
-    if stack.api_port and running(stack, "backend"):
-        # The backend lives in the gateway's network; a new gateway container leaves it without one.
-        stack.compose("up", "-d", "--no-deps", "--force-recreate", "backend")
-        wait_http("http://127.0.0.1:8080/healthz", "backend")
     wait_http(stack.rest_url + "/", "PostgREST")
     line = f"{stack.name}: postgres 127.0.0.1:{stack.db_port}, rest {stack.rest_url}"
     if stack.api_port:
@@ -221,13 +243,24 @@ def up(stack: Stack) -> None:
 
 
 def app(stack: Stack) -> None:
-    """The whole app in Docker: the backend (code mounted, reloads on change) and the Vite dev server."""
+    """The whole app in Docker: local Supabase, then api (code mounted, reloads on change) and web (Vite)."""
     up(stack)
-    stack.compose("up", "-d", "--build", "--force-recreate", "backend")
-    print("frontend: installing packages and starting Vite (first run takes a minute)")
-    stack.compose("up", "-d", "--wait", "frontend")
-    wait_http("http://127.0.0.1:8080/healthz", "backend")
-    print("app: http://localhost:5173  backend: http://127.0.0.1:8080/healthz (docs: /docs)")
+    stack.app_compose("up", "-d", "--build", "--wait", "api")
+    print("web: installing packages and starting Vite (first run takes a minute)")
+    stack.app_compose("up", "-d", "--wait", "web")
+    print("app: http://localhost:5173  api: http://127.0.0.1:8080/healthz (docs: /docs)")
+
+
+def logs(stack: Stack, names: list[str]) -> int:
+    if names == ["supabase"]:
+        names = []
+    elif not names:
+        names = sorted(APP_SERVICES)
+    if names and set(names) <= APP_SERVICES:
+        cmd = ["docker", "compose", "-p", APP_PROJECT, "-f", str(APP_COMPOSE)]
+    else:
+        cmd = ["docker", "compose", "-p", stack.proj, "-f", str(COMPOSE), *stack.profiles()]
+    return subprocess.call([*cmd, "logs", "-f", "--tail", "50", *names], env=stack.env())
 
 
 def show_env(stack: Stack) -> None:
@@ -257,8 +290,7 @@ def main() -> int:
     elif cmd == "app":
         app(stack)
     elif cmd == "logs":
-        return subprocess.call(["docker", "compose", "-p", stack.name, "-f", str(COMPOSE), *stack.profiles(),
-                                "logs", "-f", "--tail", "50", *sys.argv[2:]], env=stack.env())
+        return logs(stack, sys.argv[2:])
     elif cmd == "env":
         show_env(stack)
     elif cmd == "migrate":
@@ -266,12 +298,14 @@ def main() -> int:
     elif cmd == "status":
         status(stack)
     elif cmd == "down":
+        stack.app_compose("stop", check=False)
         stack.compose("stop")
     elif cmd == "reset":
+        stack.app_compose("down", check=False)  # it sits on the Supabase network, which reset deletes
         stack.compose("down", "-v")
         up(stack)
     elif cmd == "psql":
-        return subprocess.call(["docker", "compose", "-p", stack.name, "-f", str(COMPOSE), *stack.profiles(), "exec", "db",
+        return subprocess.call(["docker", "compose", "-p", stack.proj, "-f", str(COMPOSE), *stack.profiles(), "exec", "db",
                                 "psql", "-U", "postgres", "-d", stack.name], env=stack.env())
     else:
         print(__doc__)

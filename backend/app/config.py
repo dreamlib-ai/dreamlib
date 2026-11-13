@@ -32,6 +32,7 @@ class Settings:
     fal_speech_model: str = "speech"  # speech to text
     supabase_url: str = ""
     supabase_service_key: str = ""  # server-side only: bypasses row-level security
+    supabase_public_url: str = ""  # browsers' address of the project when it differs (local Docker); else supabase_url
     dev_auth: bool = False  # in-memory accounts for local work, never in production
     fake_ai: bool = False  # stand-in LLM and fal answers for local work without keys, never in production
     workers: int = 2  # jobs the API process runs at a time; 0 when `python -m app.worker` runs them
@@ -68,6 +69,7 @@ def load_settings() -> Settings:
         fal_speech_model=env("FAL_SPEECH_MODEL") or Settings.fal_speech_model,
         supabase_url=env("SUPABASE_URL", ""),
         supabase_service_key=env("SUPABASE_SERVICE_KEY", ""),
+        supabase_public_url=env("SUPABASE_PUBLIC_URL", ""),
         dev_auth=env("DREAMLIB_DEV_AUTH") == "1",
         fake_ai=env("DREAMLIB_FAKE_AI") == "1",
         workers=int(env("DREAMLIB_WORKERS") or Settings.workers),

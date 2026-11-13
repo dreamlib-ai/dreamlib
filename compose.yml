@@ -1,0 +1,63 @@
+# Dreamlib uygulaması, yerelde Docker'da: `npm start` önce yerel Supabase'i (supabase/local/compose.yml,
+# proje dreamlib-supabase), sonra bunu (proje dreamlib-app) kaldırır. İki grup aynı ağda konuşur.
+#   api  backend (backend/Dockerfile, canlıdaki imaj); kod bağlı, değişince yeniden yüklenir. Kuyruk
+#        worker'ları canlıdaki gibi aynı süreçte koşar (DREAMLIB_WORKERS); ayrı worker container'ı yok.
+#   web  Vite geliştirme sunucusu; /api isteklerini api'ye geçirir.
+# Anahtarlar backend/.env'den gelir; Supabase ayarları burada yerel yığına çevrilir.
+
+services:
+  api:
+    build: ./backend
+    image: dreamlib-api
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      ADDR: 0.0.0.0:8080
+      SUPABASE_URL: http://gateway:${DREAMLIB_API_PORT:-55431}
+      SUPABASE_PUBLIC_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}  # imzalı görsel adresleri tarayıcıda açılsın
+      SUPABASE_SERVICE_KEY: ${DREAMLIB_SERVICE_KEY:-}
+      DREAMLIB_DEV_AUTH: "0"
+      DREAMLIB_FAKE_AI: "0"
+    volumes:
+      - ./backend/app:/app/app
+    command: ["python", "-m", "uvicorn", "app.main:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8080",
+              "--reload", "--reload-dir", "/app/app"]
+    ports:
+      - "127.0.0.1:${DREAMLIB_BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+
+  web:
+    # node_modules konteynerin kendi biriminde: Windows'taki kopyayla karışmaz.
+    image: node:22.23.0-alpine
+    working_dir: /app
+    depends_on:
+      - api
+    environment:
+      VITE_SUPABASE_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}
+      VITE_SUPABASE_ANON_KEY: ${DREAMLIB_ANON_KEY:-}
+      DREAMLIB_API_PROXY: http://api:8080
+      DREAMLIB_POLL: "1"
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
+    command: ["sh", "-c", "npm ci --no-audit --no-fund && npx vite --host 0.0.0.0"]
+    ports:
+      - "127.0.0.1:${DREAMLIB_FRONTEND_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5173/"]
+      interval: 3s
+      timeout: 3s
+      retries: 100
+
+volumes:
+  node_modules:
+
+networks:
+  default:
+    name: dreamlib-local_net
+    external: true
