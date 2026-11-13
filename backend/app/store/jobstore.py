@@ -29,6 +29,7 @@ class Job(BaseModel):
     attempts: int = 0
     worker: str = ""
     cost_usd: float = 0
+    run_after: datetime | None = None  # a queued job waits until then (backoff after a transient error)
     created_at: datetime | None = None
 
 
@@ -157,7 +158,7 @@ class MemoryJobs:
             if j.attempts >= max_attempts:
                 j.status, j.error = "failed", "iş tamamlanamadı, tekrar dene"
         for j in sorted(self.jobs.values(), key=lambda j: j.created_at):
-            if j.status == "queued" or (j.status == "running" and self.leases.get(j.id, now) < now):
+            if (j.status == "queued" and (j.run_after is None or j.run_after <= now)) or (j.status == "running" and self.leases.get(j.id, now) < now):
                 j.status, j.attempts, j.worker = "running", j.attempts + 1, worker
                 self.leases[j.id] = now + timedelta(seconds=lease)
                 return j.model_copy(deep=True)
@@ -171,6 +172,8 @@ class MemoryJobs:
         if "lease_until" in fields:  # only ever cleared, when a job goes back to the queue
             del fields["lease_until"]
             self.leases.pop(job_id, None)
+        if isinstance(fields.get("run_after"), str):
+            fields["run_after"] = datetime.fromisoformat(fields["run_after"])
         for k, v in fields.items():
             setattr(j, k, v)
         if lease:

@@ -8,6 +8,8 @@ import time
 
 import httpx
 
+from .errors import ProviderError
+
 log = logging.getLogger("dreamlib")
 
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
@@ -64,7 +66,7 @@ class OpenRouter:
                 continue
             break
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}")
+            raise ProviderError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}", res.status_code)
         body = res.json()
         usage = body.get("usage") or {}
         log.info("openrouter: %s %s %.1fs %s tokens $%s", task, body.get("model", models[0]), time.monotonic() - started,
