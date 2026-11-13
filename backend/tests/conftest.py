@@ -74,7 +74,8 @@ def make_client(**overrides):
 
 
 @pytest.fixture
-def api():
+def api(monkeypatch):
+    monkeypatch.setattr("app.worker.BACKOFF", (0, 0, 0))  # retries after a transient error at once
     client, s = make_client()
     with client:
         yield client, s
@@ -88,7 +89,7 @@ def wait_job(client, job_id, headers=None, seconds=10):
     deadline = time.time() + seconds
     while time.time() < deadline:
         job = client.get(f"/api/jobs/{job_id}", headers=headers or auth()).json()
-        if job["status"] != "running":
+        if job["status"] not in ("queued", "running"):
             return job
         time.sleep(0.02)
     raise AssertionError("job did not finish")
