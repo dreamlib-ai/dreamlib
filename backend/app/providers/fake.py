@@ -71,6 +71,13 @@ class FakeLLM:
             return json.dumps(_storyboard(user, int(m.group(1)) if m else 4), ensure_ascii=False)
         return json.dumps(_analysis(user), ensure_ascii=False)
 
+    async def stream(self, messages: list[dict], *, task: str = ""):
+        """The sample interpretation, a word at a time."""
+        text = _analysis(messages[-1]["content"])["interpretation"]
+        words = text.split(" ")
+        for i, w in enumerate(words):
+            yield w if i == len(words) - 1 else w + " "
+
     async def embed(self, texts: list[str]) -> Embeddings:
         """Small unit vectors from a hash of each text: the same text always gets the same vector."""
         return Embeddings("fake", [_vector(t) for t in texts])

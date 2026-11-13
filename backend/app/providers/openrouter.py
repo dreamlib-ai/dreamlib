@@ -1,10 +1,12 @@
-"""A minimal chat-completions and embeddings client for https://openrouter.ai.
+"""A minimal chat-completions (whole or streamed) and embeddings client for https://openrouter.ai.
 
 Every call names a task. The task picks the model list (OPENROUTER_MODEL_<TASK>, then
 OPENROUTER_FALLBACK_<TASK>, else OPENROUTER_MODEL) and the timeout; code never names a model."""
 import asyncio
+import json
 import logging
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 import httpx
@@ -88,14 +90,7 @@ class OpenRouter:
                    schema: type[BaseModel] | None = None) -> str:
         """schema asks for JSON in that shape; a model that refuses schemas (400) gets plain JSON mode once.
         The caller still parses and validates the reply: a schema is a request, not a guarantee."""
-        models = self.models_for(task)
-        if not models:
-            raise RuntimeError(f"openrouter: no model for task {task}")
-        payload: dict = {"messages": messages, "usage": {"include": True}}
-        if len(models) > 1:
-            payload["models"] = models  # OpenRouter tries them in order
-        else:
-            payload["model"] = models[0]
+        payload, models = self._chat_payload(messages, task)
         if schema is not None:
             payload["response_format"] = json_schema(schema)
         elif json_mode:
@@ -117,6 +112,61 @@ class OpenRouter:
         if not choices:
             raise RuntimeError("openrouter: empty choices")
         return choices[0]["message"]["content"]
+
+    def _chat_payload(self, messages: list[dict], task: str) -> tuple[dict, list[str]]:
+        models = self.models_for(task)
+        if not models:
+            raise RuntimeError(f"openrouter: no model for task {task}")
+        payload: dict = {"messages": messages, "usage": {"include": True}}
+        if len(models) > 1:
+            payload["models"] = models  # OpenRouter tries them in order
+        else:
+            payload["model"] = models[0]
+        return payload, models
+
+    async def stream(self, messages: list[dict], *, task: str) -> AsyncIterator[str]:
+        """The answer as it is written, in text pieces. A rate limit or server error before the first
+        byte gets the same one retry as chat(); once text has flowed, a failure is raised, not retried,
+        because the reader has already seen part of the answer. The task's timeout is per read."""
+        payload, models = self._chat_payload(messages, task)
+        payload["stream"] = True
+        headers = {"Authorization": f"Bearer {self.key}", "X-Title": "Dreamlib"}
+        started, first, chars = time.monotonic(), None, 0
+        for attempt in range(2):
+            async with self.http.stream("POST", ENDPOINT, json=payload, headers=headers, timeout=TASKS[task]) as res:
+                if attempt == 0 and (res.status_code == 429 or res.status_code >= 500):
+                    await res.aread()
+                    await asyncio.sleep(RETRY_AFTER)
+                    continue
+                if res.status_code // 100 != 2:
+                    text = (await res.aread()).decode(errors="replace")
+                    raise ProviderError(f"openrouter: {task} status {res.status_code}: {text[:300]}", res.status_code)
+                model, usage = models[0], {}
+                async for line in res.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue  # blank separators and ": OPENROUTER PROCESSING" keep-alives
+                    data = line[5:].strip()
+                    if data == "[DONE]":
+                        break
+                    chunk = json.loads(data)
+                    if chunk.get("error"):
+                        raise RuntimeError(f"openrouter: {task} failed mid-stream: {str(chunk['error'])[:300]}")
+                    model = chunk.get("model") or model
+                    usage = chunk.get("usage") or usage
+                    for choice in chunk.get("choices") or []:
+                        piece = (choice.get("delta") or {}).get("content")
+                        if piece:
+                            if first is None:
+                                first = time.monotonic() - started
+                            chars += len(piece)
+                            yield piece
+                log.info("openrouter: %s %s stream first %.1fs total %.1fs %d chars %s tokens $%s", task, model,
+                         first if first is not None else -1, time.monotonic() - started, chars,
+                         usage.get("total_tokens", "?"), usage.get("cost", "?"))
+                if self.meter:
+                    await self.meter.record("openrouter", model, task, usage.get("total_tokens") or 0, "tokens",
+                                            float(usage.get("cost") or 0))
+                return
 
     async def embed(self, texts: list[str]) -> Embeddings:
         """Vectors for texts with the `embed` task's model. Its fallbacks are not tried: a vector from

@@ -33,6 +33,8 @@ Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde 
 
 Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 
+Hazır olan (L3): `OpenRouter.stream(messages, task=...)` metni parça parça verir; `: OPENROUTER PROCESSING` satırlarını atlar, `[DONE]`'da durur. İlk bayttan önce 429/5xx'te tek tekrar; metin akmaya başladıktan sonraki hata tekrar edilmez, yükseltilir. Zaman aşımı görevinki, okuma başına. `app/sse.py` olayları (`title`, `entity`, `text`, `emotion`, `section`, `done`, `error`) SSE'ye çevirir; akış ortasında hata `error` olayıyla biter, durum 200 kalır. `DREAMLIB_FAKE_AI=1`'de örnek yorum sözcük sözcük akar. Yorum ucuna bağlanması `analyses` (M3) ve çıkarım (L2) ile.
+
 - `interpret` görevi akışlı çağrılır; backend bunu tipli olaylara çevirip SSE ile istemciye iletir ([istemci](istemci.md)).
 - Akıştan önce `extract` sonucu hazırdır; başlık ve semboller ilk olaylar olarak hemen gider.
 - Akış koparsa istemci yorumu `analyses` kaydından okur; yorum her durumda sunucuda tamamlanır ve saklanır.
