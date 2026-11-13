@@ -37,6 +37,10 @@ Sentetik 10 örnekte (`evals/extract`): makro F1 0,69, üzüntü 1,00, mutluluk 
 
 Uygulamanın `classification.normalized` işlevi her `I`'yı Türkçe kuralla `ı`'ya çevirdiği için İngilizce beyan işaretleri ("knew i was dreaming") hiç eşleşmiyordu: modelin doğru İngilizce lucid ve tekrar beyanları da reddediliyordu. `has_marker` her iki küçük harf biçimine bakıyor.
 
+### Yeniden kodlama (HVdC: yalnız söylenen duygu)
+
+Sentetik `extract` seti yeniden kodlandı: davranış (bağırma, gülümseme, kovalanma) ve mecaz cümleler duygu sayılmıyor (`"coding": "hvdc-stated"`); "smiling" sözlükten çıktı. Lab motoru bu sette duygu satırlarının hepsinde 1,00 alıyor, ama bu sayı anlamsız: sözlük bu örneklere bakılarak kuruldu. Gerçek ölçüm, kurallar yazılırken görülmemiş gerçek raporlarla yapılır. Kayıtlı örnek model yanıtları 0,47'ye düştü: duyguyu davranıştan çıkarıyorlar, HVdC kuralıyla bunlar yanlış pozitif. Bu, modele "yalnız söylenen duygu" talimatı verilmesi gerektiğini de gösteriyor.
+
 ## Yapıyı beslemek için gerekenler
 
 1. **Altın set (en önemlisi).** HVdC kılavuzuna göre elle kodlanmış raporlar, Türkçe ve İngilizce, parametre başına en az 200 rapor ve iki kodlayıcı. Kaynaklar:
@@ -60,6 +64,6 @@ L4 istemcisi hazır ama model seçilmedi; seçilene kadar vektör üretilmez. LL
 
 ## Sıradaki adımlar
 
-1. Sentetik setin HVdC kuralına göre yeniden kodlanması ve gerçek örneklerle büyütülmesi.
+1. Setin gerçek, görülmemiş raporlarla büyütülmesi (kurallar o set görülmeden yazılır).
 2. Kod vektörü + TF-IDF benzerliği (A), altın çiftlerle ölçüm.
 3. Nesne, mekân ve karakter sözlükleri.

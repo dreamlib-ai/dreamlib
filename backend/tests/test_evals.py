@@ -51,9 +51,10 @@ def test_recorded_extract_set_scores_as_coded_by_hand():
     replies = {r["id"]: r["reply"] for r in run.read_jsonl(ROOT / "evals/extract/recorded/sample.jsonl")}
     results, info = run.measure_extract(cases, replies)
     assert info == {"cases": 14, "tr": 8, "en": 6, "missing": 4, "unreadable": 1}  # 4 newer cases have no reply
-    assert results["emotion_presence_macro_f1"] == pytest.approx((1 + 4 / 6 + 0.8 + 0.5 + 0.8) / 5)
+    # coded HVdC-style (stated emotions only); the sample replies infer some from behaviour
+    assert results["emotion_presence_macro_f1"] == pytest.approx((0 + 0.4 + 0.8 + 0.5 + 2 / 3) / 5)
     assert results["emotion_sadness_f1"] == pytest.approx(0.8)
-    assert results["emotion_positive_f1"] == pytest.approx(0.8)
+    assert results["emotion_positive_f1"] == pytest.approx(2 / 3)
     assert results["emotion_tr_gap"] == 0.0  # Turkish did better than English here
 
 
@@ -67,7 +68,7 @@ def test_missing_and_unreadable_replies_count_as_no_emotion():
 def test_runner_prints_the_table_and_strict_fails_on_a_missed_target(capsys):
     assert run.main([]) == 0
     out = capsys.readouterr().out
-    assert "| emotion_presence_macro_f1 | macro_f1 | ≥ 0.80 | 0.75 | tutmadı |" in out
+    assert "| emotion_presence_macro_f1 | macro_f1 | ≥ 0.80 | 0.47 | tutmadı |" in out
     assert "| character_presence | exact_agreement | ≥ 0.84 | — | ölçülmedi |" in out
     assert "generation_eta_mape" not in out  # other sets are not listed
     assert run.main(["--strict"]) == 1

@@ -36,7 +36,7 @@ EN: dict[str, tuple[str, ...]] = {
     "confusion": ("confus", "puzzl", "bewild", "surpris", "disorient", "could not tell", "couldn't tell",
                   "did not know where", "didn't know where", "no idea"),
     "happiness": ("happy", "happi", "joy", "glad", "delight", "content", "reliev", "relief", "elat", "excit",
-                  "smiling", "cheerful", "bliss"),
+                  "cheerful", "bliss"),
 }
 # English entries too short to be a stem: only these endings count (sad, sadly, sadness; not saddle).
 EN_WHOLE: dict[str, tuple[str, ...]] = {
