@@ -14,20 +14,28 @@ Rüya metninin analizini mümkün olduğunca dil modeli olmadan, kurallar ve sö
 | Parametre | Kuralla | Durum |
 | --- | --- | --- |
 | Duygu (beş HVdC sınıfı) | Kök sözlüğü, Türkçe olumsuzluk (`-ma/-me`, `-sız`) ve İngilizce `not/never` cümlecik içinde | v0: `backend/app/lab/emotions.py` |
-| Bakış açısı | Birinci tekil fiil ekleri ve zamirler (`-dım`, `ben`, `I`) ile üçüncü şahıs oranı | Kolay, sıradaki |
+| Bakış açısı | Cümle cümle: gözlemci işaretleri ("kendimi dışarıdan", "like a movie") ve birinci tekil ekler/zamirler (`-dım`, `-yorum`, `ben`, `I`) | v0: `backend/app/lab/perspective.py` |
 | Olumsuzlama, zaman | Dil bilgisi ekleri, zaman sözcükleri | Kolay |
 | Yiyecek, nesneler | HVdC nesne sınıflarına göre sözlük | Sözlük emeği |
 | Mekân | İç/dış, tanıdık/yabancı sözlüğü | Sözlük emeği |
 | Karakterler | Akrabalık, meslek, zamir sözlükleri, sayı; cinsiyet Türkçede çoğu zaman yazılmaz | Orta |
 | Etkileşimler (saldırı, dostluk, cinsellik) | Fiil sözlükleri; kimin kime yaptığı için cümle çözümleme gerekir | Zor |
 | Talih, başarı, başarısızlık | Kalıp + fiil sözlüğü | Orta |
-| Beyanlar (lucid, tekrar, kâbus) | Açık beyan kalıpları, birebir alıntıyla | Kolay, yüksek kesinlik |
+| Beyanlar (lucid, tekrar, kâbus) | Uygulamanın kendi işaret listesi (`classification.MARKERS`), cümle birebir alıntı, inkâr eden cümle sayılmaz | v0: `backend/app/lab/experiences.py`; ölçüm `quote` setini bekliyor |
 | Temalar, tür | Sözlük kümeleri ve yukarıdaki kodların birleşimi | Ölçümden sonra |
 | Benzerlik | HVdC kod sayıları vektörü + TF-IDF/BM25 | Yapılabilir, aşağıda |
 
 ### Duygu v0'ın ilk ölçümü
 
 Sentetik 10 örnekte (`evals/extract`): makro F1 0,69, üzüntü 1,00, mutluluk 0,80. Kaçırdıklarının hepsi duygunun söylenmediği, davranıştan çıkarıldığı örnekler (bağırma, kovalanma, "hiç bu kadar hafif hissetmemiştim"). Sentetik set bu örnekleri çıkarımla kodlamıştı; HVdC kuralıyla kodlanan gerçek sette bu örneklerde duygu kodu olmaz. Ders: altın set HVdC kılavuzuna sadık kodlanmalı. Çıkarılan duygu istenirse ayrı bir parametre olur, karıştırılmaz.
+
+### Bakış açısı v0'ın ilk ölçümü
+
+14 örnekte (10 birinci şahıs, 3 gözlemci, 1 karışık) doğruluk 0,93 (hedef 0,85). Kaçan tek örnek bilerek konmuş zor örnek: "Kendimi dışarıdan izliyordum… Yatağımda uyuyordum" — ikinci cümledeki fiil izlenen benliği anlatıyor, kural bunu katılım sayıp `mixed` diyor. Kayıtlı model yanıtlarında 0,00 görünmesi, o sentetik yanıtlarda bakış açısı alanı olmamasından; model ölçümü gerçek koşuyla yapılır.
+
+### Bulunan hata
+
+Uygulamanın `classification.normalized` işlevi her `I`'yı Türkçe kuralla `ı`'ya çevirdiği için İngilizce beyan işaretleri ("knew i was dreaming") hiç eşleşmiyordu: modelin doğru İngilizce lucid ve tekrar beyanları da reddediliyordu. `has_marker` her iki küçük harf biçimine bakıyor.
 
 ## Yapıyı beslemek için gerekenler
 
@@ -52,7 +60,7 @@ L4 istemcisi hazır ama model seçilmedi; seçilene kadar vektör üretilmez. LL
 
 ## Sıradaki adımlar
 
-1. Bakış açısı ve beyan kalıpları (kolay, yüksek kesinlik).
+1. Beyanlar için `quote` eval seti (kesinlik hedefi 0,95).
 2. Sentetik setin HVdC kuralına göre yeniden kodlanması ve gerçek örneklerle büyütülmesi.
 3. Kod vektörü + TF-IDF benzerliği (A), altın çiftlerle ölçüm.
 4. Nesne, mekân ve karakter sözlükleri.

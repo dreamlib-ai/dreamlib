@@ -79,8 +79,14 @@ def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def predicted(reply: str) -> set[str] | None:
-    """The HVdC classes a reply names; None when the reply cannot be read as the app's Analysis."""
+@dataclass(frozen=True)
+class Prediction:
+    emotions: set[str]  # HVdC classes
+    perspective: str  # first-person | observer | mixed | unknown
+
+
+def predicted(reply: str) -> Prediction | None:
+    """What a reply says; None when it cannot be read as the app's Analysis."""
     from pydantic import ValidationError
 
     from app.models import Analysis
@@ -90,7 +96,8 @@ def predicted(reply: str) -> set[str] | None:
         analysis = Analysis.model_validate(extract_json(reply))
     except (ValueError, ValidationError):
         return None
-    return {c for e in analysis.emotions if e.pct >= MIN_PCT and (c := hvdc_class(e.label))}
+    return Prediction({c for e in analysis.emotions if e.pct >= MIN_PCT and (c := hvdc_class(e.label))},
+                      analysis.features.perspective)
 
 
 def f1(cases: list[tuple[set[str], set[str]]], cls: str) -> float | None:
@@ -110,7 +117,7 @@ def macro_f1(cases: list[tuple[set[str], set[str]]]) -> float | None:
 def measure_extract(cases: list[dict], replies: dict[str, str]) -> tuple[dict[str, float], dict]:
     """Emotion rows of the extract set from model replies. A missing or unreadable reply counts as
     naming no emotion."""
-    preds: dict[str, set[str] | None] = {}
+    preds: dict[str, Prediction | None] = {}
     missing = unreadable = 0
     for case in cases:
         reply = replies.get(case["id"])
@@ -123,22 +130,29 @@ def measure_extract(cases: list[dict], replies: dict[str, str]) -> tuple[dict[st
     return results, {**info, "missing": missing, "unreadable": unreadable}
 
 
-def lexicon_predictions(cases: list[dict]) -> dict[str, set[str]]:
-    """The lab's rule engine (app/lab/emotions.py): no model, no reply files."""
+def lexicon_predictions(cases: list[dict]) -> dict[str, Prediction]:
+    """The lab's rule engines (app/lab/): no model, no reply files."""
     from app.lab.emotions import classes
+    from app.lab.perspective import perspective
 
-    return {c["id"]: classes(c["text"], c["lang"]) for c in cases}
+    return {c["id"]: Prediction(classes(c["text"], c["lang"]), perspective(c["text"], c["lang"])) for c in cases}
 
 
-def score(cases: list[dict], preds: dict[str, set[str] | None]) -> tuple[dict[str, float], dict]:
-    """Emotion rows of the extract set for the predicted HVdC classes per case id."""
+def score(cases: list[dict], preds: dict[str, Prediction | None]) -> tuple[dict[str, float], dict]:
+    """Extract-set rows for the predictions per case id; a missing prediction is wrong on every row."""
     pairs: dict[str, list[tuple[set[str], set[str]]]] = {"all": [], "tr": [], "en": []}
+    coded = right = 0
     for case in cases:
         got = preds.get(case["id"])
-        pair = (set(case["emotions"]), got or set())
+        pair = (set(case["emotions"]), got.emotions if got else set())
         pairs["all"].append(pair)
         pairs.setdefault(case["lang"], []).append(pair)
+        if "perspective" in case:
+            coded += 1
+            right += bool(got and got.perspective == case["perspective"])
     results: dict[str, float] = {}
+    if coded:
+        results["perspective_accuracy"] = right / coded
     for name, value in (("emotion_presence_macro_f1", macro_f1(pairs["all"])),
                         ("emotion_sadness_f1", f1(pairs["all"], "sadness")),
                         ("emotion_positive_f1", f1(pairs["all"], "happiness"))):
