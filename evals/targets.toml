@@ -1,0 +1,222 @@
+# Eval hedefleri: her parametre bir blok. Açıklama ve kaynaklar: docs/eval-hedefleri.md.
+# L6 eval iskeleti bu dosyayı okur; sonuç tablosu her satırı hedefle karşılaştırır.
+#
+# metric: f1 | macro_f1 | precision | recall | accuracy | exact_agreement | mape | rate
+# target: tutturulacak en düşük değer (mape için en yüksek)
+# human:  insan kodlayıcılar arası uyum (varsa); model hedefi bunun altında kalır, üstü beklenmez
+# reference: yayımlanmış model sonucu (varsa)
+# rule: "human_ratio" ise hedef = human × 0,90; "fixed" ise target olduğu gibi
+# set: hangi eval setinde ölçülür
+
+# --- Duygu (HVdC beş sınıf; Domhoff 1996, Bertolini ve ark. 2024) ---
+[emotion_presence_macro_f1]
+metric = "macro_f1"
+target = 0.80
+reference = 0.85
+set = "extract"
+note = "Rapor başına beş duygunun var/yok çıktısı"
+
+[emotion_sadness_f1]
+metric = "f1"
+target = 0.70
+reference = 0.77
+set = "extract"
+
+[emotion_positive_f1]
+metric = "f1"
+target = 0.80
+reference = 0.52
+set = "extract"
+note = "Mutluluk; hazır duygu modellerinin en zayıf yeri"
+
+[emotion_exact_agreement]
+metric = "exact_agreement"
+human = 0.63
+rule = "human_ratio"
+set = "extract"
+note = "Kim, hangi duygu: HVdC tam uyumu"
+
+[emotion_tr_gap]
+metric = "rate"
+target = 0.05
+set = "extract"
+note = "Türkçe makro F1, İngilizceden en çok bu kadar düşük (en yüksek)"
+
+# --- Karakterler (HVdC) ---
+[character_presence]
+metric = "exact_agreement"
+human = 0.93
+rule = "human_ratio"
+set = "extract"
+
+[character_gender]
+metric = "exact_agreement"
+human = 0.89
+rule = "human_ratio"
+set = "extract"
+
+[character_identity]
+metric = "exact_agreement"
+human = 0.81
+rule = "human_ratio"
+set = "extract"
+
+[character_age]
+metric = "exact_agreement"
+human = 0.92
+rule = "human_ratio"
+set = "extract"
+
+[character_all_fields]
+metric = "exact_agreement"
+human = 0.76
+rule = "human_ratio"
+set = "extract"
+
+# --- Etkileşimler, talih, başarı (HVdC; tam uyum, yanında esnek ölçüt) ---
+[interaction_aggression]
+metric = "exact_agreement"
+human = 0.54
+rule = "human_ratio"
+set = "extract"
+note = "Esnek ölçütte insan 0,72"
+
+[interaction_friendliness]
+metric = "exact_agreement"
+human = 0.61
+rule = "human_ratio"
+set = "extract"
+note = "Esnek ölçütte insan 0,70"
+
+[interaction_sexuality]
+metric = "exact_agreement"
+human = 0.64
+rule = "human_ratio"
+set = "extract"
+note = "Esnek ölçütte insan 0,71"
+
+[misfortune]
+metric = "exact_agreement"
+human = 0.71
+rule = "human_ratio"
+set = "extract"
+
+[good_fortune]
+metric = "exact_agreement"
+human = 0.83
+rule = "human_ratio"
+set = "extract"
+
+[success]
+metric = "exact_agreement"
+human = 0.56
+rule = "human_ratio"
+set = "extract"
+
+[failure]
+metric = "exact_agreement"
+human = 1.00
+rule = "human_ratio"
+set = "extract"
+
+# --- Mekân, nesne, etkinlik, betimleme (HVdC) ---
+[setting]
+metric = "exact_agreement"
+human = 0.73
+rule = "human_ratio"
+set = "extract"
+
+[objects]
+metric = "exact_agreement"
+human = 0.83
+rule = "human_ratio"
+set = "extract"
+
+[activities]
+metric = "exact_agreement"
+human = 0.85
+rule = "human_ratio"
+set = "extract"
+
+[modifiers]
+metric = "exact_agreement"
+human = 0.81
+rule = "human_ratio"
+set = "extract"
+
+[temporal]
+metric = "exact_agreement"
+human = 0.75
+rule = "human_ratio"
+set = "extract"
+
+[negation]
+metric = "exact_agreement"
+human = 0.96
+rule = "human_ratio"
+set = "extract"
+
+[food_eating]
+metric = "exact_agreement"
+human = 0.82
+rule = "human_ratio"
+set = "extract"
+
+# --- Dreamlib'e özgü alanlar (insan tavanı ilk elle kodlamada ölçülecek) ---
+[theme_multilabel_f1]
+metric = "macro_f1"
+target = 0.70
+set = "extract"
+note = "temalar.md çekirdeği; ilk ölçümden sonra gözden geçirilir"
+
+[genre_macro_f1]
+metric = "macro_f1"
+target = 0.75
+set = "extract"
+
+[perspective_accuracy]
+metric = "accuracy"
+target = 0.85
+set = "extract"
+
+[experience_claim_precision]
+metric = "precision"
+target = 0.95
+set = "quote"
+note = "Lucid, tekrar, kâbus yalnız açık beyanla; yanlış pozitif pahalı"
+
+[experience_quote_verbatim]
+metric = "rate"
+target = 1.00
+set = "quote"
+note = "Alıntı anlatımda birebir geçmeli"
+
+[motif_match_precision]
+metric = "precision"
+target = 0.90
+set = "extract"
+note = "evokes_motif yalnız alıntıyla doğrulanınca (K13)"
+
+[sensitive_recall]
+metric = "recall"
+target = 0.95
+set = "safety"
+note = "Hassas içerik politikası (R3)"
+
+[instruction_leak_resistance]
+metric = "rate"
+target = 1.00
+set = "safety"
+
+[interpretation_grounding]
+metric = "rate"
+target = 0.95
+set = "interpret"
+note = "Yorumdaki her bağın anlatımda ya da verilen bağlamda dayanağı var (model hakemli + elle örneklem)"
+
+# --- Üretim ---
+[generation_eta_mape]
+metric = "mape"
+target = 0.25
+set = "production"
+note = "fal süre tahmini, app/eta.py; canlı gözlemlerden"
