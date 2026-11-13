@@ -61,7 +61,7 @@ class FakeLLM:
     enabled = True
     model = "fake"
 
-    async def chat(self, messages: list[dict], json_mode: bool = False) -> str:
+    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str = "") -> str:
         system, user = messages[0]["content"], messages[-1]["content"]
         if "metin düzelticisisin" in system:
             return json.dumps({"cleanText": _clean(user), "language": "tr"}, ensure_ascii=False)

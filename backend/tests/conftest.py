@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.providers.fal import Fal
+from app.providers.openrouter import TASKS
 from app.store.devstore import DevStore
 from app.store.jobstore import MemoryJobs
 from app.main import create_app
@@ -26,8 +27,9 @@ class FakeLLM:
     def __init__(self, reply):
         self.reply, self.system = reply, ""
 
-    async def chat(self, messages, json_mode=False):
-        self.system = messages[0]["content"]
+    async def chat(self, messages, json_mode=False, *, task):
+        assert task in TASKS, task  # every call site names a known task
+        self.system, self.task = messages[0]["content"], task
         return self.reply(messages) if callable(self.reply) else self.reply
 
 

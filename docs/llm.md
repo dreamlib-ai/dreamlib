@@ -1,6 +1,6 @@
 # LLM: OpenRouter yapılandırması
 
-Tüm dil modeli ve embedding çağrıları OpenRouter üzerinden, tek ince istemciyle (`backend/app/providers/openrouter.py`) yapılır. SDK eklenmez. Bugün tek model ve tek tekrar var; hedef, görev başına model seçimi ve öngörülebilir hata davranışı.
+Tüm dil modeli ve embedding çağrıları OpenRouter üzerinden, tek ince istemciyle (`backend/app/providers/openrouter.py`) yapılır. SDK eklenmez. Görev tablosu, görev başına model, yedek dizi ve zaman aşımı kodda (L1, `TASKS`); hata davranışı hâlâ tek tekrar, hedef öngörülebilir hata sınıfları (B2).
 
 ## Görev tablosu
 
@@ -15,7 +15,7 @@ Her çağrı bir göreve aittir. Model adı görevden okunur; kodda model adı g
 | `embed` | Rüya ve düğüm vektörü | Çok dilli, sabit boyut | — |
 | `moderate` | Paylaşım öncesi içerik kontrolü | Ucuz, şemalı | Hayır |
 
-Ayar ortam değişkenleriyle: `OPENROUTER_MODEL_<GÖREV>` ve yedekler için `OPENROUTER_FALLBACK_<GÖREV>` (virgüllü liste). Görev ayarı yoksa bugünkü `OPENROUTER_MODEL` kullanılır; mevcut kurulum bozulmaz.
+Ayar ortam değişkenleriyle: `OPENROUTER_MODEL_<GÖREV>` ve yedekler için `OPENROUTER_FALLBACK_<GÖREV>` (virgüllü liste). Görev ayarı yoksa `OPENROUTER_MODEL` kullanılır; mevcut kurulum bozulmaz. Bugün çağrılan görevler: `clean`, `interpret` (yorum ve çıkarım şimdilik tek çağrıda), `storyboard`.
 
 Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde koşulur ve seçim tabloya tarihle yazılır.
 
@@ -24,7 +24,7 @@ Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde 
 - **Şemalı çıktı:** `extract`, `storyboard`, `moderate` görevleri JSON şemasıyla istenir; şema Pydantic modelinden üretilir. Şemayı desteklemeyen modelde JSON modu ve mevcut `extract_json` ayrıştırıcısı yedektir.
 - **Yedek model:** istek, görev için tanımlı model dizisiyle gider; ilk model yanıt veremezse OpenRouter sıradakini dener.
 - **Sağlayıcı tercihi:** rüya metni hassas veridir. İstekler, girdiyi saklamayan ve eğitimde kullanmayan sağlayıcılarla sınırlanır; bu koşulu sağlamayan model aday olmaz.
-- **Zaman aşımı:** görev başına ayrı (ör. `clean` kısa, `interpret` uzun). Tek genel 90 saniye kalkar.
+- **Zaman aşımı:** görev başına ayrı: `clean` 30, `extract` 60, `interpret` ve `storyboard` 120, `embed` 30, `moderate` 20 saniye.
 - **Tekrar:** 429, 5xx ve zaman aşımında üstel bekleme ve jitter ile en çok üç deneme; 4xx içerik hatasında tekrar yok. Sınıflandırma [üretim](uretim.md) belgesindeki hata sınıflarıyla aynıdır.
 - **Kullanım:** her yanıtın jeton ve maliyet bilgisi `usage` tablosuna yazılır; log satırı kalır.
 - **Önbellek:** uzun sistem istemleri değişmeyen önek olarak tutulur ki sağlayıcı önbelleği çalışsın; değişken bağlam sona eklenir.

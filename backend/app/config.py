@@ -1,7 +1,9 @@
 """Settings from the environment, plus an optional backend/.env file."""
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+
+from .providers.openrouter import TASKS, Routes
 
 
 def load_dotenv(path: Path) -> None:
@@ -23,6 +25,7 @@ class Settings:
     addr: str = "127.0.0.1:8080"
     openrouter_key: str = ""
     openrouter_model: str = ""
+    openrouter_routes: Routes = field(default_factory=dict)  # per task: OPENROUTER_MODEL_<TASK>, OPENROUTER_FALLBACK_<TASK>
     fal_key: str = ""
     fal_image_model: str = "fal-ai/flux/schnell"
     fal_edit_model: str = "fal-ai/nano-banana/edit"  # draws later panels from the first one
@@ -40,6 +43,17 @@ class Settings:
     daily_redo_user: int = 30
 
 
+def llm_routes(env) -> Routes:
+    """Per-task models from the environment; tasks with nothing set are left out."""
+    routes: Routes = {}
+    for task in TASKS:
+        model = (env(f"OPENROUTER_MODEL_{task.upper()}") or "").strip()
+        fallbacks = tuple(m.strip() for m in (env(f"OPENROUTER_FALLBACK_{task.upper()}") or "").split(",") if m.strip())
+        if model or fallbacks:
+            routes[task] = (model, fallbacks)
+    return routes
+
+
 def load_settings() -> Settings:
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     env = os.environ.get
@@ -47,6 +61,7 @@ def load_settings() -> Settings:
         addr=env("ADDR") or Settings.addr,
         openrouter_key=env("OPENROUTER_API_KEY", ""),
         openrouter_model=env("OPENROUTER_MODEL", ""),
+        openrouter_routes=llm_routes(env),
         fal_key=env("FAL_KEY", ""),
         fal_image_model=env("FAL_IMAGE_MODEL") or Settings.fal_image_model,
         fal_edit_model=env("FAL_EDIT_MODEL") or Settings.fal_edit_model,

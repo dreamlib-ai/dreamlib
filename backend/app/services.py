@@ -129,7 +129,7 @@ def build_services(cfg: Settings) -> Services:
 
     sb = Supabase(cfg.supabase_url, cfg.supabase_service_key)
     s = Services(
-        llm=on(OpenRouter(cfg.openrouter_key, cfg.openrouter_model)),
+        llm=on(OpenRouter(cfg.openrouter_key, cfg.openrouter_model, cfg.openrouter_routes)),
         images=on(Fal(cfg.fal_key, cfg.fal_image_model)),
         editor=on(Fal(cfg.fal_key, cfg.fal_edit_model)),
         speech=on(Fal(cfg.fal_key, cfg.fal_speech_model)),
