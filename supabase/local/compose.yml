@@ -1,0 +1,39 @@
+# Yerel veritabanı yığını: canlıdaki Supabase Postgres imajı (auth, pgvector içinde) ve uygulamanın
+# konuştuğu REST katmanı PostgREST. Aynı dosya iki proje adıyla çalışır:
+#   dreamlib-local       kalıcı geliştirme veritabanı (scripts/local_db.py, npm run db)
+#   dreamlib-local-test  her test koşusunda sıfırdan kurulup silinen kopya (scripts/db_test.py)
+# Parolalar ve JWT sırrı yalnız yerel kullanım içindir.
+
+services:
+  db:
+    image: supabase/postgres:17.11.0.019
+    environment:
+      POSTGRES_PASSWORD: postgres
+      JWT_SECRET: dreamlib-local-test-secret-not-for-production-use
+    ports:
+      - "127.0.0.1:${DREAMLIB_DB_PORT:-55432}:5432"
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  rest:
+    image: postgrest/postgrest:v13.0.7
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:postgres@db:5432/${DREAMLIB_DB_NAME:-dreamlib-local}
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: dreamlib-local-test-secret-not-for-production-use
+      PGRST_DB_POOL: "5"
+    ports:
+      - "127.0.0.1:${DREAMLIB_REST_PORT:-55433}:3000"
+    profiles: ["rest"]
+
+volumes:
+  data:
