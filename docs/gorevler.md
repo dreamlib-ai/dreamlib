@@ -13,7 +13,7 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 | A4 | Mirror, Oniri, The Dream Drop, Remora ve Türkiye'deki rüya uygulamalarını elle dene; karşılaştırma kartını tamamla |
 | A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
 | A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
-| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini oku; pratik listesini halkbilimi kartına ekle |
+| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini indir (Açık Bilim, CC BY 4.0 görünüyor); lisansı teyit et, pratik listesini halkbilimi kartına ve korpus atlasına ekle |
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
