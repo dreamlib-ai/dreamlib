@@ -2,7 +2,7 @@ import pytest
 
 from .conftest import SqlError, sql
 
-TABLES = {"profiles", "dreams", "jobs", "call_log", "user_locks", "usage", "generation_timings",
+TABLES = {"profiles", "dreams", "jobs", "call_log", "user_locks", "usage", "generation_timings", "relation_types", "edges", "dream_embeddings",
           "entity_kinds", "entities", "entity_aliases", "dream_entities"}
 
 
