@@ -1,0 +1,10 @@
+{
+  "name": "dreamlib",
+  "private": true,
+  "description": "Dreamlib: frontend/ (React + Vite) ve backend/ (Python FastAPI). Kök yalnız görev çalıştırıcıdır, bağımlılık yok.",
+  "scripts": {
+    "setup": "powershell -NoProfile -File scripts/setup.ps1",
+    "dev": "powershell -NoProfile -File scripts/dev.ps1",
+    "check": "powershell -NoProfile -File scripts/check.ps1"
+  }
+}

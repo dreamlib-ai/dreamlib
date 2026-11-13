@@ -1,0 +1,48 @@
+# Belgeler, referans ve tasarım kaynakları repoya girmez
+kaynak/
+*.docx
+*.pptx
+*.pdf
+
+# Gizli bilgiler
+.env
+.env.*
+*pass*.txt
+
+# Sistem dosyaları
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Bağımlılıklar / build çıktıları
+node_modules/
+dist/
+build/
+
+*.tsbuildinfo
+*.log
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Araç önbellekleri ve editörler
+.vite/
+.idea/
+.vscode/
+*.swp
+.claude/settings.local.json
+
+# Supabase CLI önbelleği
+supabase/.temp/
+.wrangler/
+
+# Yerel tasarım keşifleri ve not dosyaları (anahtar ve yönetim bilgisi içerebilir)
+dreamlib-vibe/
+*-env.txt
+*yonetim*.txt
+
+# Korpus ham verisi
+corpus-data/

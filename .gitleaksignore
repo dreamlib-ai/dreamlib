@@ -1,0 +1,2 @@
+# Test fixture, not a real key: a made-up HS256 secret used to sign a fake legacy token in the auth tests.
+bfb4e161e3bb3995a72d5c77026afe20805112a0:backend/tests/test_supabase.py:generic-api-key:54

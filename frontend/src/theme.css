@@ -1,0 +1,21 @@
+/* Cobalt dreamscape with warm light and tactile controls. */
+:root {
+  --cobalt: #2457c5;
+  --night: #102343;
+  --night-soft: #18345b;
+  --cobalt-strong: #2457c5;
+  --cobalt-deep: #183d83;
+  --white: #ffffff;
+  --paper: #f6f1e6;
+  --ink: #171c2e;
+  --muted: #70788d;
+  --soft: #4f596f;
+  --line: #dfe4f0;
+  --accent: #f3c84b;
+  --danger: #b93758;
+  --font: 'Unbounded', system-ui, sans-serif;
+  --gutter: clamp(24px, 4vw, 64px);
+  --radius-panel: 28px;
+  --radius-card: 20px;
+  --radius-small: 14px;
+}
