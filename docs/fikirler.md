@@ -7,7 +7,7 @@ Araştırmadan ve dış gözle bakıştan çıkan ürün fikirleri. Hiçbiri kar
 ### 1. Rüya ile masal motifi eşleşmesi
 Rüya, dünyanın masal ve mit motifleriyle eşlenir: "Bu rüya, yasak odayı açma motifine benziyor."
 - **Neden uygun:** yeni ilişki türünün şemayı değiştirmeden eklenebildiğini gösteren ilk örnek olur; kolektif katman boşken bile insanlığın ortak hikâyeleriyle bağ kurar.
-- **Dayanak:** Thompson Motif Dizini açık veri seti olarak var (CC BY-SA) ([mitoloji ve kültür](arastirma/mitoloji-kultur.md)).
+- **Dayanak:** Thompson Motif Dizini açık veri seti olarak var; lisansı çelişkili (CC BY-SA ya da CC BY-NC-SA), yazardan teyit bekleniyor ([mitoloji ve kültür](arastirma/mitoloji-kultur.md)).
 - **Bedel:** motiflerin embed edilmesi ve bir puanlayıcı; eşleşme zayıfsa gösterilmez.
 
 ### 2. Sembol kartı: bir sembolün yolculuğu
