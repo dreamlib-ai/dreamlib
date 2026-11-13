@@ -10,7 +10,7 @@ Basit klasik monorepo; ağır araç yok, kök yalnız görev çalıştırıcı.
 | --- | --- |
 | `frontend/` | React + TypeScript + Vite. Tema `src/theme.css`, metinler `src/strings.ts`, tek API kapısı `src/api.ts` (başka yerde `fetch` yok) |
 | `backend/` | Python 3.13 + FastAPI. `app/` içinde `routes/` (HTTP uçları), `pipelines/` (kitapçık, görsel), `providers/` (OpenRouter, fal), `store/` (Supabase, iş kuyruğu, yerel sahte hesap), `worker.py` (arka plan işleri), `main.py`, `prompts/` (görev başına sürümlü prompt); `tests/` pytest. Veritabanı şeması kökteki `supabase/migrations/` içinde, tarih sırasıyla. Mimari: `docs/mimari.md` |
-| `docs/` | `api.md` uçlar, `mimari.md` katmanlar ve iş kuyruğu, `urun.md` ürün kararları, `tasarim.md` tasarım yönü ve maskot. Kolektif motor: `vizyon.md` yön, `motor.md` grafik ve benzerlik, `veri.md`, `uretim.md`, `llm.md`, `istemci.md`, `yol-haritasi.md`, `gorevler.md` iş listesi, `riskler.md`, `acik-kaynak.md`, `kararlar/` karar kayıtları. Araştırma: `arastirma.md` program, `arastirma/` alanlar ve kartlar, `fikirler.md` |
+| `docs/` | `api.md` uçlar, `mimari.md` katmanlar ve iş kuyruğu, `urun.md` ürün kararları, `tasarim.md` tasarım yönü ve maskot. Kolektif motor: `vizyon.md` yön, `motor.md` grafik ve benzerlik, `veri.md`, `uretim.md`, `llm.md`, `istemci.md`, `yol-haritasi.md`, `gorevler.md` iş listesi, `eval-hedefleri.md`, `riskler.md`, `acik-kaynak.md`, `kararlar/` karar kayıtları. Araştırma: `arastirma.md` program, `arastirma/` alanlar ve kartlar, `fikirler.md` |
 | `brand/` | Profil resmi ve marka dosyaları |
 | `scripts/` | `setup.ps1`, `dev.ps1`, `check.ps1`, `cutout.ps1` (görsel zemin kesme) |
 | `kaynak/` | Git dışı yerel kaynaklar: `belgeler/`, `referans/`, `prototip/` |
