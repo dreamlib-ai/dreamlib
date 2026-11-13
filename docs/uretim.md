@@ -8,7 +8,7 @@ Uzun süren her şey (indeksleme, ikon, dergi, video) Postgres `jobs` kuyruğund
 | --- | --- | --- |
 | İş türü | Yapıldı (B1): türler `pipelines/registry.py` içindeki `KINDS` kaydında; sütunda yalnız biçim check'i | Yeni tür bir kayıt satırıdır |
 | Eşzamanlılık | Kullanıcı başına tek aktif iş | Tür başına kural: ücretli çizimde tek, `index` ve `glyph` serbest |
-| Bekleme | Hata sonrası hemen kuyruğa döner | `run_after` sütunu; üstel bekleme ve jitter |
+| Bekleme | Yapıldı (B2): geçici hatada `run_after` ile 5, 20, 80 sn (±%25) bekleme; kalıcı hatada tekrar yok | — |
 | Zincir | Yok | `dream_id`, `parent_id`; biten iş sonrakini kuyruğa yazar |
 | Tekrar koruması | Manga için `requestId` | Tüm türlerde `dedupe_key` |
 | Öncelik | Geliş sırası | `priority`; kullanıcının beklediği iş arka plan işinin önüne geçer |
@@ -25,7 +25,7 @@ anlatım ─> akışlı yorum (senkron, SSE)
 
 ## Hata ve tekrar
 
-Hatalar iki sınıftır; sınıfı sağlayıcı istemcisi belirler, worker yalnız uygular.
+Hatalar iki sınıftır; sınıfı sağlayıcı istemcisi belirler (`providers/errors.py`, `ProviderError.status`), worker yalnız uygular. Bilinmeyen hata geçici sayılır: en çok üç denemeyle sınırlı. OpenRouter istemcisi L1 birleşince aynı sınıfa geçer.
 
 | Sınıf | Örnek | Davranış |
 | --- | --- | --- |

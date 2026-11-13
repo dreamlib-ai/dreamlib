@@ -9,6 +9,8 @@ import time
 
 import httpx
 
+from .errors import ProviderError
+
 log = logging.getLogger("dreamlib")
 
 QUEUE = "https://queue.fal.run"
@@ -49,7 +51,7 @@ class Fal:
         """Queues a request and returns its handle."""
         res = await self.http.post(f"{QUEUE}/{self.model}", json=body, headers=self._auth)
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"fal: submit status {res.status_code}: {res.text[:300]}")
+            raise ProviderError(f"fal: submit status {res.status_code}: {res.text[:300]}", res.status_code)
         d = res.json()
         if not d.get("status_url") or not d.get("response_url"):
             raise RuntimeError("fal: bad queue reply")
@@ -61,15 +63,15 @@ class Fal:
         while True:
             st = await self.http.get(handle["status_url"], headers=self._auth)
             if st.status_code // 100 != 2:
-                raise RuntimeError(f"fal: status {st.status_code}: {st.text[:300]}")
+                raise ProviderError(f"fal: status {st.status_code}: {st.text[:300]}", st.status_code)
             if st.json().get("status") == "COMPLETED":
                 break
             if time.monotonic() > deadline:
-                raise RuntimeError("fal: request timed out")
+                raise ProviderError("fal: request timed out", 0)
             await asyncio.sleep(POLL_EVERY)
         res = await self.http.get(handle["response_url"], headers=self._auth)
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"fal: result status {res.status_code}: {res.text[:300]}")
+            raise ProviderError(f"fal: result status {res.status_code}: {res.text[:300]}", res.status_code)
         urls = [i["url"] for i in res.json().get("images", []) if i.get("url")]
         if not urls:
             raise RuntimeError("fal: no images returned")
@@ -83,7 +85,7 @@ class Fal:
             body["language"] = language
         res = await self.http.post(f"https://fal.run/{self.model}", json=body, headers=self._auth, timeout=180)
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"fal: status {res.status_code}: {res.text[:300]}")
+            raise ProviderError(f"fal: status {res.status_code}: {res.text[:300]}", res.status_code)
         return res.json().get("text", "").strip()
 
     async def _upload(self, data: bytes, content_type: str) -> str:
@@ -93,11 +95,11 @@ class Fal:
             headers=self._auth,
         )
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"fal: upload init status {res.status_code}")
+            raise ProviderError(f"fal: upload init status {res.status_code}", res.status_code)
         slot = res.json()
         if not slot.get("upload_url") or not slot.get("file_url"):
             raise RuntimeError("fal: bad upload slot")
         put = await self.http.put(slot["upload_url"], content=data, headers={"Content-Type": content_type})
         if put.status_code // 100 != 2:
-            raise RuntimeError(f"fal: upload status {put.status_code}")
+            raise ProviderError(f"fal: upload status {put.status_code}", put.status_code)
         return slot["file_url"]
