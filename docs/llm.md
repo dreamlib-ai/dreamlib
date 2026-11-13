@@ -65,6 +65,8 @@ Bugün tek dosya (`backend/app/prompts.py`). Hedef:
 | Güvenlik | Talimat sızdırma, hassas içerik davranışı | Elle |
 | Yorum | Bağlama sadakat, uydurma bağ | Model hakemli + elle örneklem |
 
+**Duygu hedefi (A13):** çıkarımın beş HVdC duygusuna eşlenen çıktısı, elle kodlanmış İngilizce örneklerde rapor başına var/yok olarak makro F1 ≥ 0,80; üzüntü ayrıca raporlanır ve ≥ 0,70 olmalı. Referans: ince ayarlı BERT DreamBank'te makro F1 0,85–0,86, üzüntüde 0,77–0,80 ([kart](arastirma/notlar/olcum-llm-kodlama.md)). Türkçe set için hedef İngilizce sonuçtan en çok 0,05 düşük. Mutluluk gibi olumlu duygunun kaçırılması ayrı izlenir; hazır duygu modellerinin en zayıf yeri bu.
+
 CI kayıtlı yanıtlarla koşar ve ücretli çağrı yapmaz. Canlı koşu elle tetiklenir; model ya da prompt değişikliği sonuç tablosuyla birlikte gelir. Yeni bir zor rüya örneği eklemek dışarıdan katkıya açık en kolay iştir.
 
 ## Maliyet görünümü

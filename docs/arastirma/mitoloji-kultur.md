@@ -50,13 +50,13 @@ Korpus şemasındaki `condition` ve `polarity` alanları bu mantığı taşımak
 - Rüyalar kültürel kriz dönemlerinde davranışı ve dünya görüşünü biçimler (Lohmann, Papua Yeni Gine) ✓.
 - Kültürler arası içerik karşılaştırmasının sorunu: kişiler kendi rüyası yerine kültürün rüya bilgisini aktarabilir ✓.
 - Kuluçka: bir soruyla uyumak. Asklepios tapınakları, istihare, modern hedefli kuluçka aynı fikrin biçimleri.
-- Sabah sofrasında rüya anlatma, rüyayı suya anlatma gibi halk pratikleri ○.
+- Sabah sofrasında rüya anlatma, rüyayı suya anlatma gibi halk pratikleri ○; kısmet için rüyaya yatma (Doğu Karadeniz, *alata kolotisi*) ✓ ([kart](notlar/kultur-turk-halkbilimi.md)).
 
 ## Motif ve sembol sözlükleri
 
 | Kaynak | Ne | Hak durumu |
 | --- | --- | --- |
-| Thompson Motif Dizini veri seti (Hagedorn, GitHub `trilogy`) | Motif başına satır ve ATU masal tipleri | CC BY-SA 4.0 ✓ (A kademesi) |
+| Thompson Motif Dizini veri seti (Hagedorn, GitHub `trilogy`) | Motif başına satır ve ATU masal tipleri | Çelişkili: README CC BY-SA, `LICENSE.md` CC BY-NC-SA ✓; teyide kadar B ([kart](notlar/kultur-motif-dizini.md)) |
 | Açıklamalı masal külliyatı (Hagedorn ve Darányi 2022, Zenodo) | Ashliman derlemesinden masallar | Açık ✓; lisans kartta teyit edilecek |
 | MOMFER | Motif dizini için anlamsal arama | Araç ✓ |
 | Wikidata | Kavramlar ve çok dilli etiketler | CC0 |
