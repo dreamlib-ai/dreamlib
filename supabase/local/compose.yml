@@ -1,8 +1,10 @@
 # Yerel veritabanı yığını: canlıdaki Supabase Postgres imajı (auth, pgvector içinde) ve uygulamanın
 # konuştuğu REST katmanı PostgREST. Aynı dosya iki proje adıyla çalışır:
-#   dreamlib-local       kalıcı geliştirme veritabanı (scripts/local_db.py, npm run db)
-#   dreamlib-local-test  her test koşusunda sıfırdan kurulup silinen kopya (scripts/db_test.py)
-# Parolalar ve JWT sırrı yalnız yerel kullanım içindir.
+#   dreamlib-local       kalıcı geliştirme veritabanı (scripts/local_db.py, npm run db); `api` profiliyle
+#                        giriş (GoTrue), dosya deposu (storage-api) ve hepsini Supabase'in yollarıyla
+#                        (/rest/v1, /auth/v1, /storage/v1) tek adreste sunan ağ geçidi de kalkar.
+#   dreamlib-local-test  her test koşusunda sıfırdan kurulup silinen kopya (scripts/db_test.py), yalnız db ve rest.
+# Parolalar, JWT sırrı ve anahtarlar yalnız yerel kullanım içindir.
 
 services:
   db:
@@ -35,5 +37,135 @@ services:
       - "127.0.0.1:${DREAMLIB_REST_PORT:-55433}:3000"
     profiles: ["rest"]
 
+  auth:
+    image: supabase/gotrue:v2.177.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      API_EXTERNAL_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:postgres@db:5432/${DREAMLIB_DB_NAME:-dreamlib-local}
+      GOTRUE_SITE_URL: http://localhost:5173
+      GOTRUE_URI_ALLOW_LIST: http://localhost:5173/**,http://127.0.0.1:5173/**
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_SECRET: dreamlib-local-test-secret-not-for-production-use
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMS_AUTOCONFIRM: "true"
+      # İsteğe bağlı Google girişi: Google Cloud'da bir OAuth istemcisi, yönlendirme adresi
+      # http://127.0.0.1:55431/auth/v1/callback; kimlik ve sır kabuğun ortamından okunur.
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${DREAMLIB_GOOGLE_ENABLED:-false}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${DREAMLIB_GOOGLE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${DREAMLIB_GOOGLE_SECRET:-}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}/auth/v1/callback
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9999/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    profiles: ["api"]
+
+  storage:
+    image: supabase/storage-api:v1.25.7
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ANON_KEY: ${DREAMLIB_ANON_KEY:-}
+      SERVICE_KEY: ${DREAMLIB_SERVICE_KEY:-}
+      POSTGREST_URL: http://rest:3000
+      AUTH_JWT_SECRET: dreamlib-local-test-secret-not-for-production-use
+      PGRST_JWT_SECRET: dreamlib-local-test-secret-not-for-production-use
+      DATABASE_URL: postgres://supabase_storage_admin:postgres@db:5432/${DREAMLIB_DB_NAME:-dreamlib-local}
+      FILE_SIZE_LIMIT: "52428800"
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: local
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+    volumes:
+      - files:/var/lib/storage
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5000/status"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    profiles: ["api"]
+
+  gateway:
+    # İçeride de aynı portta dinler: backend bu servisin ağını paylaştığı için http://127.0.0.1:<port>
+    # hem tarayıcıdan hem backend'den aynı yere çıkar (imzalı görsel adresleri tarayıcıya gider).
+    image: nginx:1.27.5-alpine
+    depends_on:
+      - rest
+      - auth
+      - storage
+    environment:
+      DREAMLIB_API_PORT: ${DREAMLIB_API_PORT:-55431}
+      NGINX_ENVSUBST_FILTER: DREAMLIB_
+    volumes:
+      - ./gateway.conf:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "127.0.0.1:${DREAMLIB_API_PORT:-55431}:${DREAMLIB_API_PORT:-55431}"
+      - "127.0.0.1:${DREAMLIB_BACKEND_PORT:-8080}:8080"  # backend'in portu (backend bu ağda koşar)
+    profiles: ["api"]
+
+  backend:
+    # Canlıdaki imaj (backend/Dockerfile); kod bağlanır ve değişince yeniden yüklenir.
+    # Anahtarlar backend/.env'den gelir; Supabase ayarları burada dreamlib-local'a çevrilir.
+    build: ../../backend
+    image: dreamlib-local-backend
+    network_mode: service:gateway
+    depends_on:
+      - gateway
+    env_file:
+      - path: ../../backend/.env
+        required: false
+    environment:
+      ADDR: 0.0.0.0:8080
+      SUPABASE_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}
+      SUPABASE_SERVICE_KEY: ${DREAMLIB_SERVICE_KEY:-}
+      DREAMLIB_DEV_AUTH: "0"
+      DREAMLIB_FAKE_AI: "0"
+    volumes:
+      - ../../backend/app:/app/app
+    command: ["python", "-m", "uvicorn", "app.main:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8080",
+              "--reload", "--reload-dir", "/app/app"]
+    profiles: ["app"]
+
+  frontend:
+    # Vite geliştirme sunucusu; node_modules konteynerin kendi biriminde (Windows'unkiyle karışmaz).
+    image: node:22.23.0-alpine
+    working_dir: /app
+    depends_on:
+      - backend
+    environment:
+      VITE_SUPABASE_URL: http://127.0.0.1:${DREAMLIB_API_PORT:-55431}
+      VITE_SUPABASE_ANON_KEY: ${DREAMLIB_ANON_KEY:-}
+      DREAMLIB_API_PROXY: http://gateway:8080
+      DREAMLIB_POLL: "1"
+    volumes:
+      - ../../frontend:/app
+      - node_modules:/app/node_modules
+    command: ["sh", "-c", "npm ci --no-audit --no-fund && npx vite --host 0.0.0.0"]
+    ports:
+      - "127.0.0.1:${DREAMLIB_FRONTEND_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5173/"]
+      interval: 3s
+      timeout: 3s
+      retries: 100
+    profiles: ["app"]
+
 volumes:
   data:
+  files:
+  node_modules:
