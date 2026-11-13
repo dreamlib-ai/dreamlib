@@ -39,13 +39,12 @@ Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici
 
 ### LLM
 
-Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); prompt'lar görev dosyalarında, sürümlü (L5).
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); prompt'lar görev dosyalarında, sürümlü (L5); embedding çağrısı (L4).
 
 | No | Görev | Önce |
 | --- | --- | --- |
 | L2 | Şemalı çıktı (Pydantic'ten şema), ayrıştırıcı yedeği | L1 |
 | L3 | Akışlı çağrı ve SSE'ye çeviri | L1 |
-| L4 | Embedding çağrısı | L1 |
 | L6 | 🌱 `evals/` iskeleti, kayıtlı yanıtla koşan ilk çıkarım seti | L2 |
 
 ### Motor ve yorum
