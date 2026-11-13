@@ -104,6 +104,14 @@ class SupabaseJobs:
         rows = await self._rest("GET", {"id": f"eq.{job_id}", "user_id": f"eq.{user_id}"})
         return Job(**rows[0]) if rows else None
 
+    async def for_dream(self, user_id: str, dream_id: str) -> list[Job]:
+        """The user's jobs for one dream, oldest first."""
+        if not UUID.match(dream_id):
+            return []
+        params = {"user_id": f"eq.{user_id}", "dream_id": f"eq.{dream_id}", "order": "created_at",
+                  "select": "id,user_id,kind,status,done,total,error,dream_id,parent_id,created_at", "limit": "100"}
+        return [Job(**r) for r in await self._rest("GET", params)]
+
     async def active(self, user_id: str) -> bool:
         params = {"user_id": f"eq.{user_id}", "status": f"in.({','.join(ACTIVE)})", "select": "id", "limit": "1"}
         return bool(await self._rest("GET", params))
@@ -167,6 +175,10 @@ class MemoryJobs:
     async def get(self, job_id: str, user_id: str) -> Job | None:
         j = self.jobs.get(job_id)
         return j.model_copy(deep=True) if j and j.user_id == user_id else None
+
+    async def for_dream(self, user_id: str, dream_id: str) -> list[Job]:
+        mine = [j for j in self.jobs.values() if j.user_id == user_id and j.dream_id == dream_id]
+        return [j.model_copy(deep=True) for j in sorted(mine, key=lambda j: j.created_at)]
 
     async def active(self, user_id: str) -> bool:
         return any(j.user_id == user_id and j.status in ACTIVE for j in self.jobs.values())

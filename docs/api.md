@@ -16,6 +16,7 @@ Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`.
 | `PUT /api/dreams/{uuid}?existing=false` | evet | Aynı rüyayı sabit kimlikle oluşturur/günceller; tekrar istek kayıt çoğaltmaz. `existing=true` silinen kaydı yeniden oluşturmaz |
 | `POST /api/events` | evet | Yalnız sabit ürün olayı, UUID olay kimliği ve platform; içerik/ek alan kabul etmez, servis loguna takma hesap koduyla yazar |
 | `GET /api/dreams`, `GET /api/dreams/{id}` | evet | Kütüphane; panel `url`'leri süreli imzalı |
+| `GET /api/dreams/{id}/status` | evet | Rüya için çalışan tüm işler (`index`, `glyph`, `magazine`…) tek yerden: `{dreamId, busy, jobs:[{id, kind, status, done, total, error, parentId}]}`. Başkasının rüyası 404 |
 | `DELETE /api/dreams/{id}` | evet | Rüyayı ve görsellerini siler |
 | `POST /api/dreams/{id}/panels/{n}/redo` | evet | Kayıtlı çizim taslağından paneli yeniler; eski taslaksız kayıt 409 |
 

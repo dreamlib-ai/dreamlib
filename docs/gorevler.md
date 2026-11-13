@@ -29,11 +29,7 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 
 ### İş sistemi ve maliyet
 
-Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2); zincir ve tekrar koruması sütunları, öncelik, tür başına eşzamanlılık (B3); `usage` tablosu, OpenRouter ve fal çağrıları satır yazıyor (B4).
-
-| No | Görev | Önce |
-| --- | --- | --- |
-| B5 | Rüya başına tek durum ucu | B3 |
+Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2); zincir ve tekrar koruması sütunları, öncelik, tür başına eşzamanlılık (B3); `usage` tablosu, OpenRouter ve fal çağrıları satır yazıyor (B4); rüya başına tek durum ucu (B5).
 
 ### LLM
 
