@@ -27,9 +27,9 @@ class Settings:
     openrouter_model: str = ""
     openrouter_routes: Routes = field(default_factory=dict)  # per task: OPENROUTER_MODEL_<TASK>, OPENROUTER_FALLBACK_<TASK>
     fal_key: str = ""
-    fal_image_model: str = "fal-ai/flux/schnell"
-    fal_edit_model: str = "fal-ai/nano-banana/edit"  # draws later panels from the first one
-    fal_speech_model: str = "fal-ai/wizper"  # speech to text
+    fal_image_model: str = "fast"  # a name in providers/image_models.toml, or a full fal id
+    fal_edit_model: str = "consistent"  # draws later panels from the first one
+    fal_speech_model: str = "speech"  # speech to text
     supabase_url: str = ""
     supabase_service_key: str = ""  # server-side only: bypasses row-level security
     dev_auth: bool = False  # in-memory accounts for local work, never in production

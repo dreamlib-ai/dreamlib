@@ -70,6 +70,8 @@ Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (
 
 ### İkon, dergi, kütüphane
 
+Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, öğrenen süre tahmini ve `etaSeconds`.
+
 | No | Görev | Önce |
 | --- | --- | --- |
 | G1 | İkon üslup şablonu ve referansı; `glyph` işi | B1, M1 |

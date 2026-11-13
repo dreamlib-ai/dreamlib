@@ -14,7 +14,9 @@ from .config import Settings
 from .errors import ApiError
 from .models import Panel
 from .providers.fake import FakeFal, FakeLLM
+from .eta import Estimator, MemoryTimings, SupabaseTimings
 from .providers.fal import Fal
+from .providers.image_models import resolve
 from .providers.openrouter import OpenRouter
 from .store.devstore import DevStore
 from .store.jobstore import MemoryJobs, SupabaseJobs
@@ -114,6 +116,7 @@ class Services:
     daily_user: int = 0
     worker: object | None = None  # the running Worker, set when the app starts
     meter: Meter | None = None  # writes a usage row per paid provider call; comes with accounts
+    eta: Estimator | None = None  # learns how long fal requests take; comes with accounts
     locks: UserLocks = field(default_factory=UserLocks)
     limits: CallLimits = field(default_factory=CallLimits)
 
@@ -132,9 +135,9 @@ def build_services(cfg: Settings) -> Services:
     sb = Supabase(cfg.supabase_url, cfg.supabase_service_key)
     s = Services(
         llm=on(OpenRouter(cfg.openrouter_key, cfg.openrouter_model, cfg.openrouter_routes)),
-        images=on(Fal(cfg.fal_key, cfg.fal_image_model, "image")),
-        editor=on(Fal(cfg.fal_key, cfg.fal_edit_model, "edit")),
-        speech=on(Fal(cfg.fal_key, cfg.fal_speech_model, "speech")),
+        images=on(Fal(cfg.fal_key, resolve(cfg.fal_image_model, "image"))),
+        editor=on(Fal(cfg.fal_key, resolve(cfg.fal_edit_model, "edit"))),
+        speech=on(Fal(cfg.fal_key, resolve(cfg.fal_speech_model, "speech"))),
         workers=cfg.workers,
         daily_guest=cfg.daily_guest,
         daily_user=cfg.daily_user,
@@ -143,12 +146,14 @@ def build_services(cfg: Settings) -> Services:
     if sb.enabled:
         s.auth, s.store, s.blobs, s.queue = sb, sb, sb, SupabaseJobs(sb)
         s.meter = Meter(SupabaseUsage(sb))
+        s.eta = Estimator(SupabaseTimings(sb))
         quota = SupabaseQuota(sb)
         s.limits.store, s.locks = quota, UserLocks(quota)
     elif cfg.dev_auth:
         s.auth = s.store = DevStore()
         s.queue = MemoryJobs()
         s.meter = Meter(MemoryUsage())
+        s.eta = Estimator(MemoryTimings())
         log.warning("DREAMLIB_DEV_AUTH=1: in-memory accounts, any 'dev-' token is accepted. Local use only.")
     else:
         log.warning("SUPABASE_URL or SUPABASE_SERVICE_KEY missing: saving dreams is off")
@@ -160,6 +165,9 @@ def build_services(cfg: Settings) -> Services:
     for client in (s.llm, s.images, s.editor, s.speech):
         if client is not None:
             client.meter = s.meter
+    for client in (s.images, s.editor):
+        if client is not None:
+            client.eta = s.eta
     if not s.llm:
         log.warning("OPENROUTER_API_KEY or OPENROUTER_MODEL missing: /api/analyze is off")
     if not s.images:

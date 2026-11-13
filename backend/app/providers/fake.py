@@ -93,6 +93,9 @@ class FakeFal:
     def __init__(self, model: str = "fake"):
         self.model = model
 
+    async def estimate(self, pictures: int = 1, references: int = 0, queue_position: int = 0) -> float:
+        return 2.0
+
     async def submit(self, body: dict) -> dict:
         n = int(body.get("num_images", 1))
         return {"urls": [placeholder(f"{body.get('prompt', '')}-{i}") for i in range(n)]}
