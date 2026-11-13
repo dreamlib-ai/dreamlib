@@ -79,6 +79,8 @@ class MangaMeta(BaseModel):
     avatar_path: str = Field('',alias='AvatarPath')
     avatar_spec: AvatarSpec | None = Field(None,alias='AvatarSpec')
     perspective: str = Field('unknown',alias='Perspective')
+    prompt_version: str = Field('', alias='PromptVersion')  # picture prompt revision; empty is the legacy wording
+    image_model: str = Field('', alias='ImageModel')  # registry name the panels were first drawn with
 
 
 class DreamIn(Analysis):

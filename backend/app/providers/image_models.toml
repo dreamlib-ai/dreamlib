@@ -1,0 +1,32 @@
+# fal modelleri. Tablo adı bizim takma adımız; `id` fal'daki uç. FAL_IMAGE_MODEL, FAL_EDIT_MODEL ve
+# FAL_SPEECH_MODEL takma adı ya da tam id'yi alır. Model eklemek bir blok, çıkarmak bloğu silmek;
+# kod değişmez. DREAMLIB_IMAGE_MODELS başka bir dosyayı gösterirse bu dosyanın yerine o okunur.
+#
+# role: image (metinden görsel), edit (referans görselden), speech (sesten metin)
+# price: görsel ya da istek başına kaba dolar (usage satırı ve iş maliyeti)
+# typical_seconds: süre tahmincisi veri görene kadar kullandığı ön değer
+# enabled: false ise seçilemez; eskisini silmeden kapatmak için
+
+[fast]
+id = "fal-ai/flux/schnell"
+role = "image"
+price = 0.003
+typical_seconds = 4
+
+[quality]
+id = "fal-ai/flux/dev"
+role = "image"
+price = 0.025
+typical_seconds = 12
+
+[consistent]
+id = "fal-ai/nano-banana/edit"
+role = "edit"
+price = 0.039
+typical_seconds = 15
+
+[speech]
+id = "fal-ai/wizper"
+role = "speech"
+price = 0.0
+typical_seconds = 8

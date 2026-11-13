@@ -65,6 +65,8 @@ Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_alias
 
 ### İkon, dergi, kütüphane
 
+Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, öğrenen süre tahmini ve `etaSeconds`.
+
 | No | Görev | Önce |
 | --- | --- | --- |
 | G1 | İkon üslup şablonu ve referansı; `glyph` işi | B1, M1 |
