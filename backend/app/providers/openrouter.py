@@ -7,6 +7,7 @@ import logging
 import time
 
 import httpx
+from pydantic import BaseModel
 
 from .errors import ProviderError
 
@@ -45,7 +46,10 @@ class OpenRouter:
         model, fallbacks = self.routes.get(task, ("", ()))
         return [m for m in dict.fromkeys((model or self.model, *fallbacks)) if m]
 
-    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str) -> str:
+    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str,
+                   schema: type[BaseModel] | None = None) -> str:
+        """schema asks for JSON in that shape; a model that refuses schemas (400) gets plain JSON mode once.
+        The caller still parses and validates the reply: a schema is a request, not a guarantee."""
         models = self.models_for(task)
         if not models:
             raise RuntimeError(f"openrouter: no model for task {task}")
@@ -54,18 +58,16 @@ class OpenRouter:
             payload["models"] = models  # OpenRouter tries them in order
         else:
             payload["model"] = models[0]
-        if json_mode:
+        if schema is not None:
+            payload["response_format"] = json_schema(schema)
+        elif json_mode:
             payload["response_format"] = {"type": "json_object"}
         started = time.monotonic()
-        for attempt in range(2):
-            res = await self.http.post(
-                ENDPOINT, json=payload, timeout=TASKS[task],
-                headers={"Authorization": f"Bearer {self.key}", "X-Title": "Dreamlib"},
-            )
-            if attempt == 0 and (res.status_code == 429 or res.status_code >= 500):
-                await asyncio.sleep(RETRY_AFTER)
-                continue
-            break
+        res = await self._post(payload, task)
+        if res.status_code == 400 and schema is not None:
+            log.warning("openrouter: %s schema refused, falling back to JSON mode", task)
+            payload["response_format"] = {"type": "json_object"}
+            res = await self._post(payload, task)
         if res.status_code // 100 != 2:
             raise ProviderError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}", res.status_code)
         body = res.json()
@@ -79,3 +81,20 @@ class OpenRouter:
         if not choices:
             raise RuntimeError("openrouter: empty choices")
         return choices[0]["message"]["content"]
+
+    async def _post(self, payload: dict, task: str) -> httpx.Response:
+        for attempt in range(2):
+            res = await self.http.post(
+                ENDPOINT, json=payload, timeout=TASKS[task],
+                headers={"Authorization": f"Bearer {self.key}", "X-Title": "Dreamlib"},
+            )
+            if attempt == 0 and (res.status_code == 429 or res.status_code >= 500):
+                await asyncio.sleep(RETRY_AFTER)
+                continue
+            break
+        return res
+
+
+def json_schema(model: type[BaseModel]) -> dict:
+    """OpenRouter's structured-output request for a Pydantic model. Not strict: our models have defaults."""
+    return {"type": "json_schema", "json_schema": {"name": model.__name__, "strict": False, "schema": model.model_json_schema()}}

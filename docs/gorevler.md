@@ -38,11 +38,10 @@ Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici
 
 ### LLM
 
-Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1).
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); Pydantic'ten şemalı çıktı ve JSON modu yedeği (L2).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| L2 | Şemalı çıktı (Pydantic'ten şema), ayrıştırıcı yedeği | L1 |
 | L3 | Akışlı çağrı ve SSE'ye çeviri | L1 |
 | L4 | Embedding çağrısı | L1 |
 | L5 | Prompt'ları görev dosyalarına böl, sürüm kimliği ver | L1 |

@@ -5,7 +5,7 @@ each stored panel), so a booklet picked up after a restart carries on from where
 import asyncio
 import logging
 
-from ..models import MangaMeta, Panel
+from ..models import MangaMeta, Panel, Storyboard
 from ..prompts import STYLE_HINTS, storyboard_prompt
 from ..services import Services, clip, extract_json
 from ..avatar import AvatarSpec, avatar_prompt
@@ -74,7 +74,7 @@ async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list
         system += '\nThe dreamer uses this fixed character appearance. Preserve it; do not replace them with an unrelated character. ' + avatar_prompt(appearance)
     try:
         reply = await s.llm.chat(
-            [{"role": "system", "content": system}, {"role": "user", "content": f"{input.get('title', '')}\n\n{input['text']}"}], True, task="storyboard"
+            [{"role": "system", "content": system}, {"role": "user", "content": f"{input.get('title', '')}\n\n{input['text']}"}], True, task="storyboard", schema=Storyboard
         )
     except Exception as e:
         raise RuntimeError(f"storyboard failed: {e}") from e  # worth another try
