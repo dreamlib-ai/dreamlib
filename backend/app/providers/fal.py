@@ -2,14 +2,19 @@
 text through the synchronous endpoint. One client per model.
 
 A queued request is a handle of two URLs. Pipelines keep the handle in the job's state, so after a
-restart the worker asks fal for the same picture instead of paying for a new one."""
+restart the worker asks fal for the same picture instead of paying for a new one.
+
+Models come from image_models.toml (price, typical time). fal gives no time estimate, so every
+request this process queued is timed and fed to app.eta, which predicts the next ones."""
 import asyncio
 import logging
 import time
 
 import httpx
 
+from .. import eta
 from .errors import ProviderError
+from .image_models import FalModel
 
 log = logging.getLogger("dreamlib")
 
@@ -17,13 +22,13 @@ QUEUE = "https://queue.fal.run"
 POLL_EVERY = 1.0
 WAIT_FOR = 180
 
-# Rough dollars per picture, for the cost estimate kept on each job (fal bills per megapixel).
-PRICES = {"fal-ai/flux/schnell": 0.003, "fal-ai/flux/dev": 0.025, "fal-ai/nano-banana/edit": 0.039}
-
 
 class Fal:
-    def __init__(self, key: str, model: str, task: str = ""):
-        self.key, self.model, self.task = key, model, task  # task: image, edit or speech, for usage rows
+    def __init__(self, key: str, spec: FalModel):
+        self.key, self.spec = key, spec
+        self.model, self.task = spec.id, spec.role  # task: image, edit or speech, for usage rows
+        self.eta = None  # app.eta.Estimator, set by build_services
+        self._timing: dict[str, tuple[float, list[float]]] = {}  # status_url -> (queued at, features)
         self.meter = None  # app.usage.Meter, set by build_services
         self.http = httpx.AsyncClient(timeout=60)
 
@@ -33,7 +38,7 @@ class Fal:
 
     @property
     def price(self) -> float:
-        return PRICES.get(self.model, 0.0)
+        return self.spec.price
 
     @property
     def _auth(self) -> dict:
@@ -59,16 +64,33 @@ class Fal:
         if self.meter:  # counted when queued: a restart reads the same request again without paying
             n = body.get("num_images", 1)
             await self.meter.record("fal", self.model, self.task, n, "images", self.price * n)
+        x = eta.features(body.get("num_images", 1), len(body.get("image_urls", [])))
+        self._timing[d["status_url"]] = (eta.clock(), x)  # only requests queued here are timed
         return {"status_url": d["status_url"], "response_url": d["response_url"]}
+
+    async def estimate(self, pictures: int = 1, references: int = 0, queue_position: int = 0) -> float:
+        """Seconds from queueing to the picture, as learned so far; the typical time before any data."""
+        x = eta.features(pictures, references, queue_position)
+        if not self.eta:
+            return self.spec.typical_seconds * max(1, pictures)
+        return await self.eta.estimate(self.model, self.spec.typical_seconds, x)
 
     async def images(self, handle: dict, wait_for: float = WAIT_FOR) -> list[str]:
         """Waits for a queued request and returns its picture URLs."""
         deadline = time.monotonic() + wait_for
+        timing, first = self._timing.pop(handle["status_url"], None), True
         while True:
             st = await self.http.get(handle["status_url"], headers=self._auth)
             if st.status_code // 100 != 2:
                 raise ProviderError(f"fal: status {st.status_code}: {st.text[:300]}", st.status_code)
-            if st.json().get("status") == "COMPLETED":
+            body = st.json()
+            if first and timing:  # the queue position when we first looked is a feature too
+                timing[1][3] = float(body.get("queue_position") or 0)
+            first = False
+            if body.get("status") == "COMPLETED":
+                if timing and self.eta:
+                    inference = (body.get("metrics") or {}).get("inference_time")
+                    await self.eta.observe(self.model, self.spec.typical_seconds, timing[1], eta.clock() - timing[0], inference)
                 break
             if time.monotonic() > deadline:
                 raise ProviderError("fal: request timed out", 0)

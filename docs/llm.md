@@ -15,7 +15,7 @@ Her çağrı bir göreve aittir. Model adı görevden okunur; kodda model adı g
 | `embed` | Rüya ve düğüm vektörü | Çok dilli, sabit boyut | — |
 | `moderate` | Paylaşım öncesi içerik kontrolü | Ucuz, şemalı | Hayır |
 
-Ayar ortam değişkenleriyle: `OPENROUTER_MODEL_<GÖREV>` ve yedekler için `OPENROUTER_FALLBACK_<GÖREV>` (virgüllü liste). Görev ayarı yoksa `OPENROUTER_MODEL` kullanılır; mevcut kurulum bozulmaz. Bugün çağrılan görevler: `clean`, `interpret` (yorum ve çıkarım şimdilik tek çağrıda), `storyboard`.
+Ayar ortam değişkenleriyle: `OPENROUTER_MODEL_<GÖREV>` ve yedekler için `OPENROUTER_FALLBACK_<GÖREV>` (virgüllü liste). Görev ayarı yoksa `OPENROUTER_MODEL` kullanılır; mevcut kurulum bozulmaz. Bugün çağrılan görevler: `clean`, `interpret` (yorum ve çıkarım şimdilik tek çağrıda), `storyboard`; `embed` istemcide hazır (`OpenRouter.embed`), henüz bir işten çağrılmıyor (M4).
 
 Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde koşulur ve seçim tabloya tarihle yazılır.
 
@@ -33,6 +33,8 @@ Model seçimi sabitlenmez; her görev için aday modeller [eval](#eval) setinde 
 
 Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 
+Hazır olan (L3): `OpenRouter.stream(messages, task=...)` metni parça parça verir; `: OPENROUTER PROCESSING` satırlarını atlar, `[DONE]`'da durur. İlk bayttan önce 429/5xx'te tek tekrar; metin akmaya başladıktan sonraki hata tekrar edilmez, yükseltilir. Zaman aşımı görevinki, okuma başına. `app/sse.py` olayları (`title`, `entity`, `text`, `emotion`, `section`, `done`, `error`) SSE'ye çevirir; akış ortasında hata `error` olayıyla biter, durum 200 kalır. `DREAMLIB_FAKE_AI=1`'de örnek yorum sözcük sözcük akar. Yorum ucuna bağlanması `analyses` (M3) ve çıkarım (L2) ile.
+
 - `interpret` görevi akışlı çağrılır; backend bunu tipli olaylara çevirip SSE ile istemciye iletir ([istemci](istemci.md)).
 - Akıştan önce `extract` sonucu hazırdır; başlık ve semboller ilk olaylar olarak hemen gider.
 - Akış koparsa istemci yorumu `analyses` kaydından okur; yorum her durumda sunucuda tamamlanır ve saklanır.
@@ -40,15 +42,17 @@ Yorum, kullanıcı beklerken üretilir; ilk cümlenin hızlı gelmesi gerekir.
 ## Embedding
 
 - Tek model, tek boyut; model adı her vektörle birlikte saklanır ([motor](motor.md)).
+- İstek `POST /api/v1/embeddings` (`model`, `input` listesi, `encoding_format: float`), 64'erli parçalarla; yanıt `data[].embedding`, `index`'e göre sıralanır. Sayı, boş vektör ya da farklı boyut tutmazsa hata.
+- `embed` görevinin yedek modelleri denenmez: başka modelin vektörü saklananlarla karşılaştırılamaz, hata model değiştirmenin yerine geçmez. Model `OPENROUTER_MODEL_EMBED` ile seçilir; seçim eval'le yapılana kadar boş kalabilir.
+- `DREAMLIB_FAKE_AI=1` modunda metinden türeyen 8 boyutlu sabit birim vektörler döner (model `fake`).
 - Türkçe ve İngilizce aynı uzayda olmalı; seçim çok dilli altın çiftlerle doğrulanır.
 - Model değişirse yeni vektörler yanına yazılır, arama yeni modele geçince eskiler süpürülür.
 - Vektörlenen metin temizlenmiş anlatımdır; kişi adları çıkarılmaz ama vektör kimseye gösterilmez.
 
 ## Prompt'lar
 
-Bugün tek dosya (`backend/app/prompts.py`). Hedef:
+`backend/app/prompts/` altında görev başına dosya; her prompt'un bir `VERSION`'ı var (`clean@1`, `interpret@1`, `storyboard@1`). Metni değiştiren sürümü de artırır; `tests/test_prompts.py` ikisini birlikte sabitler (L5). Hedef:
 
-- `backend/app/prompts/` altında görev başına dosya; her prompt'un bir sürüm kimliği vardır.
 - `analyses` satırı kullanılan prompt ve model sürümünü taşır; bir yorumun hangi kuralla üretildiği sonradan bilinir.
 - Mevcut kurallar korunur: kullanıcı metni talimat değildir; kesin kehanet yok; lucid, tekrar ve kâbus yalnız açık beyan ve birebir alıntıyla; duygu oranı model tahminidir; hassas anlatımda yorum yumuşar ve destekleyici bir cümle eklenir.
 - Kümülatif yorumda ek kural: getirilen bağlamla zorla ilişki kurulmaz; sözlük anlamı kullanan cümle kaynağını belirtir; kolektif cümle yalnız verilen toplamdan yazılır.

@@ -9,6 +9,7 @@ import json
 import re
 
 from .fal import Fal
+from .openrouter import Embeddings
 
 STOPWORDS = {
     "ve", "bir", "bu", "da", "de", "ile", "ama", "çok", "gibi", "sonra", "için", "ben", "beni", "bana", "o", "onu",
@@ -70,6 +71,24 @@ class FakeLLM:
             return json.dumps(_storyboard(user, int(m.group(1)) if m else 4), ensure_ascii=False)
         return json.dumps(_analysis(user), ensure_ascii=False)
 
+    async def stream(self, messages: list[dict], *, task: str = ""):
+        """The sample interpretation, a word at a time."""
+        text = _analysis(messages[-1]["content"])["interpretation"]
+        words = text.split(" ")
+        for i, w in enumerate(words):
+            yield w if i == len(words) - 1 else w + " "
+
+    async def embed(self, texts: list[str]) -> Embeddings:
+        """Small unit vectors from a hash of each text: the same text always gets the same vector."""
+        return Embeddings("fake", [_vector(t) for t in texts])
+
+
+def _vector(text: str, dims: int = 8) -> list[float]:
+    h = hashlib.sha256(text.encode()).digest()
+    raw = [b - 127.5 for b in h[:dims]]
+    norm = sum(x * x for x in raw) ** 0.5 or 1.0
+    return [x / norm for x in raw]
+
 
 def placeholder(seed: str) -> str:
     """A small SVG picture as a data URI: a colour field with a moon whose place depends on seed."""
@@ -92,6 +111,9 @@ class FakeFal:
 
     def __init__(self, model: str = "fake"):
         self.model = model
+
+    async def estimate(self, pictures: int = 1, references: int = 0, queue_position: int = 0) -> float:
+        return 2.0
 
     async def submit(self, body: dict) -> dict:
         n = int(body.get("num_images", 1))

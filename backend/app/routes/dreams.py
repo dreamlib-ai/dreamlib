@@ -151,6 +151,22 @@ async def get_dream(dream_id: str, user_id: str = Depends(current_user), s: Serv
     return d.public()
 
 
+@router.get("/api/dreams/{dream_id}/status")
+async def dream_status(dream_id: str, user_id: str = Depends(current_user), s: Services = Depends(services)):
+    """Every job working for this dream (index, glyph, magazine...), so the app follows one address."""
+    await _load(s, user_id, dream_id)  # 404 unless the dream is theirs
+    if not s.queue:
+        return {"dreamId": dream_id, "busy": False, "jobs": []}
+    try:
+        jobs = await s.queue.for_dream(user_id, dream_id)
+    except Exception:
+        log.exception("dreams: status failed")
+        raise ApiError(502, "durum okunamadı")
+    out = [{"id": j.id, "kind": j.kind, "status": "running" if j.status == "queued" else j.status,
+            "done": j.done, "total": j.total, "error": j.error, "parentId": j.parent_id} for j in jobs]
+    return {"dreamId": dream_id, "busy": any(j["status"] == "running" for j in out), "jobs": out}
+
+
 @router.delete("/api/dreams/{dream_id}", status_code=204)
 async def delete_dream(dream_id: str, user_id: str = Depends(current_user), s: Services = Depends(services)):
     files: list[str] = []

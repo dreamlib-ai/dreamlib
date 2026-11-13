@@ -44,6 +44,9 @@ class FakeFal:
     def __init__(self, text="Dün gece uçuyordum."):
         self.text, self.calls, self.fail = text, [], False
 
+    async def estimate(self, pictures: int = 1, references: int = 0, queue_position: int = 0) -> float:
+        return 2.0
+
     async def submit(self, body):
         edit = "image_urls" in body
         self.calls.append(("edit", body["prompt"], body["image_urls"]) if edit else ("generate", body["prompt"], body["num_images"]))
@@ -95,3 +98,7 @@ def wait_job(client, job_id, headers=None, seconds=10):
             return job
         time.sleep(0.02)
     raise AssertionError("job did not finish")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "db: needs the real database stack (scripts/db_test.py)")

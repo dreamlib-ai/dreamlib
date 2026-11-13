@@ -42,7 +42,7 @@ Başlangıç türleri:
 | `evokes_motif` | rüya → motif | Masal ve mit motifi eşleşmesi; alıntıyla doğrulanır ([kart](arastirma/notlar/kultur-motif-dizini.md)) |
 | `day_residue` | rüya → gündüz olayı | Uyanık hayattan iz; kullanıcı bağlar ya da model önerir ([kart](arastirma/notlar/bilim-sureklilik.md)) |
 
-Zincir sorguları (rüya → sembol → başka rüya → tema) derinliği üçle sınırlı recursive CTE ile yazılır ve SQL fonksiyonu olarak sunulur.
+Zincir sorguları (rüya → sembol → başka rüya → tema) derinliği üçle sınırlı recursive CTE ile yazılır ve SQL fonksiyonu olarak sunulur: `dream_chain(p_user, p_dream, p_depth)` ve kNN için `dream_neighbors(p_user, p_dream, p_kind, p_model, p_limit)`. İkisi de erişim kuralını sorgunun içinde taşır ve yalnız service key ile çağrılır. Simetrik ilişkilerde kenar bir kez, kaynak kimliği küçük olacak şekilde yazılır.
 
 ## İndeksleme (otonom)
 

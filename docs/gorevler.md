@@ -29,28 +29,18 @@ Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1,
 
 ### İş sistemi ve maliyet
 
-Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2); zincir ve tekrar koruması sütunları, öncelik, tür başına eşzamanlılık (B3); `usage` tablosu, OpenRouter ve fal çağrıları satır yazıyor (B4).
-
-| No | Görev | Önce |
-| --- | --- | --- |
-| B5 | Rüya başına tek durum ucu | B3 |
+Yapıldı: iş türleri kod kaydında, veritabanı check'i kalktı (B1); geçici hatada üstel bekleme, kalıcı hatada tekrar yok (B2); zincir ve tekrar koruması sütunları, öncelik, tür başına eşzamanlılık (B3); `usage` tablosu, OpenRouter ve fal çağrıları satır yazıyor (B4); rüya başına tek durum ucu (B5).
 
 ### LLM
 
-Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); Pydantic'ten şemalı çıktı ve JSON modu yedeği (L2); eval iskeleti ve ilk çıkarım seti (L6).
-
-| No | Görev | Önce |
-| --- | --- | --- |
-| L3 | Akışlı çağrı ve SSE'ye çeviri | L1 |
-| L4 | Embedding çağrısı | L1 |
-| L5 | Prompt'ları görev dosyalarına böl, sürüm kimliği ver | L1 |
+Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (L1); Pydantic'ten şemalı çıktı ve JSON modu yedeği (L2); prompt'lar görev dosyalarında, sürümlü (L5); embedding çağrısı (L4); akışlı çağrı ve SSE yardımcısı (L3, uca bağlanması yorum ucuyla); eval iskeleti ve ilk çıkarım seti (L6).
 
 ### Motor ve yorum
 
+Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile); `relation_types` (9 ilişki), `edges` (simetrik kenar tek ve sıralı), `dream_embeddings`, `dream_neighbors` ve derinliği üçle sınırlı `dream_chain` (M2; arama yalnız kişinin kendi rüyalarında, rızalılar R1 ile).
+
 | No | Görev | Önce |
 | --- | --- | --- |
-| M1 | pgvector, `entity_kinds`, `entities`, `entity_aliases`, `dream_entities` | Z1 |
-| M2 | `relation_types`, `edges`, `dream_embeddings` ve arama SQL fonksiyonları | M1 |
 | M3 | `analyses` tablosu; yorum yeni satır yazsın, eski alanlar okunmaya devam etsin | Z1 |
 | M4 | `index` işi: çıkar, normalize et, vektörle | M1, L2, L4, B3 |
 | M5 | `similar` puanlayıcısı ve kanıt; kişinin kendi rüyaları arasında | M2, M4 |
@@ -68,6 +58,8 @@ Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (
 | R3 | [Hassas içerik](hassas-icerik.md) politikasını uygula: `sensitive` sınıflaması, destek kartı, eval seti | L6, A7 |
 
 ### İkon, dergi, kütüphane
+
+Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, öğrenen süre tahmini ve `etaSeconds`.
 
 | No | Görev | Önce |
 | --- | --- | --- |

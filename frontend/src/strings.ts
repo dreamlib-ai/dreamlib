@@ -105,6 +105,7 @@ export const tr = {
     libraryIntro: 'Rüyaların ve kitapçıkların bir arada',
     writingTitle: 'Dün gece ne gördün?', writingHint: 'Bir sahne, bir his, aklında kalan ne varsa.',
     progress: 'Kitapçığın çiziliyor', savedDream: 'Rüyan kaydedildi',
+    remaining: (s: number) => s < 60 ? `yaklaşık ${Math.max(5, Math.round(s / 5) * 5)} sn` : `yaklaşık ${Math.round(s / 60)} dk`,
     retry: 'Tekrar dene', close: 'Kapat', original: 'Anlattığın rüya',
   },
   writePlaceholder: 'Hatırladığın yerden başla…',
