@@ -25,7 +25,7 @@ def sql(query: str) -> str:
     """Runs SQL as postgres in the test database and returns the unaligned output."""
     res = subprocess.run(
         ["docker", "compose", "-f", os.environ["DREAMLIB_DB_COMPOSE"], "exec", "-T", "db",
-         "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1", "-c", query],
+         "psql", "-U", "postgres", "-d", "postgres", "-qAt", "-v", "ON_ERROR_STOP=1", "-c", query],
         capture_output=True, text=True, encoding="utf-8",
     )
     if res.returncode:
