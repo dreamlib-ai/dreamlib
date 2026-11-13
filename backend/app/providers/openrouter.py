@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass
 
 import httpx
+from pydantic import BaseModel
 
 from .errors import ProviderError
 
@@ -61,7 +62,8 @@ class OpenRouter:
         model, fallbacks = self.routes.get(task, ("", ()))
         return [m for m in dict.fromkeys((model or self.model, *fallbacks)) if m]
 
-    async def _post(self, url: str, payload: dict, task: str) -> httpx.Response:
+    async def _send(self, url: str, payload: dict, task: str) -> httpx.Response:
+        """One request with one retry on a rate limit or a server error; the answer as it came."""
         for attempt in range(2):
             res = await self.http.post(
                 url, json=payload, timeout=TASKS[task],
@@ -71,11 +73,21 @@ class OpenRouter:
                 await asyncio.sleep(RETRY_AFTER)
                 continue
             break
+        return res
+
+    async def _post(self, url: str, payload: dict, task: str) -> httpx.Response:
+        return self._ok(await self._send(url, payload, task), task)
+
+    @staticmethod
+    def _ok(res: httpx.Response, task: str) -> httpx.Response:
         if res.status_code // 100 != 2:
             raise ProviderError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}", res.status_code)
         return res
 
-    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str) -> str:
+    async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str,
+                   schema: type[BaseModel] | None = None) -> str:
+        """schema asks for JSON in that shape; a model that refuses schemas (400) gets plain JSON mode once.
+        The caller still parses and validates the reply: a schema is a request, not a guarantee."""
         models = self.models_for(task)
         if not models:
             raise RuntimeError(f"openrouter: no model for task {task}")
@@ -84,10 +96,17 @@ class OpenRouter:
             payload["models"] = models  # OpenRouter tries them in order
         else:
             payload["model"] = models[0]
-        if json_mode:
+        if schema is not None:
+            payload["response_format"] = json_schema(schema)
+        elif json_mode:
             payload["response_format"] = {"type": "json_object"}
         started = time.monotonic()
-        body = (await self._post(ENDPOINT, payload, task)).json()
+        res = await self._send(ENDPOINT, payload, task)
+        if res.status_code == 400 and schema is not None:
+            log.warning("openrouter: %s schema refused, falling back to JSON mode", task)
+            payload["response_format"] = {"type": "json_object"}
+            res = await self._send(ENDPOINT, payload, task)
+        body = self._ok(res, task).json()
         usage = body.get("usage") or {}
         log.info("openrouter: %s %s %.1fs %s tokens $%s", task, body.get("model", models[0]), time.monotonic() - started,
                  usage.get("total_tokens", "?"), usage.get("cost", "?"))
@@ -107,7 +126,7 @@ class OpenRouter:
         models = self.models_for("embed")
         if not models:
             raise RuntimeError("openrouter: no model for task embed")
-        model, vectors, used, tokens = models[0], [], "", 0
+        model, vectors, used, tokens, cost = models[0], [], "", 0, 0.0
         started = time.monotonic()
         for i in range(0, len(texts), EMBED_BATCH):
             batch = texts[i:i + EMBED_BATCH]
@@ -122,9 +141,18 @@ class OpenRouter:
                     raise RuntimeError("openrouter: embed returned a malformed vector")
                 vectors.append([float(x) for x in vec])
             used = used or body.get("model") or model
-            tokens += (body.get("usage") or {}).get("total_tokens") or 0
+            usage = body.get("usage") or {}
+            tokens += usage.get("total_tokens") or 0
+            cost += float(usage.get("cost") or 0)
         if len({len(v) for v in vectors}) != 1:
             raise RuntimeError("openrouter: embed returned vectors of different sizes")
         log.info("openrouter: embed %s %.1fs %d texts %d dims %s tokens", used, time.monotonic() - started,
                  len(texts), len(vectors[0]), tokens or "?")
+        if self.meter:
+            await self.meter.record("openrouter", used, "embed", tokens, "tokens", cost)
         return Embeddings(used, vectors)
+
+
+def json_schema(model: type[BaseModel]) -> dict:
+    """OpenRouter's structured-output request for a Pydantic model. Not strict: our models have defaults."""
+    return {"type": "json_schema", "json_schema": {"name": model.__name__, "strict": False, "schema": model.model_json_schema()}}

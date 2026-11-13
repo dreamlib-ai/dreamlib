@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ValidationError
 
 from ..errors import ApiError
-from ..models import Analysis
+from ..models import Analysis, CleanOut
 from ..prompts import ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HINTS
 from ..services import MAX_DREAM, Services, current_user, extract_json, one_line, services
 
@@ -45,7 +45,7 @@ async def clean(body: CleanIn, user_id: str = Depends(current_user), s: Services
     text = dream_text(body.text)
     await s.take("text", user_id)
     try:
-        reply = await s.llm.chat([{"role": "system", "content": CLEAN_SYSTEM}, {"role": "user", "content": text}], True, task="clean")
+        reply = await s.llm.chat([{"role": "system", "content": CLEAN_SYSTEM}, {"role": "user", "content": text}], True, task="clean", schema=CleanOut)
     except Exception:
         log.exception("clean: llm failed")
         raise ApiError(502, "metin şu an düzeltilemedi")
@@ -136,7 +136,7 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
     await s.take("text", user_id)
 
     try:
-        reply = await s.llm.chat([{"role": "system", "content": system}, {"role": "user", "content": text}], True, task="interpret")
+        reply = await s.llm.chat([{"role": "system", "content": system}, {"role": "user", "content": text}], True, task="interpret", schema=Analysis)
     except Exception:
         log.exception("analyze: llm failed")
         raise ApiError(502, "yorum şu an üretilemedi")
