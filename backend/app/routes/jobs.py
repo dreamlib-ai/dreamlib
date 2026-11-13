@@ -2,6 +2,7 @@
 The work itself is done by the worker (app/worker.py); these routes only read and write the queue."""
 import asyncio
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -153,7 +154,10 @@ async def get_job(job_id: str, user_id: str = Depends(current_user), s: Services
     if j.status == "done":
         await sign_panels(s, [panels])
     status = "running" if j.status == "queued" else j.status  # the web app knows running, done and failed
-    return {"id": j.id, "status": status, "done": j.done, "total": j.total, "panels": [p.public() for p in panels], "error": j.error}
+    out = {"id": j.id, "status": status, "done": j.done, "total": j.total, "panels": [p.public() for p in panels], "error": j.error}
+    if status in ("queued", "running") and j.state.get("eta_at"):
+        out["etaSeconds"] = max(0, round(j.state["eta_at"] - time.time()))  # learned estimate, see app/eta.py
+    return out
 
 
 @router.post("/api/jobs/{job_id}/panels/{n}/redo")
