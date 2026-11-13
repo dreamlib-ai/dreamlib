@@ -44,6 +44,13 @@ MARKERS = {
 }
 
 
+def has_marker(sentence: str, kind: str) -> bool:
+    """sentence is normalized(), which lowers I to ı the Turkish way; English markers ('knew i was
+    dreaming') are looked for in the dotted form too, or an English claim could never match."""
+    dotted = sentence.replace('ı', 'i')
+    return any(marker in sentence or marker in dotted for marker in MARKERS[kind])
+
+
 def grounded_features(features: Features, text: str) -> Features:
     result = features.model_copy(deep=True)
     result.genres = list(dict.fromkeys(result.genres))
@@ -53,7 +60,7 @@ def grounded_features(features: Features, text: str) -> Features:
     for entry in result.experiences:
         quote = normalized(entry.quote)
         negative = any(word in quote for word in ('değildi', 'etmedim', 'bilmiyordum', 'did not', "wasn't", 'not a nightmare'))
-        if quote and quote in narrative and not negative and entry.kind not in seen and any(marker in quote for marker in MARKERS[entry.kind]):
+        if quote and quote in narrative and not negative and entry.kind not in seen and has_marker(quote, entry.kind):
             supported.append(entry)
             seen.add(entry.kind)
     result.experiences = supported
