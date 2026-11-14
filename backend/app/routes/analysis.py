@@ -37,7 +37,7 @@ class CleanIn(BaseModel):
     text: str = ""
 
 
-@router.post("/api/clean")
+@router.post("/clean")
 async def clean(body: CleanIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """Fixes spelling and drops filler before the user confirms the text and it is interpreted."""
     if not s.llm:
@@ -119,7 +119,7 @@ async def history_block(s: Services, user_id: str, exclude_id: str = "") -> str:
     return "\n".join(lines)
 
 
-@router.post("/api/analyze")
+@router.post("/analyze")
 async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     if not s.llm:
         raise ApiError(503, "yorum servisi kurulu değil")
@@ -165,7 +165,7 @@ def _model(llm) -> str:
     return models[0] if models else getattr(llm, "model", "")
 
 
-@router.post("/api/transcribe")
+@router.post("/transcribe")
 async def transcribe(request: Request, lang: str = "", s: Services = Depends(services)):
     """Turns a recorded dream into text. The body is the raw audio, the type its Content-Type."""
     user_id = await current_user(request)

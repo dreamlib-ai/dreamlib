@@ -24,11 +24,11 @@ def test_analyze_extracts_and_persists_features_and_owner_corrections(api):
     narrative = 'Rüyada olduğumu fark ettim. Annemle uzay gemisinde uçuyordum.'
     s.llm.reply = json.dumps({**ANALYSIS, 'features': {'version':1, 'genres':['scifi','adventure'], 'perspective':'first-person',
         'people':['annem'], 'places':['uzay gemisi'], 'events':['uçmak'], 'experiences':[{'kind':'lucid','quote':'Rüyada olduğumu fark ettim.'}]}})
-    analysis = client.post('/api/analyze', headers=auth(), json={'text':narrative}).json()
+    analysis = client.post('/api/v1/analyze', headers=auth(), json={'text':narrative}).json()
     assert analysis['features']['genres'] == ['scifi','adventure']
-    saved = client.post('/api/dreams', headers=auth(), json={**analysis,'originalText':narrative}).json()
+    saved = client.post('/api/v1/dreams', headers=auth(), json={**analysis,'originalText':narrative}).json()
     assert saved['features']['people'] == ['annem']
-    path = f"/api/dreams/{saved['id']}/journal"
+    path = f"/api/v1/dreams/{saved['id']}/journal"
     corrected = client.patch(path, headers=auth(), json={'revision':saved['revision'], 'classification':{'genres':[], 'experiences':[], 'tags':['aile']}, 'recall':'fragmentary'}).json()
     assert corrected['journal']['classification']['genres'] == []
     assert corrected['features']['genres'] == ['scifi','adventure']  # retain model provenance
@@ -44,7 +44,7 @@ def test_analyze_extracts_and_persists_features_and_owner_corrections(api):
 
 def test_old_records_do_not_acquire_invented_classifications(api):
     client, _ = api
-    saved = client.post('/api/dreams', headers=auth(), json={**ANALYSIS,'originalText':'Bir ev.'}).json()
+    saved = client.post('/api/v1/dreams', headers=auth(), json={**ANALYSIS,'originalText':'Bir ev.'}).json()
     assert saved['features']['version'] == 0 and saved['features']['genres'] == []
 
 

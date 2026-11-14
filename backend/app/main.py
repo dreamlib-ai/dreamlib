@@ -18,6 +18,32 @@ log = logging.getLogger("dreamlib")
 
 MAX_BODY = 1 << 20
 MAX_AUDIO_BODY = analysis.MAX_AUDIO
+API = "/api/v1"
+LEGACY = "/api/"
+
+
+class LegacyPaths:
+    """Serves the old unversioned /api/... paths as /api/v1/... in place (no redirect, so bodies, audio
+    uploads and streams pass untouched) and marks those answers deprecated. docs/api.md, S1."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        path = scope.get("path", "")
+        if scope["type"] != "http" or not path.startswith(LEGACY) or path.startswith(API + "/"):
+            return await self.app(scope, receive, send)
+        new = API + path[len(LEGACY) - 1:]
+        scope = {**scope, "path": new, "raw_path": new.encode()}
+
+        async def marked(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers += [(b"deprecation", b"true"), (b"link", f'<{new}>; rel="successor-version"'.encode())]
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, marked)
 
 
 def create_app(services: Services | None = None) -> FastAPI:
@@ -62,7 +88,7 @@ def create_app(services: Services | None = None) -> FastAPI:
 
     @app.middleware("http")
     async def limit_body(request: Request, call_next):
-        limit = MAX_AUDIO_BODY if request.url.path == "/api/transcribe" else MAX_BODY
+        limit = MAX_AUDIO_BODY if request.url.path == f"{API}/transcribe" else MAX_BODY
         if int(request.headers.get("content-length") or 0) > limit:
             return JSONResponse({"error": "istek çok büyük"}, status_code=413)
         return await call_next(request)
@@ -82,7 +108,8 @@ def create_app(services: Services | None = None) -> FastAPI:
         }
 
     for module in (analysis, jobs, dreams, events, journal, profile):
-        app.include_router(module.router)
+        app.include_router(module.router, prefix=API)
+    app.add_middleware(LegacyPaths)  # outermost: the body limit and the router already see /api/v1
     return app
 
 

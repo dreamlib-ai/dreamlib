@@ -74,7 +74,7 @@ async def _queue(s: Services, user_id: str, kind: str, input: dict, total: int, 
     return {"id": job.id}
 
 
-@router.post("/api/manga", status_code=202)
+@router.post("/manga", status_code=202)
 async def start_manga(body: MangaIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """Validates the request and queues the booklet; the answer is the job id to follow."""
     if not s.llm or not s.images:
@@ -115,7 +115,7 @@ async def start_manga(body: MangaIn, user_id: str = Depends(current_user), s: Se
     return await _queue(s, user_id, "manga", input, n, str(body.requestId) if body.requestId else "")
 
 
-@router.post("/api/images", status_code=202)
+@router.post("/images", status_code=202)
 async def start_images(body: ImagesIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     if not s.images:
         raise ApiError(503, "görsel servisi kurulu değil")
@@ -147,7 +147,7 @@ async def job_or_404(s: Services, job_id: str, user_id: str) -> Job:
     return job
 
 
-@router.get("/api/jobs/{job_id}")
+@router.get("/jobs/{job_id}")
 async def get_job(job_id: str, user_id: str = Depends(current_user), s: Services = Depends(services)):
     j = await job_or_404(s, job_id, user_id)
     panels = job_panels(j)
@@ -160,7 +160,7 @@ async def get_job(job_id: str, user_id: str = Depends(current_user), s: Services
     return out
 
 
-@router.post("/api/jobs/{job_id}/panels/{n}/redo")
+@router.post("/jobs/{job_id}/panels/{n}/redo")
 async def redo_panel(job_id: str, n: int, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """Draws panel n of a finished booklet again and swaps it in."""
     async with s.locks.hold(user_id, None):
