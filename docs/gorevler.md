@@ -85,6 +85,17 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 | F5 | Onboarding'de isteğe bağlı "hangilerini gördün" tipik tema seçimi | G1 |
 | F6 | `features` sürüm 2: karakter rolü, etkileşim, sonuç, mekân tanıdıklığı, eylemlilik | L2 |
 
+### Beyin grafiği
+
+Her kullanıcının rüyaları bir uzay kanvasında düğüm; ilişkiler türüne göre renkli bağlar. Zayıf ilişki tutulmaz, bağı olmayan rüya uzayda süzülür (Cenker, 2026-11-14). İlk sürüm LLM'siz, M4 ve M8'in düğümlerinden; vektör benzerliği (M10) gelince ayrı bir bağ türü olarak eklenir.
+
+| No | Görev | Önce |
+| --- | --- | --- |
+| BG1 | Rüya ↔ rüya ilişki puanlayıcıları, kişinin kendi rüyaları arasında: içerik (ortak sembol, karakter, yer, eylem; IDF ağırlıklı), kavram (tema, tür, deneyim), duygu (HVdC), zaman (gün yakınlığı, tekrar). Her biri `relation_types` satırı ve kanıtlı `edges`; eşiğin altı yazılmaz, `index` işi yeni rüyanın bağlarını yazar ve bayatlarını siler | M8 |
+| BG2 | `GET /api/brain`: kişinin rüya düğümleri (başlık, tarih, baskın duygu, küçük resim) ve eşiği geçen bağlar türü, ağırlığı ve kanıtıyla; bağsız rüyalar ayrı | BG1 |
+| BG3 | Beyin ekranı: uzay kanvası, bağımlılıksız kuvvet yerleşimi, ilişki türüne göre renk, bağsız rüyalar süzülür; dokununca rüya önizlemesi ve komşuları öne çıkar, tür filtresi, azaltılmış hareket | BG2, G3 |
+| BG4 | Grafikte etkileşim: iki rüyayı elle bağla ya da bir bağı gizle (`series`, kaynak `user`), bağın neden kurulduğunu gösteren kanıt kartı | BG3 |
+
 ## Sonraki major (betadan sonra)
 
 Beta, anlat → yorum → dergi → kütüphane akışına odaklanır; benzerlik ve lab'ın gerçek veri işi buraya alındı (Cenker, 2026-11-14).
