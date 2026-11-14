@@ -75,10 +75,10 @@ export type JournalPatch = { revision: number; title?: string | null; originalTe
 export type MangaIn = { title?: string; text?: string; style?: string; panels?: number; consistent?: boolean; requestId?: string | null; useAvatar?: boolean; avatarRevision?: number; perspective?: "first-person" | "observer" | "mixed" | "unknown" };
 
 /** One picture of a booklet. path is a storage path (or, without storage, the remote image */
-export type PanelInput = { caption?: string; path?: string; url?: string };
+export type PanelInput = { caption?: string; path?: string; url?: string; width?: number; height?: number; blurhash?: string; color?: string; thumb?: string };
 
 /** One picture of a booklet. path is a storage path (or, without storage, the remote image */
-export type PanelOutput = { caption: string; path: string; url?: string };
+export type PanelOutput = { caption: string; path: string; url?: string; width?: number; height?: number; blurhash?: string; color?: string; thumb?: string };
 
 export type ProfileOut = { id: string; displayName: string; avatar: AvatarSpecOutput | null; presetId: "dawn" | "moss" | "copper" | "ink" | null; revision: number; avatarUrl: string };
 

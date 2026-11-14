@@ -59,17 +59,28 @@ class Panel(BaseModel):
     URL); url is the viewable address, filled in when a dream is sent out."""
 
     model_config = ConfigDict(json_schema_serialization_defaults_required=True,
-                              json_schema_extra=lambda s, _=None: s.__setitem__("required", [r for r in s.get("required", []) if r != "url"]))
+                              json_schema_extra=lambda s, _=None: s.__setitem__("required", [r for r in s.get("required", []) if r in ("caption", "path")]))
 
     caption: str = ""
     path: str = ""
     url: str = ""
+    # G3, filled in when sent out from the images table; never stored with the dream
+    width: int = 0
+    height: int = 0
+    blurhash: str = ""
+    color: str = ""
+    thumb: str = ""  # viewable address of the 480 px copy
 
     def stored(self) -> dict:
         return {"caption": self.caption, "path": self.path}
 
     def public(self) -> dict:
-        return {**self.stored(), **({"url": self.url} if self.url else {})}
+        out = {**self.stored(), **({"url": self.url} if self.url else {})}
+        if self.width:
+            out.update(width=self.width, height=self.height, blurhash=self.blurhash, color=self.color)
+        if self.thumb:
+            out["thumb"] = self.thumb
+        return out
 
 
 class MangaMeta(BaseModel):
