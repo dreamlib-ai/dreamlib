@@ -10,6 +10,7 @@ from app.store.entities import MemoryEntities
 from app.store.graph import MemoryGraph
 
 from .conftest import auth, make_client
+from .test_contract import check
 from .test_dreams import DREAM
 
 SEA = Node("e-sea", "symbol", "sym.deniz", "deniz")
@@ -108,3 +109,30 @@ def test_saving_dreams_writes_and_replaces_their_links(brain_api):
     while time.time() < deadline and any(r["relation"] == "shares_emotion" and b["id"] in (r["source_id"], r["target_id"]) for r in s.graph.rows):
         time.sleep(0.02)
     assert not any(r["relation"] == "shares_emotion" and b["id"] in (r["source_id"], r["target_id"]) for r in s.graph.rows)
+
+
+def test_the_brain_answer_holds_every_dream_and_its_links(brain_api):
+    client, s = brain_api
+    a = save(client, s, "Denizde annemle yüzdüm, çok korktum.", ["deniz", "anne"], 1)
+    b = save(client, s, "Yine deniz ve annem vardı, korktum.", ["deniz", "anne"], 12)
+    c = save(client, s, "Bir kütüphanede kitap okudum.", ["kitap"], 25)
+    res = client.get("/api/v1/brain", headers=auth())
+    assert res.status_code == 200
+    brain = res.json()
+    spec = client.app.openapi()
+    check(spec, spec["paths"]["/api/v1/brain"]["get"]["responses"]["200"]["content"]["application/json"]["schema"], brain)
+    assert brain["relations"] == ["shares_content", "shares_concept", "shares_emotion", "near_in_time"]
+    nodes = {d["id"]: d for d in brain["dreams"]}
+    assert [d["id"] for d in brain["dreams"]] == [a["id"], b["id"], c["id"]]  # by the day dreamt
+    assert nodes[a["id"]]["dated"] == "2026-10-01" and nodes[a["id"]]["emotions"] == ["apprehension"]
+    assert nodes[c["id"]]["degree"] == 0 and nodes[a["id"]]["degree"] >= 2  # c floats free
+    content = next(l for l in brain["links"] if l["relation"] == "shares_content")
+    assert {content["source"], content["target"]} == {a["id"], b["id"]}
+    assert {x["key"] for x in content["evidence"]["shared"]} >= {"sym.deniz"}
+    assert client.get("/api/v1/brain", headers=auth("dev-someone-else-entirely")).json()["dreams"] == []
+
+
+def test_the_brain_needs_accounts(api):
+    client, _ = api
+    assert client.get("/api/v1/brain").status_code == 401
+    assert client.get("/api/v1/brain", headers=auth()).json()["code"] == "service_off"

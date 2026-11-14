@@ -13,6 +13,14 @@ export type AvatarSpecInput = { skin?: "light" | "warm" | "olive" | "deep"; face
 
 export type AvatarSpecOutput = { skin: "light" | "warm" | "olive" | "deep"; face: "oval" | "round" | "angular"; hair: "short" | "curly" | "wavy" | "long" | "bun" | "none"; hairColor: "brown" | "black" | "copper" | "blond" | "grey"; build: "slim" | "average" | "broad"; outfit: "jacket" | "sweater" | "shirt"; outfitColor: "midnight" | "sage" | "cobalt" | "cream"; accessory: "none" | "glasses" | "earrings"; expression: "calm" | "curious" | "smile"; pose: "relaxed" | "folded" | "hands-front" };
 
+export type BrainDream = { id: string; title: string; dated: string; emotions: string[]; thumbnail: string; degree: number };
+
+export type BrainEvidence = { shared?: SharedNode[]; days?: number };
+
+export type BrainLink = { relation: "shares_content" | "shares_concept" | "shares_emotion" | "near_in_time"; source: string; target: string; weight: number; evidence: BrainEvidence };
+
+export type BrainOut = { relations: Array<"shares_content" | "shares_concept" | "shares_emotion" | "near_in_time">; dreams: BrainDream[]; links: BrainLink[] };
+
 export type ClassificationOverrideInput = { genres?: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense"> | null; perspective?: "first-person" | "observer" | "mixed" | "unknown" | null; experiences?: Array<"lucid" | "recurring" | "nightmare"> | null; tags?: string[] | null };
 
 export type ClassificationOverrideOutput = { genres: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense"> | null; perspective: "first-person" | "observer" | "mixed" | "unknown" | null; experiences: Array<"lucid" | "recurring" | "nightmare"> | null; tags: string[] | null };
@@ -72,6 +80,8 @@ export type PanelOutput = { caption: string; path: string; url?: string };
 export type ProfileOut = { id: string; displayName: string; avatar: AvatarSpecOutput | null; presetId: "dawn" | "moss" | "copper" | "ink" | null; revision: number; avatarUrl: string };
 
 export type ProfilePatch = { revision: number; displayName?: string | null; presetId?: "dawn" | "moss" | "copper" | "ink" | null; avatarJobId?: string | null; clearAvatar?: boolean };
+
+export type SharedNode = { kind: string; key: string; label: string };
 
 const search = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
@@ -151,3 +161,7 @@ export const updateProfile = (body: ProfilePatch, signal?: AbortSignal) =>
 /** POST /api/v1/avatar */
 export const createAvatar = (body: AvatarIn, signal?: AbortSignal) =>
   request<JobRef>('POST', `/api/v1/avatar`, body, signal);
+
+/** GET /api/v1/brain */
+export const brain = (signal?: AbortSignal) =>
+  request<BrainOut>('GET', `/api/v1/brain`, undefined, signal);
