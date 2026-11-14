@@ -79,3 +79,18 @@ def test_the_backfill_queues_each_dream_once_behind_user_work(user, dream):
     sql(backfill)  # running it again adds nothing
     got = sql(f"select count(*) || '|' || min(priority) || '|' || bool_or(exclusive) from jobs where dream_id = '{dream}' and kind = 'index'")
     assert got == "1|-1|false"
+
+
+def test_only_approved_symbols_without_an_icon_are_drawn(sb):
+    from app.store.entities import Node, SupabaseEntities
+    ents = SupabaseEntities(sb)
+    ids = run(ents.ensure([Node("symbol", "g1-moon", {"en": "moon"})], "approved"))
+    cand = run(ents.ensure([Node("symbol", "g1-door", {"en": "door"})], "candidate"))
+    try:
+        both = [ids["g1-moon"], cand["g1-door"]]
+        assert run(ents.without_glyph(both)) == [ids["g1-moon"]]
+        run(ents.set_glyph(ids["g1-moon"], "https://x.test/glyphs/a.webp"))
+        assert run(ents.without_glyph(both)) == [] and run(ents.get(ids["g1-moon"]))["glyph_path"].endswith("a.webp")
+        assert sql("select public from storage.buckets where id = 'glyphs'") == "t"
+    finally:
+        sql("delete from public.entities where key in ('g1-moon', 'g1-door')")
