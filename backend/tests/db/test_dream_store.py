@@ -26,6 +26,19 @@ def test_save_read_list_and_delete_keep_every_field(sb, user):
         run(sb.get_dream(user, saved.id))
 
 
+def test_list_pages_by_created_at_then_id(sb, user):
+    saved = [run(sb.save_dream(user, dream())) for _ in range(3)]
+    tie = saved[0].createdAt
+    sql(f"update public.dreams set created_at = '{tie.isoformat()}' where user_id = '{user}'")  # one instant, id decides
+    whole = run(sb.list_dreams(user))
+    assert len(whole) == 3 and [d.id for d in whole] == sorted((d.id for d in saved), reverse=True)
+    seen, before = [], None
+    while page := run(sb.list_dreams(user, limit=1, before=before)):
+        seen.append(page[0].id)
+        before = (page[0].createdAt, page[0].id)
+    assert seen == [d.id for d in whole]
+
+
 def test_another_account_can_neither_read_nor_overwrite(sb, user):
     other = "00000000-0000-4000-8000-0000000000aa"
     sql(f"insert into auth.users (id, email) values ('{other}', 'other@test.local') on conflict do nothing")

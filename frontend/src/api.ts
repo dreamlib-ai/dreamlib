@@ -7,6 +7,7 @@ import type { ProductEvent } from './telemetry';
 import type { AvatarSpec, PresetId } from './avatar';
 import * as g from './generated/api';
 import { ApiError } from './http';
+import { WALL_PAGE } from './wall';
 
 export { ApiError, type ErrorCode } from './http';
 export type InterpretationType = 'universal' | 'cultural' | 'psychoanalytic';
@@ -82,6 +83,11 @@ export async function transcribeAudio(audio: Blob, language?: string, signal?: A
 }
 
 export const listDreams = () => g.listDreams().then((r) => r.dreams.map(asDream));
+
+export type DreamPage = { dreams: Dream[]; next?: string };
+/** G7: newest first, `limit` at a time; pass `next` back as the cursor until it is gone. */
+export const listDreamPage = (cursor?: string, limit = WALL_PAGE, signal?: AbortSignal): Promise<DreamPage> =>
+  g.listDreams({ limit, cursor }, signal).then((r) => ({ dreams: r.dreams.map(asDream), next: r.next }));
 
 export const deleteDream = (id: string) => g.deleteDream(id);
 

@@ -151,6 +151,8 @@ export const tr = {
     removeYes: 'Evet, sil',
     cancel: 'Vazgeç',
     all: 'Tüm rüyalar',
+    moreFailed: 'Daha eski rüyalar açılamadı.',
+    retry: 'Tekrar dene',
   },
   save: 'Kütüphaneye kaydet',
   saving: 'Kaydediliyor',

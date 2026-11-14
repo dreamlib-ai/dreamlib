@@ -19,7 +19,13 @@ dream.features = {version:1, genres:['fantasy','adventure'], perspective:'first-
 if (params.has('reset')) { localStorage.removeItem(testKey); localStorage.removeItem('dreamlib:draft:v1:test'); localStorage.removeItem('dreamlib:avatar-draft:v1:test'); }
 const fake = JSON.parse(localStorage.getItem(testKey) ?? '{"rows":[],"jobs":{}}');
 fake.profile ??= {id:'test',displayName:'',avatar:null,avatarUrl:'',presetId:null,revision:0};
-const rows: Dream[] = params.has('themes') ? [dream, { ...dream, id:'second-dream', title:'Ormandaki ışık', tags:['DENİZ','orman'], features:{...dream.features,genres:['scifi']} }, { ...dream, id:'third-dream', title:'Eski ev', tags:['ev'], features:{...dream.features,genres:['daily']}, emotions:[{label:'Korku',pct:100,note:''}] }] : params.has('populated') ? [dream] : fake.rows;
+// ?wall: 60 dreams with pictures of many shapes (G3 sizes, colour, BlurHash) and some text-only ones (G7).
+const shapes = [[1024,1024],[832,1216],[1216,832],[768,1344],[1024,1536]];
+const pictures = ['/avatar-512.png','/avatars/ink.webp','/favicon.png'];
+const wallRows = (): Dream[] => Array.from({length:60}, (_, i) => ({ ...dream, id:`wall-${i}`, title: i % 7 === 3 ? 'Uzun bir koridorun sonunda, hiç görmediğim bir kapının önünde bekliyordum' : `Rüya ${60 - i}`,
+  createdAt: new Date(Date.UTC(2026, 10, 14) - i * 86400000).toISOString(),
+  panels: i % 5 === 2 ? [] : [{ path:`wall/${i}`, caption:'', url: pictures[i % 3], thumb: pictures[i % 3], width: shapes[i % 5][0], height: shapes[i % 5][1], color: ['#203252','#5a3b6e','#2e5a4f'][i % 3], blurhash: i % 2 ? 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' : '' }] }));
+const rows: Dream[] = params.has('themes') ? [dream, { ...dream, id:'second-dream', title:'Ormandaki ışık', tags:['DENİZ','orman'], features:{...dream.features,genres:['scifi']} }, { ...dream, id:'third-dream', title:'Eski ev', tags:['ev'], features:{...dream.features,genres:['daily']}, emotions:[{label:'Korku',pct:100,note:''}] }] : params.has('populated') ? [dream] : params.has('wall') ? wallRows() : fake.rows;
 const persist = () => { localStorage.setItem(testKey, JSON.stringify({ ...fake, rows })); trace(); };
 const calls: { path: string; method: string; bytes?: number; text?: string }[] = [];
 // A visible, read-only test trace in the DOM lets browser checks inspect requests.
@@ -65,7 +71,13 @@ globalThis.fetch = async (input, init) => {
     if (index < 0) rows.push(saved); else rows[index] = saved;
     persist(); return json(saved);
   }
-  if (path === '/api/v1/dreams') return json({ dreams: rows });
+  if (path === '/api/v1/dreams') {
+    const query = new URL(String(input), location.origin).searchParams;
+    const start = Number(query.get('cursor') ?? 0), limit = Number(query.get('limit') ?? 200);
+    const page = rows.slice(start, start + limit);
+    if (params.has('slowPages') && start) await new Promise(done => setTimeout(done, 700));
+    return json(start + limit < rows.length ? { dreams: page, next: String(start + limit) } : { dreams: page });
+  }
   if (path.endsWith('/journal') && init?.method === 'PATCH') {
     const row = rows.find(d => d.id === path.split('/')[3]);
     if (!row) return json({error:'not found'},404);

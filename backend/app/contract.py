@@ -67,8 +67,9 @@ class DreamOut(Analysis):
 
 
 class DreamList(BaseModel):
-    model_config = OUT
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("next"))
     dreams: list[DreamOut]
+    next: str = ""  # only when more remain: the cursor for the next page (G7)
 
 
 class DreamJob(BaseModel):

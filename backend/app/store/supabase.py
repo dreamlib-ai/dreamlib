@@ -194,10 +194,17 @@ class Supabase:
             raise RuntimeError("save: no row returned")
         return self._from_row(rows[0])
 
-    async def list_dreams(self, user_id: str, limit: int = 200, exclude_id: str = "") -> list[Dream]:
-        params = {"user_id": f"eq.{user_id}", "order": "created_at.desc", "limit": str(min(max(limit, 1), 200))}
+    async def list_dreams(self, user_id: str, limit: int = 200, exclude_id: str = "",
+                          before: tuple[datetime, str] | None = None) -> list[Dream]:
+        """Newest first; `before` (createdAt, id) is a cursor: only dreams that come after it in that order."""
+        params = {"user_id": f"eq.{user_id}", "order": "created_at.desc,id.desc", "limit": str(min(max(limit, 1), 1000))}
         if exclude_id:
             params["id"] = f"neq.{exclude_id}"
+        if before:
+            at, last = before[0].isoformat(), before[1]
+            if not UUID.match(last):
+                return []
+            params["or"] = f'(created_at.lt."{at}",and(created_at.eq."{at}",id.lt.{last}))'
         return [self._from_row(r) for r in await self._rest("GET", params)]
 
     async def update_journal(self, user_id: str, d: Dream, revision: int) -> Dream:

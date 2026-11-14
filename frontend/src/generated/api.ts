@@ -38,7 +38,7 @@ export type DreamIn = { title?: string; cleanText?: string; tags?: string[]; moo
 
 export type DreamJob = { id: string; kind: string; status: "running" | "done" | "failed"; done: number; total: number; error: string; parentId: string | null };
 
-export type DreamList = { dreams: DreamOut[] };
+export type DreamList = { dreams: DreamOut[]; next?: string };
 
 export type DreamObjectInput = { label?: string; meaning?: string };
 
@@ -117,13 +117,13 @@ export const getJob = (jobId: string, signal?: AbortSignal) =>
 export const redoPanel = (jobId: string, n: number, signal?: AbortSignal) =>
   request<PanelOutput>('POST', `/api/v1/jobs/${encodeURIComponent(String(jobId))}/panels/${encodeURIComponent(String(n))}/redo`, undefined, signal);
 
-/** GET /api/v1/dreams */
-export const listDreams = (signal?: AbortSignal) =>
-  request<DreamList>('GET', `/api/v1/dreams`, undefined, signal);
-
 /** POST /api/v1/dreams */
 export const saveDream = (body: DreamIn, signal?: AbortSignal) =>
   request<DreamOut>('POST', `/api/v1/dreams`, body, signal);
+
+/** GET /api/v1/dreams */
+export const listDreams = (query: { limit?: number; cursor?: string } = {}, signal?: AbortSignal) =>
+  request<DreamList>('GET', `/api/v1/dreams${search(query)}`, undefined, signal);
 
 /** PUT /api/v1/dreams/{dream_id} */
 export const putDream = (dreamId: string, body: DreamIn, query: { existing?: boolean } = {}, signal?: AbortSignal) =>
