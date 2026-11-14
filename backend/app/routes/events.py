@@ -13,6 +13,8 @@ from pydantic import BaseModel, ConfigDict
 from ..errors import ApiError
 from ..services import current_user
 
+from ..contract import answers
+
 router = APIRouter()
 log = logging.getLogger("dreamlib.events")
 EventName = Literal["session_open", "record_started", "transcript_ready", "analysis_ready", "booklet_ready", "dream_saved", "feedback_helpful", "feedback_unhelpful"]
@@ -23,7 +25,7 @@ class EventIn(BaseModel):
     eventId: UUID
     platform: Literal["ios", "android", "desktop", "other"] = "other"
 
-@router.post("/events", status_code=204)
+@router.post("/events", status_code=204, **answers(None, 204))
 async def event(body: EventIn, user_id: str = Depends(current_user)):
     now = time.monotonic()
     actor = hashlib.sha256(("dreamlib-events:" + user_id).encode()).hexdigest()[:20]

@@ -13,6 +13,9 @@ from ..prompts import VERSIONS, ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HIN
 from ..services import MAX_DREAM, Services, current_user, extract_json, one_line, services
 
 log = logging.getLogger("dreamlib")
+from ..contract import answers, AnalysisOut, TranscribeOut
+from ..models import CleanOut
+
 router = APIRouter()
 
 MAX_CONTEXT = 40  # mood / sleep, characters
@@ -37,7 +40,7 @@ class CleanIn(BaseModel):
     text: str = ""
 
 
-@router.post("/clean")
+@router.post("/clean", **answers(CleanOut, 200))
 async def clean(body: CleanIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """Fixes spelling and drops filler before the user confirms the text and it is interpreted."""
     if not s.llm:
@@ -119,7 +122,7 @@ async def history_block(s: Services, user_id: str, exclude_id: str = "") -> str:
     return "\n".join(lines)
 
 
-@router.post("/analyze")
+@router.post("/analyze", **answers(AnalysisOut, 200))
 async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     if not s.llm:
         raise ApiError(503, "yorum servisi kurulu değil")
@@ -165,7 +168,7 @@ def _model(llm) -> str:
     return models[0] if models else getattr(llm, "model", "")
 
 
-@router.post("/transcribe")
+@router.post("/transcribe", **answers(TranscribeOut, 200), openapi_extra={"x-raw-body": "audio/*"})
 async def transcribe(request: Request, lang: str = "", s: Services = Depends(services)):
     """Turns a recorded dream into text. The body is the raw audio, the type its Content-Type."""
     user_id = await current_user(request)

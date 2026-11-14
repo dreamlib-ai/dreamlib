@@ -6,7 +6,7 @@ PresetId = Literal['dawn', 'moss', 'copper', 'ink']
 
 
 class AvatarSpec(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra='forbid', json_schema_serialization_defaults_required=True)
     skin: Literal['light','warm','olive','deep'] = 'warm'
     face: Literal['oval','round','angular'] = 'oval'
     hair: Literal['short','curly','wavy','long','bun','none'] = 'short'

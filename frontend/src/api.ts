@@ -1,115 +1,74 @@
-// The only place the web app talks to the API.
+// The only place the web app talks to the API. Calls and wire types come from ./generated/api.ts, which
+// scripts/gen_client.py writes from the backend's OpenAPI schema (S3); this file narrows the free-text
+// fields the app knows more about and keeps the app's own call shapes.
 import { getToken, publicAuthConfig } from './session';
 import { tr } from './strings';
 import type { ProductEvent } from './telemetry';
 import type { AvatarSpec, PresetId } from './avatar';
+import * as g from './generated/api';
+import { ApiError } from './http';
 
+export { ApiError, type ErrorCode } from './http';
 export type InterpretationType = 'universal' | 'cultural' | 'psychoanalytic';
-/** Machine codes from docs/api.md (S2); the message is for people and may change. */
-export type ErrorCode = 'invalid_request' | 'auth_required' | 'auth_invalid' | 'not_found' | 'conflict' | 'revision_conflict'
-  | 'job_busy' | 'too_large' | 'unsupported_media' | 'unreadable' | 'daily_limit' | 'rate_limited' | 'upstream_failed'
-  | 'service_off' | 'internal';
-export class ApiError extends Error {
-  status: number;
-  code: ErrorCode;
-  constructor(status:number,message:string,code:ErrorCode='internal') { super(message); this.status=status; this.code=code; }
-}
-export type AvatarProfile = { id:string; displayName:string; avatar:AvatarSpec|null; presetId:PresetId|null; avatarUrl:string; revision:number };
-export const getSelfProfile = () => request<AvatarProfile>('GET','/api/v1/profile');
-export const updateSelfProfile = (revision:number,changes:{displayName?:string;presetId?:PresetId;avatarJobId?:string;clearAvatar?:boolean}) => request<AvatarProfile>('PATCH','/api/v1/profile',{revision,...changes});
-export const createAvatar = (requestId:string,spec:AvatarSpec,baseRevision:number) => request<{id:string}>('POST','/api/v1/avatar',{requestId,spec,baseRevision});
 export type ArtStyle = 'manga' | 'illustration' | 'collage' | 'photographic';
+export type AvatarProfile = g.ProfileOut;
+export const getSelfProfile = () => g.getProfile();
+export const updateSelfProfile = (revision:number,changes:{displayName?:string;presetId?:PresetId;avatarJobId?:string;clearAvatar?:boolean}) => g.updateProfile({revision,...changes});
+export const createAvatar = (requestId:string,spec:AvatarSpec,baseRevision:number) => g.createAvatar({requestId,spec,baseRevision});
 
-export type DreamObject = { label: string; meaning: string };
-export type Emotion = { label: string; pct: number; note: string };
-export type Genre = 'daily' | 'fantasy' | 'scifi' | 'romance' | 'adventure' | 'suspense';
-export type Perspective = 'first-person' | 'observer' | 'mixed' | 'unknown';
-export type Experience = 'lucid' | 'recurring' | 'nightmare';
-export type Features = { version: number; genres: Genre[]; perspective: Perspective; people: string[]; places: string[]; events: string[]; experiences: { kind: Experience; quote: string }[] };
-export type ClassificationOverride = { genres?: Genre[] | null; perspective?: Perspective | null; experiences?: Experience[] | null; tags?: string[] | null };
-export type Analysis = {
-  title: string;
-  cleanText: string;
-  tags: string[];
-  interpretation: string;
-  objects: DreamObject[];
-  emotions: Emotion[];
-  mood?: string;
-  features?: Features;
-};
+export type DreamObject = g.DreamObjectOutput;
+export type Emotion = g.EmotionOutput;
+export type Features = g.FeaturesOutput;
+export type Genre = Features['genres'][number];
+export type Perspective = Features['perspective'];
+export type Experience = Features['experiences'][number]['kind'];
+export type ClassificationOverride = g.ClassificationOverrideInput;
+export type Analysis = Omit<g.AnalysisOut, 'mood' | 'features' | 'analysisId'> & { mood?: string; features?: Features; analysisId?: string };
 
-export type Panel = { caption: string; path: string; url?: string };
-export type Job = { id: string; status: 'running' | 'done' | 'failed'; done: number; total: number; panels: Panel[]; error: string; etaSeconds?: number };
+export type Panel = g.PanelOutput;
+export type Job = g.JobOut;
+export type DreamStatus = g.DreamStatus;
 
-export type Dream = Analysis & {
-  id: string;
-  originalText: string;
+type Recall = '' | 'clear' | 'fragmentary' | 'faint';
+export type Journal = Omit<g.Journal, 'classification' | 'recall'> & { classification?: ClassificationOverride | null; recall?: Recall };
+export type Dream = Analysis & Omit<g.DreamOut, keyof g.AnalysisOut | 'type' | 'style' | 'visibility' | 'createdAt' | 'sleep' | 'revision' | 'journal'> & {
   type: InterpretationType;
   style: ArtStyle;
-  panels: Panel[];
   visibility: 'private' | 'public';
   createdAt: string;
   sleep?: string;
   revision?: number;
   journal?: Journal;
 };
+/** The API sends these fields as free text; the app only ever stores its own values in them. */
+const asDream = (d: g.DreamOut) => d as unknown as Dream;
 
-export type Journal = { dreamedOn: string | null; favorite: boolean; reflection: string; firstText: string; classification?: ClassificationOverride | null; recall?: '' | 'clear' | 'fragmentary' | 'faint';
-  entries: { id: string; text: string; createdAt: string }[]; analysisStale: boolean; artStale: boolean };
-export type JournalPatch = { title?: string; originalText?: string; dreamedOn?: string | null; favorite?: boolean;
-  reflection?: string; addition?: { id: string; text: string }; refresh?: boolean; personal?: boolean;
-  classification?: ClassificationOverride | null; recall?: '' | 'clear' | 'fragmentary' | 'faint' };
+export type JournalPatch = Omit<g.JournalPatch, 'revision' | 'classification' | 'recall'> & { classification?: ClassificationOverride | null; recall?: Recall };
 export const editJournal = (dream: Dream, changes: JournalPatch) =>
-  request<Dream>('PATCH', `/api/v1/dreams/${dream.id}/journal`, { revision: dream.revision ?? 0, ...changes });
-
-async function request<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
-  const headers: Record<string, string> = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const token = await getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const controller = new AbortController();
-  const cancel = () => controller.abort();
-  if (signal?.aborted) cancel();
-  signal?.addEventListener('abort', cancel, { once: true });
-  const timeout = window.setTimeout(cancel, 60_000);
-  try {
-    const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal });
-    if (res.status === 204) return undefined as T;
-    const data = await res.json().catch((cause) => {
-      if (controller.signal.aborted) throw cause;
-      if (res.ok) throw new Error(tr.genericError);
-      return {};
-    });
-    if (!res.ok) throw new ApiError(res.status,data.error ?? tr.genericError,data.code ?? 'internal');
-    return data as T;
-  } catch (cause) {
-    if (controller.signal.aborted && !signal?.aborted) throw new Error(tr.recovery.timeout);
-    throw cause;
-  } finally { window.clearTimeout(timeout); signal?.removeEventListener('abort', cancel); }
-}
+  g.editJournal(dream.id, { revision: dream.revision ?? 0, ...changes }).then(asDream);
 
 export const analyzeDream = (text: string, type: InterpretationType, context?: { mood?: string; sleep?: string; personal?: boolean; excludeId?: string }) =>
-  request<Analysis>('POST', '/api/v1/analyze', { ...context, text, type });
+  g.analyze({ ...context, text, type });
 
-export const cleanText = (text: string) =>
-  request<{ cleanText: string; language: string }>('POST', '/api/v1/clean', { text });
+export const cleanText = (text: string) => g.clean({ text });
 
 export const startManga = (title: string, text: string, style: ArtStyle, panels: number, consistent = true, requestId?: string, signal?: AbortSignal, character?:{useAvatar:boolean;avatarRevision:number;perspective:Perspective}) =>
-  request<{ id: string }>('POST', '/api/v1/manga', { ...character, title, text, style, panels, consistent, requestId }, signal);
+  g.startManga({ ...character, title, text, style, panels, consistent, requestId }, signal);
 
-export const getJob = (id: string, signal?: AbortSignal) => request<Job>('GET', `/api/v1/jobs/${id}`, undefined, signal);
+export const getJob = (id: string, signal?: AbortSignal) => g.getJob(id, signal);
 
-export const getDream = (id: string, signal?: AbortSignal) => request<Dream>('GET', `/api/v1/dreams/${id}`, undefined, signal);
+export const getDream = (id: string, signal?: AbortSignal) => g.getDream(id, signal).then(asDream);
 
-export const saveDream = (originalText: string, type: InterpretationType, analysis: Analysis, style: ArtStyle, panels: Panel[], jobId?: string, visibility: 'private' | 'public' = 'private', id?: string, existing = false) =>
-  request<Dream>(id ? 'PUT' : 'POST', id ? `/api/v1/dreams/${id}?existing=${existing}` : '/api/v1/dreams', { ...analysis, originalText, type, style, jobId, visibility, panels: panels.map(({ caption, path }) => ({ caption, path })) });
+export const getDreamStatus = (id: string, signal?: AbortSignal) => g.dreamStatus(id, signal);
 
-export const redoJobPanel = (id: string, panel: number) =>
-  request<Panel>('POST', `/api/v1/jobs/${id}/panels/${panel}/redo`);
+export const saveDream = (originalText: string, type: InterpretationType, analysis: Analysis, style: ArtStyle, panels: Panel[], jobId?: string, visibility: 'private' | 'public' = 'private', id?: string, existing = false) => {
+  const body: g.DreamIn = { ...analysis, originalText, type, style, jobId, visibility, panels: panels.map(({ caption, path }) => ({ caption, path })) };
+  return (id ? g.putDream(id, body, { existing }) : g.saveDream(body)).then(asDream);
+};
 
-export const redoSavedPanel = (id: string, panel: number) =>
-  request<Panel>('POST', `/api/v1/dreams/${id}/panels/${panel}/redo`);
+export const redoJobPanel = (id: string, panel: number) => g.redoPanel(id, panel);
+
+export const redoSavedPanel = (id: string, panel: number) => g.redoSavedPanel(id, panel);
 
 export async function transcribeAudio(audio: Blob, language?: string, signal?: AbortSignal): Promise<string> {
   const token = await getToken();
@@ -119,15 +78,15 @@ export async function transcribeAudio(audio: Blob, language?: string, signal?: A
   const res = await fetch(`/api/v1/transcribe${query}`, { method: 'POST', headers, body: audio, signal });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, data.error ?? tr.genericError, data.code ?? 'internal');
-  return data.text;
+  return (data as { text: string }).text;  // raw audio upload: outside the generated client
 }
 
-export const listDreams = () => request<{ dreams: Dream[] }>('GET', '/api/v1/dreams').then((r) => r.dreams);
+export const listDreams = () => g.listDreams().then((r) => r.dreams.map(asDream));
 
-export const deleteDream = (id: string) => request<void>('DELETE', `/api/v1/dreams/${id}`);
+export const deleteDream = (id: string) => g.deleteDream(id);
 
-export const trackEvent = (name: ProductEvent, eventId: string, platform: string) =>
-  request<void>('POST', '/api/v1/events', { name, eventId, platform });
+export const trackEvent = (name: ProductEvent, eventId: string, platform: g.EventIn['platform']) =>
+  g.event({ name, eventId, platform });
 
 export async function checkGoogleProvider(): Promise<void> {
   const { url, key } = publicAuthConfig();

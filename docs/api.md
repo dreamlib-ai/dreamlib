@@ -1,6 +1,6 @@
 # API
 
-Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`. Hata her yerde `{"error": "Türkçe mesaj", "code": "makine_kodu"}` ve uygun durum kodu; istemci mesaja değil koda bakar (kodlar aşağıda). Uçlar `/api/v1` altında; eski sürümsüz `/api/...` yolları aynı yanıtı verir, `Deprecation: true` ve yeni yolu gösteren `Link` başlığı taşır, ileride kalkar. Giriş gereken uçlar `Authorization: Bearer <Supabase access token>` ister Jeton backend'de projenin açık anahtarlarıyla (JWKS, ES256) doğrulanır; çıkış yapılmış jeton süresi dolana kadar (1 saat) geçerli kalır (yerelde `DREAMLIB_DEV_AUTH=1` ile `dev-` ile başlayan 12+ karakterli herhangi bir jeton).
+Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`. Hata her yerde `{"error": "Türkçe mesaj", "code": "makine_kodu"}` ve uygun durum kodu; istemci mesaja değil koda bakar (kodlar aşağıda). Yanıt şekilleri `backend/app/contract.py`'de; frontend istemcisi şemadan üretilir (`npm run gen:api`), gerçek yanıtlar `tests/test_contract.py`'de şemaya karşı denetlenir. Uçlar `/api/v1` altında; eski sürümsüz `/api/...` yolları aynı yanıtı verir, `Deprecation: true` ve yeni yolu gösteren `Link` başlığı taşır, ileride kalkar. Giriş gereken uçlar `Authorization: Bearer <Supabase access token>` ister Jeton backend'de projenin açık anahtarlarıyla (JWKS, ES256) doğrulanır; çıkış yapılmış jeton süresi dolana kadar (1 saat) geçerli kalır (yerelde `DREAMLIB_DEV_AUTH=1` ile `dev-` ile başlayan 12+ karakterli herhangi bir jeton).
 
 | Uç | Giriş | Ne yapar |
 | --- | --- | --- |

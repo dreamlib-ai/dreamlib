@@ -65,7 +65,8 @@ def create_app(services: Services | None = None) -> FastAPI:
                 await asyncio.gather(task, return_exceptions=True)
             s.worker = None
 
-    app = FastAPI(title="Dreamlib", docs_url="/docs", redoc_url=None, lifespan=lifespan)
+    app = FastAPI(title="Dreamlib", version="1", docs_url="/docs", redoc_url=None, lifespan=lifespan,
+                  generate_unique_id_function=lambda route: route.name)  # operation ids = function names (S3)
     app.state.services = s
 
     @app.exception_handler(ApiError)

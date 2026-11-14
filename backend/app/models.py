@@ -12,17 +12,20 @@ def _round(v):
 
 
 class DreamObject(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     label: str = ""
     meaning: str = ""
 
 
 class Emotion(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     label: str = ""
     pct: Annotated[int, BeforeValidator(_round)] = 0
     note: str = ""
 
 
 class Analysis(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     title: str = ""
     cleanText: str = ""
     tags: list[str] = []
@@ -35,6 +38,7 @@ class Analysis(BaseModel):
 
 class CleanOut(BaseModel):
     """What the clean task returns."""
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     cleanText: str = ""
     language: str = ""
 
@@ -53,6 +57,9 @@ class Storyboard(BaseModel):
 class Panel(BaseModel):
     """One picture of a booklet. path is a storage path (or, without storage, the remote image
     URL); url is the viewable address, filled in when a dream is sent out."""
+
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True,
+                              json_schema_extra=lambda s, _=None: s.__setitem__("required", [r for r in s.get("required", []) if r != "url"]))
 
     caption: str = ""
     path: str = ""
@@ -97,12 +104,14 @@ class DreamIn(Analysis):
 
 
 class JournalEntry(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     id: str
     text: str = Field(min_length=1, max_length=4000)
     createdAt: datetime
 
 
 class Journal(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     dreamedOn: date | None = None
     favorite: bool = False
     reflection: str = Field(default="", max_length=4000)
