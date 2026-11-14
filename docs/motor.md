@@ -17,7 +17,7 @@ Motor, rüyaları düğümlere (sembol, tema, duygu…) bağlar ve düğümler i
 | `analyses` | Her yorum ayrı satır: pipeline, prompt ve model sürümü, girdi özeti, çıktı, maliyet |
 | `consents` | Rıza defteri: kullanıcı, kapsam, sürüm, verildi, geri çekildi |
 
-`dreams` tablosu sahibinin okuduğu geniş kayıt olarak kalır; ilişki ve arama yeni tablolardan yürür. Mevcut `features` ve `objects` alanları geçişte `dream_entities` satırlarına açılır, eski kayıtlar isteğe bağlı yeniden yorumla dolar.
+`dreams` tablosu sahibinin okuduğu geniş kayıt olarak kalır; ilişki ve arama yeni tablolardan yürür. Yorumun `objects` ve `features` alanları `index` işinde `dream_entities` satırlarına açılır (`app/pipelines/fields.py`): serbest metin `candidate` düğüm, tür ve deneyim onaylı `theme`; kullanıcının düzelttiği sınıflama `user` kaynağıyla. Yorumu olmayan eski kayıtlar isteğe bağlı yeniden yorumla dolar.
 
 ## Yeni ilişki türü eklemek
 

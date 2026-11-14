@@ -1,5 +1,6 @@
 """M3 analyses rows, M4 node links and the background-job lock rule against the real tables."""
 import uuid
+from pathlib import Path
 
 from app.store.analyses import SupabaseAnalyses
 from app.store.entities import Link, Node, SupabaseEntities
@@ -56,3 +57,25 @@ def test_background_jobs_do_not_take_the_user_lock(user):
     sql(f"delete from user_locks where user_id = '{user}'")
     sql(f"insert into jobs (user_id, kind, input, exclusive) values ('{user}', 'manga', '{{}}', true)")
     assert sql(f"select lock_user('{user}', 'tok', 30, true)") == "f"  # a drawing job still does
+
+
+def test_the_dreamers_link_and_the_models_link_live_side_by_side(sb, dream):
+    e = SupabaseEntities(sb)
+    genre = Node("theme", f"test.genre{uuid.uuid4().hex[:6]}", {"tr": "Gerilim", "en": "Suspense"})
+    try:
+        gid = run(e.ensure([genre]))[genre.key]
+        run(e.link(dream, "interpret.features@1", [Link(gid, 1.0, "")]))
+        run(e.link(dream, "user.classification@1", [Link(gid, 1.0, "")], "user"))
+        run(e.link(dream, "interpret.features@1", []))  # clearing the model's rows leaves the dreamer's
+        assert sql(f"select source || '|' || extractor from dream_entities where dream_id = '{dream}'") == "user|user.classification@1"
+    finally:
+        sql(f"delete from entities where key = '{genre.key}'")
+
+
+def test_the_backfill_queues_each_dream_once_behind_user_work(user, dream):
+    path = Path(__file__).parents[3] / "supabase" / "migrations" / "20261114180000_index_backfill.sql"
+    backfill = path.read_text(encoding="utf-8")
+    sql(backfill)
+    sql(backfill)  # running it again adds nothing
+    got = sql(f"select count(*) || '|' || min(priority) || '|' || bool_or(exclusive) from jobs where dream_id = '{dream}' and kind = 'index'")
+    assert got == "1|-1|false"
