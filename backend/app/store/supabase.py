@@ -12,6 +12,7 @@ import httpx
 import jwt
 
 from ..errors import Conflict, NotFound
+from ..imagemeta import describe
 from ..models import Dream, MangaMeta, Panel
 from ..avatar import SelfProfile
 
@@ -25,6 +26,10 @@ JWKS_RETRY = 60  # an unknown key id (a rotation) looks the keys up again at mos
 log = logging.getLogger("dreamlib")
 UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
+
+def thumb_path(path: str) -> str:
+    """Where the 480 px WebP copy of a stored picture lives (G3)."""
+    return f"{path}.t.webp"
 
 class Unauthorized(Exception):
     pass
@@ -291,7 +296,35 @@ class Supabase:
         )
         if up.status_code // 100 != 2:
             raise RuntimeError(f"storage: upload status {up.status_code}: {up.text[:300]}")
+        try:  # G3: layout facts and a thumbnail; a picture is still saved when this fails
+            await self._describe(user_id, path, data)
+        except Exception:
+            log.warning("storage: could not describe %s", path, exc_info=True)
         return path
+
+    async def _describe(self, user_id: str, path: str, data: bytes) -> None:
+        meta = await asyncio.to_thread(describe, data)
+        thumb = thumb_path(path)
+        up = await self.http.post(f"{self.url}/storage/v1/object/{BUCKET}/{thumb}", content=meta.thumb, timeout=60,
+                                  headers={"apikey": self.key, "Authorization": f"Bearer {self.key}", "Content-Type": "image/webp"})
+        if up.status_code // 100 != 2:
+            raise RuntimeError(f"storage: thumb upload status {up.status_code}")
+        row = {"path": path, "user_id": user_id, "width": meta.width, "height": meta.height, "blurhash": meta.blurhash,
+               "color": meta.color, "thumb_path": thumb}
+        res = await self._do("POST", "/rest/v1/images", self.key, json_body=row, prefer="resolution=merge-duplicates,return=minimal")
+        if res.status_code // 100 != 2:
+            raise RuntimeError(f"images: insert status {res.status_code}: {res.text[:300]}")
+
+    async def image_meta(self, paths: list[str]) -> dict[str, dict]:
+        """path -> {width, height, blurhash, color, thumb_path} for the stored pictures that have one."""
+        if not paths:
+            return {}
+        listed = ",".join('"' + p.replace('"', "") + '"' for p in paths)
+        res = await self._do("GET", "/rest/v1/images", self.key, params={
+            "path": f"in.({listed})", "select": "path,width,height,blurhash,color,thumb_path"})
+        if res.status_code != 200:
+            raise RuntimeError(f"images: read status {res.status_code}")
+        return {r["path"]: r for r in res.json()}
 
     async def sign(self, paths: list[str]) -> list[str]:
         """An hour-long viewable URL for each storage path, in the same order ('' when it could not be signed)."""
@@ -307,6 +340,9 @@ class Supabase:
         """Delete stored pictures; paths that are already gone are not an error."""
         if not paths:
             return
-        res = await self._do("DELETE", f"/storage/v1/object/{BUCKET}", self.key, json_body={"prefixes": paths})
+        res = await self._do("DELETE", f"/storage/v1/object/{BUCKET}", self.key,
+                             json_body={"prefixes": paths + [thumb_path(p) for p in paths]})
         if res.status_code // 100 != 2:
             raise RuntimeError(f"storage: remove status {res.status_code}")
+        listed = ",".join('"' + p.replace('"', "") + '"' for p in paths)
+        await self._do("DELETE", "/rest/v1/images", self.key, params={"path": f"in.({listed})"})

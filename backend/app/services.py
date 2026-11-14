@@ -246,6 +246,19 @@ async def sign_panels(s: Services, groups: list[list[Panel]]) -> None:
         return
     for p, u in zip(todo, urls):
         p.url = u
+    if not hasattr(s.blobs, "image_meta"):
+        return
+    try:  # G3: size, placeholder, colour and thumbnail, for the pictures that have them
+        meta = await s.blobs.image_meta(list({p.path for p in todo}))
+        thumbs = [meta[p.path]["thumb_path"] for p in todo if p.path in meta and meta[p.path]["thumb_path"]]
+        signed = dict(zip(thumbs, await s.blobs.sign(thumbs))) if thumbs else {}
+    except Exception:
+        log.warning("images: meta failed", exc_info=True)
+        return
+    for p in todo:
+        if m := meta.get(p.path):
+            p.width, p.height, p.blurhash, p.color = m["width"], m["height"], m["blurhash"], m["color"]
+            p.thumb = signed.get(m["thumb_path"], "")
 
 
 

@@ -47,6 +47,8 @@ Notlar
 - Analiz ve kayıt JSON'unda `features`: sürüm, `genres` (daily/fantasy/scifi/romance/adventure/suspense), `perspective` (first-person/observer/mixed/unknown), people/places/events ve `experiences:[{kind,quote}]`. kind lucid/recurring/nightmare; açık beyanın anlatımdaki alıntısı doğrulanır. Modelin eşanlamlı `type` anahtarı kind'a normalize edilir. Eski kayıtlar version=0 kalır; yeniden yorumla güncellenir.
 - Journal PATCH ek alanları: `classification:{genres?,perspective?,experiences?,tags?}` ve `recall` (boş/clear/fragmentary/faint). Düzeltmeler model verisini silmez; [] bilinçli boş seçimdir, null modele döner. Yeniden yorum düzeltmeleri korur. Yeni kolon: `supabase/migrations/20261102113817_dream_features.sql`. Kişisel yorum geçmişte kullanıcı tarafından düzeltilen temaları kullanır.
 
+Panel nesneleri `{caption, path, url}`; kayıtlı görselin bilgisi varsa ayrıca `width`, `height`, `blurhash`, `color` (#rrggbb) ve `thumb` (480 px WebP, süreli imzalı). Eski görsellerde bu alanlar yoktur.
+
 ## Hata kodları
 
 Kayıt `backend/app/errors.py` (`CODES`); kodu verilmeyen hata durumdan türer. Yeni kod önce oraya ve bu tabloya eklenir.
