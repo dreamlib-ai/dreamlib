@@ -207,6 +207,16 @@ class Supabase:
             params["or"] = f'(created_at.lt."{at}",and(created_at.eq."{at}",id.lt.{last}))'
         return [self._from_row(r) for r in await self._rest("GET", params)]
 
+    async def set_tier(self, user_id: str, dream_id: str, tier: str, version: str) -> str | None:
+        """R1: the dream's consent tier and its ledger rows, in one transaction; None when it is not theirs."""
+        if not UUID.match(dream_id):
+            return None
+        res = await self._do("POST", "/rest/v1/rpc/set_dream_tier", self.key,
+                             json_body={"p_user": user_id, "p_dream": dream_id, "p_tier": tier, "p_version": version})
+        if res.status_code != 200:
+            raise RuntimeError(f"consent: status {res.status_code}: {res.text.strip()[:300]}")
+        return res.json()
+
     async def update_journal(self, user_id: str, d: Dream, revision: int) -> Dream:
         if not UUID.match(d.id):
             raise NotFound()

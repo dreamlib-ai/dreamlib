@@ -33,6 +33,11 @@ export type CleanIn = { text?: string };
 /** What the clean task returns. */
 export type CleanOut = { cleanText: string; language: string };
 
+/** R1: the tier and the version of the consent wording the dreamer was shown (not needed for private). */
+export type ConsentIn = { tier: "private" | "collective" | "public"; textVersion?: string };
+
+export type ConsentOut = { tier: "private" | "collective" | "public"; textVersion: string };
+
 /** What the client sends to save a dream. manga_meta is never taken from the client. */
 export type DreamIn = { title?: string; cleanText?: string; tags?: string[]; mood?: string; interpretation?: string; objects?: DreamObjectInput[]; emotions?: EmotionInput[]; features?: FeaturesInput; originalText?: string; type?: string; sleep?: string; style?: string; visibility?: string; panels?: PanelInput[]; jobId?: string; analysisId?: string };
 
@@ -156,6 +161,14 @@ export const getDream = (dreamId: string, signal?: AbortSignal) =>
 /** DELETE /api/v1/dreams/{dream_id} */
 export const deleteDream = (dreamId: string, signal?: AbortSignal) =>
   request<void>('DELETE', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}`, undefined, signal);
+
+/** GET /api/v1/consent */
+export const consentText = (signal?: AbortSignal) =>
+  request<ConsentOut>('GET', `/api/v1/consent`, undefined, signal);
+
+/** PUT /api/v1/dreams/{dream_id}/consent */
+export const setConsent = (dreamId: string, body: ConsentIn, signal?: AbortSignal) =>
+  request<ConsentOut>('PUT', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}/consent`, body, signal);
 
 /** GET /api/v1/dreams/{dream_id}/status */
 export const dreamStatus = (dreamId: string, signal?: AbortSignal) =>

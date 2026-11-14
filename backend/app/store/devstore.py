@@ -13,6 +13,7 @@ class DevStore:
     def __init__(self):
         self.dreams: dict[str, list[Dream]] = {}  # user -> dreams
         self.profiles: dict[str, SelfProfile] = {}
+        self.consents: list[dict] = []  # R1 ledger: {dream_id, scope, version, withdrawn}
 
     async def get_profile(self, user_id: str) -> SelfProfile:
         return self.profiles.get(user_id, SelfProfile(id=user_id)).model_copy(deep=True)
@@ -56,6 +57,22 @@ class DevStore:
         if before:
             mine = [d for d in mine if (d.createdAt, d.id) < before]
         return [d.model_copy(deep=True) for d in mine[:min(max(limit, 1), 1000)]]
+
+    async def set_tier(self, user_id: str, dream_id: str, tier: str, version: str) -> str | None:
+        """The same ledger as set_dream_tier, in memory: [{dream_id, scope, version, withdrawn}]."""
+        ledger = self.consents
+        for d in self.dreams.get(user_id, []):
+            if d.id == dream_id:
+                scopes = {"public": ["collective", "public"], "collective": ["collective"]}.get(tier, [])
+                for row in ledger:
+                    if row["dream_id"] == dream_id and not row["withdrawn"] and (row["scope"] not in scopes or row["version"] != version):
+                        row["withdrawn"] = True
+                for scope in scopes:
+                    if not any(r["dream_id"] == dream_id and r["scope"] == scope and not r["withdrawn"] for r in ledger):
+                        ledger.append({"dream_id": dream_id, "scope": scope, "version": version, "withdrawn": False})
+                d.visibility = tier
+                return tier
+        return None
 
     async def update_journal(self, user_id: str, d: Dream, revision: int) -> Dream:
         for i, prior in enumerate(self.dreams.get(user_id, [])):

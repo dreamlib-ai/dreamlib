@@ -18,7 +18,8 @@ from ..providers.fake import PLACEHOLDER_PREFIX, FakeFal
 from ..services import MAX_DREAM, Services, current_user, remove_files, services, sign_panels
 
 log = logging.getLogger("dreamlib")
-from ..contract import answers, DreamList, DreamOut, DreamStatus
+from ..consent import CONSENT_VERSION, ONBOARDING_VERSION, TIERS
+from ..contract import answers, ConsentIn, ConsentOut, DreamList, DreamOut, DreamStatus
 
 router = APIRouter()
 
@@ -88,9 +89,12 @@ async def save_record(body: DreamIn, user_id: str, s: Services, dream_id: str = 
         d.type = d.type or "universal"
         if d.type not in INTERPRETATION_HINTS:
             raise ApiError(400, "bilinmeyen yorum türü")
-        d.visibility = d.visibility or "private"  # dreams are private unless the user opens them up
-        if d.visibility not in ("private", "public"):
+        wanted = d.visibility or "private"  # dreams are private unless the user opens them up
+        if wanted not in TIERS:
             raise ApiError(400, "bilinmeyen görünürlük")
+        # R1: the tier changes only through the consent ledger; a new dream takes the onboarding choice once
+        # it exists, an existing one keeps its tier whatever a later save sends
+        d.visibility = previous.visibility if previous else "private"
         d.style = d.style or "manga"
         if d.style not in STYLE_HINTS:
             raise ApiError(400, "bilinmeyen stil")
@@ -124,6 +128,11 @@ async def save_record(body: DreamIn, user_id: str, s: Services, dream_id: str = 
                 await s.queue.update(job.id, {"state": {**job.state, "saved": True, "savedDreamId": saved.id}})
             except Exception:
                 log.warning("dreams: could not mark job %s saved", job.id, exc_info=True)
+        if not previous and wanted != saved.visibility:
+            try:
+                saved.visibility = await s.store.set_tier(user_id, saved.id, wanted, ONBOARDING_VERSION) or saved.visibility
+            except Exception:
+                log.warning("consent: could not open %s up; it stays private", saved.id, exc_info=True)
         # Do not delete replaced image paths here: legacy records may share them.
         await after_save(s, user_id, saved.id, saved.revision, body.analysisId, [p.path for p in saved.panels])
     await sign_panels(s, [saved.panels])
@@ -181,6 +190,28 @@ async def get_dream(dream_id: str, user_id: str = Depends(current_user), s: Serv
     d = await _load(s, user_id, dream_id)
     await sign_panels(s, [d.panels])
     return d.public()
+
+
+@router.get("/consent", **answers(ConsentOut, 200))
+async def consent_text(user_id: str = Depends(current_user)):
+    """R1: the consent wording's current version; a dream opened up must send it back."""
+    return {"tier": "private", "textVersion": CONSENT_VERSION}
+
+
+@router.put("/dreams/{dream_id}/consent", **answers(ConsentOut, 200))
+async def set_consent(dream_id: str, body: ConsentIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
+    """R1: the dream's tier. Opening it up needs the version of the wording the dreamer saw; lowering it withdraws
+    consent and closes its public magazine in the same transaction."""
+    if body.tier != "private" and body.textVersion != CONSENT_VERSION:
+        raise ApiError(409, "rıza metni değişti; güncel metni gösterip yeniden sor")
+    try:
+        tier = await s.store.set_tier(user_id, dream_id, body.tier, body.textVersion or CONSENT_VERSION)
+    except Exception:
+        log.exception("consent: set failed")
+        raise ApiError(502, "rıza kaydedilemedi")
+    if tier is None:
+        raise ApiError(404, "rüya bulunamadı")
+    return {"tier": tier, "textVersion": CONSENT_VERSION}
 
 
 @router.get("/dreams/{dream_id}/status", **answers(DreamStatus, 200))
