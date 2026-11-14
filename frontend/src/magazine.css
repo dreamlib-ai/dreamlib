@@ -7,6 +7,17 @@
 .shared-page h1 { margin:0; font-size:22px; font-weight:500; letter-spacing:-.05em; }
 .shared-page .go { display:inline-flex; align-items:center; min-height:50px; padding:14px 23px; border-radius:28px; background:#f3c84b; color:#102343; font-size:12px; text-decoration:none; }
 
+/* F2: last year's magazine of this night, above the library */
+.app-shell .anniversary { display:flex; align-items:center; gap:16px; width:100%; max-width:520px; margin:0 0 26px; padding:12px; border:1px solid #f3c84b55; border-radius:14px; background:#f3c84b0d; color:#f6f1e6; text-align:left; cursor:pointer; }
+.app-shell .anniversary:hover { background:#f3c84b1a; }
+.app-shell .anniversary:focus-visible { outline:2px solid #f3c84b; outline-offset:3px; }
+.app-shell .anniversary-cover { display:block; width:64px; flex-shrink:0; overflow:hidden; border-radius:8px; background:#16264a center / cover no-repeat; }
+.app-shell .anniversary-cover img { display:block; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .35s; }
+.app-shell .anniversary-cover img.shown { opacity:1; }
+.app-shell .anniversary span { display:grid; gap:6px; min-width:0; }
+.app-shell .anniversary small { color:#f3c84b; font-size:11px; }
+.app-shell .anniversary b { font-size:15px; font-weight:500; line-height:1.4; overflow-wrap:anywhere; }
+
 /* G5 magazine reader: one sheet at a time on the night page; layouts are named in the spec (G4). */
 .app-shell .read-magazine { gap:10px; margin:22px 0 4px; }
 .app-shell .read-magazine .icon { width:18px; height:18px; }

@@ -58,6 +58,11 @@ class DevStore:
             mine = [d for d in mine if (d.createdAt, d.id) < before]
         return [d.model_copy(deep=True) for d in mine[:min(max(limit, 1), 1000)]]
 
+    async def dream_ids_on(self, user_id: str, day: str, start: datetime, end: datetime) -> list[str]:
+        mine = sorted(self.dreams.get(user_id, []), key=lambda d: d.createdAt)
+        dated = [d.id for d in mine if d.journal.dreamedOn and d.journal.dreamedOn.isoformat() == day]
+        return dated + [d.id for d in mine if not d.journal.dreamedOn and start <= d.createdAt < end]
+
     async def rows_of(self, user_id: str, table: str, select: str = "*", limit: int = 5000) -> list[dict]:
         if table == "consents":
             mine = {d.id for d in self.dreams.get(user_id, [])}

@@ -87,6 +87,7 @@ globalThis.fetch = async (input, init) => {
     if (index < 0) rows.push(saved); else rows[index] = saved;
     persist(); return json(saved);
   }
+  if (path === '/api/v1/magazines/anniversary') return params.has('magazine') ? json(fakeMagazine(rows[0])) : json({ error:'yok', code:'not_found' }, 404);
   if (path.startsWith('/api/v1/m/')) {
     return params.has('gone') ? json({ error:'bu dergi paylaşılmıyor', code:'not_found' }, 404) : json({ spec: fakeMagazine(bookletRow()).spec, panels: bookletRow().panels.map(({ caption, url, width, height, color, blurhash }) => ({ caption, url, thumb: url, width, height, color, blurhash })) });
   }

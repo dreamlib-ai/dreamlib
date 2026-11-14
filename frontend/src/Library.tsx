@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { deleteDream, listDreamPage, type Dream, type Panel } from './api';
 import Picture from './Picture';
-import Magazine, { ShareMagazine, useMagazine } from './Magazine';
+import Magazine, { Anniversary, ShareMagazine, useMagazine } from './Magazine';
 import { placeCards, wallColumns } from './wall';
 import Result from './Result';
 import Icon from './Icon';
@@ -152,6 +152,7 @@ export function LibraryShelf({ dreams, error = '', onTell, onOpen, hasMore = fal
   });
   return <div className="library-content view-transition">
     <header className="page-heading"><h1>{text.heading}</h1>{dreams && dreams.length > 0 && <button className="new-dream" onClick={onTell} aria-label={tr.app.newDream}><Icon name="plus" /></button>}</header>
+    {dreams && dreams.length > 0 && <Anniversary />}
     {themes.length > 0 && <section className="recurring-themes" aria-label={tr.personal.themes}><h2>{tr.personal.themes}</h2><div>
       {themes.map(theme => <button key={theme.label} aria-pressed={themeFilter === theme.label} onClick={() => { setThemeFilter(themeFilter === theme.label ? null : theme.label); setQuery(''); setFilter('all'); }}><span>{theme.label}</span><small>{tr.personal.count(theme.count)}</small></button>)}
     </div></section>}
