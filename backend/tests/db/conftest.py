@@ -62,6 +62,15 @@ def sb():
 
 
 @pytest.fixture
+def other():
+    """A second auth user, for checks that one person never reaches another's rows."""
+    uid = str(uuid.uuid4())
+    sql(f"insert into auth.users (id, email) values ('{uid}', '{uid}@test.local')")
+    yield uid
+    sql(f"delete from auth.users where id = '{uid}'")
+
+
+@pytest.fixture
 def user():
     """A fresh auth user; its jobs, dreams and usage rows go with it."""
     uid = str(uuid.uuid4())

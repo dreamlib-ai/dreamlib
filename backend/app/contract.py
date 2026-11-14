@@ -196,6 +196,21 @@ class SharedMagazineOut(BaseModel):
     panels: list[SharedPanel]
 
 
+Tier = Literal["private", "collective", "public"]
+
+
+class ConsentIn(BaseModel):
+    """R1: the tier and the version of the consent wording the dreamer was shown (not needed for private)."""
+    tier: Tier
+    textVersion: str = ""
+
+
+class ConsentOut(BaseModel):
+    model_config = OUT
+    tier: Tier
+    textVersion: str  # the current wording's version
+
+
 def answers(model: type[BaseModel] | None, status: int = 200) -> dict:
     """Route kwargs that document `model` as the answer without making FastAPI validate or filter it."""
     if model is None:

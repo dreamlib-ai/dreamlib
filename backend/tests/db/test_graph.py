@@ -17,14 +17,6 @@ def embed(dream: str, vec: list[float], model: str = "test-3") -> None:
         f"values ('{dream}', 'narrative', '{model}', {len(vec)}, '{vec}')")
 
 
-@pytest.fixture
-def other():
-    uid = str(uuid.uuid4())
-    sql(f"insert into auth.users (id, email) values ('{uid}', '{uid}@test.local')")
-    yield uid
-    sql(f"delete from auth.users where id = '{uid}'")
-
-
 def test_neighbors_are_nearest_first_and_only_the_owners(sb, user, other):
     a, near, far, mine_other_model = (new_dream(user) for _ in range(4))
     stranger = new_dream(other)
