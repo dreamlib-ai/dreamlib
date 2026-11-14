@@ -90,6 +90,8 @@ export type BrainDream = g.BrainDream;
 export type BrainLink = g.BrainLink;
 export type Relation = g.BrainLink['relation'];
 export const getBrain = (signal?: AbortSignal) => g.brain(signal);
+/** BG4: link two dreams by hand, or hide a scored link between them; answers the new graph. */
+export const editBrain = (a: string, b: string, action: 'link' | 'hide', on = true) => g.editBrain({ a, b, action, on });
 
 export const trackEvent = (name: ProductEvent, eventId: string, platform: g.EventIn['platform']) =>
   g.event({ name, eventId, platform });

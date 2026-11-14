@@ -41,6 +41,13 @@
 .brain-card li button:hover { background: #f6f1e622; }
 .brain-card li strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .brain-card li small { color: #f6f1e6b3; font-size: 12px; }
+.brain-card li { display: flex; gap: 6px; align-items: stretch; }
+.brain-card li button:first-child { flex: 1; min-width: 0; }
+.brain-card li .brain-unlink { display: block; width: 36px; padding: 0; text-align: center; flex: none; border: 0; border-radius: var(--radius-small); background: #f6f1e60d; color: #f6f1e6b3; font-size: 18px; cursor: pointer; }
+.brain-card li .brain-unlink:hover { background: #f29bbb33; color: var(--paper); }
+.brain-connect, .brain-pick button { margin-top: 12px; min-height: 36px; padding: 0 14px; border: 1px solid #f6f1e655; border-radius: 999px; background: none; color: var(--paper); font: inherit; font-size: 13px; cursor: pointer; }
+.brain-pick { margin: 12px 0 0; color: var(--accent) !important; }
+.brain-pick button { margin: 0 0 0 8px; }
 .brain-close { position: absolute; top: 8px; right: 10px; width: 36px; height: 36px; border: 0; background: none; font-size: 22px; color: var(--paper); cursor: pointer; }
 
 .brain-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; padding: 0; }

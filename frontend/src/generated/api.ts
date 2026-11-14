@@ -15,11 +15,14 @@ export type AvatarSpecOutput = { skin: "light" | "warm" | "olive" | "deep"; face
 
 export type BrainDream = { id: string; title: string; dated: string; emotions: string[]; thumbnail: string; degree: number };
 
+/** BG4: the dreamer links two dreams (link) or hides a scored link between them (hide); on=false undoes it. */
+export type BrainEdit = { a: string; b: string; action: "link" | "hide"; on?: boolean };
+
 export type BrainEvidence = { shared?: SharedNode[]; days?: number };
 
-export type BrainLink = { relation: "shares_content" | "shares_concept" | "shares_emotion" | "near_in_time"; source: string; target: string; weight: number; evidence: BrainEvidence };
+export type BrainLink = { relation: "shares_content" | "shares_concept" | "shares_emotion" | "near_in_time" | "series"; source: string; target: string; weight: number; evidence: BrainEvidence };
 
-export type BrainOut = { relations: Array<"shares_content" | "shares_concept" | "shares_emotion" | "near_in_time">; dreams: BrainDream[]; links: BrainLink[] };
+export type BrainOut = { relations: Array<"shares_content" | "shares_concept" | "shares_emotion" | "near_in_time" | "series">; dreams: BrainDream[]; links: BrainLink[] };
 
 export type ClassificationOverrideInput = { genres?: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense"> | null; perspective?: "first-person" | "observer" | "mixed" | "unknown" | null; experiences?: Array<"lucid" | "recurring" | "nightmare"> | null; tags?: string[] | null };
 
@@ -165,3 +168,7 @@ export const createAvatar = (body: AvatarIn, signal?: AbortSignal) =>
 /** GET /api/v1/brain */
 export const brain = (signal?: AbortSignal) =>
   request<BrainOut>('GET', `/api/v1/brain`, undefined, signal);
+
+/** POST /api/v1/brain/links */
+export const editBrain = (body: BrainEdit, signal?: AbortSignal) =>
+  request<BrainOut>('POST', `/api/v1/brain/links`, body, signal);

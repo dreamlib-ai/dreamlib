@@ -121,7 +121,7 @@ def test_the_brain_answer_holds_every_dream_and_its_links(brain_api):
     brain = res.json()
     spec = client.app.openapi()
     check(spec, spec["paths"]["/api/v1/brain"]["get"]["responses"]["200"]["content"]["application/json"]["schema"], brain)
-    assert brain["relations"] == ["shares_content", "shares_concept", "shares_emotion", "near_in_time"]
+    assert brain["relations"] == ["shares_content", "shares_concept", "shares_emotion", "near_in_time", "series"]
     nodes = {d["id"]: d for d in brain["dreams"]}
     assert [d["id"] for d in brain["dreams"]] == [a["id"], b["id"], c["id"]]  # by the day dreamt
     assert nodes[a["id"]]["dated"] == "2026-10-01" and nodes[a["id"]]["emotions"] == ["apprehension"]
@@ -136,3 +136,28 @@ def test_the_brain_needs_accounts(api):
     client, _ = api
     assert client.get("/api/v1/brain").status_code == 401
     assert client.get("/api/v1/brain", headers=auth()).json()["code"] == "service_off"
+
+
+def test_the_dreamer_links_and_hides_by_hand(brain_api):
+    client, s = brain_api
+    a = save(client, s, "Denizde annemle yüzdüm, çok korktum.", ["deniz", "anne"], 1)
+    b = save(client, s, "Yine deniz ve annem vardı, korktum.", ["deniz", "anne"], 12)
+    c = save(client, s, "Bir kütüphanede kitap okudum.", ["kitap"], 25)
+    edit = lambda x, y, action, on=True: client.post("/api/v1/brain/links", headers=auth(),
+                                                     json={"a": x["id"], "b": y["id"], "action": action, "on": on})
+    linked = edit(c, a, "link").json()
+    mine = [l for l in linked["links"] if l["relation"] == "series"]
+    assert len(mine) == 1 and {mine[0]["source"], mine[0]["target"]} == {a["id"], c["id"]}
+    assert next(d for d in linked["dreams"] if d["id"] == c["id"])["degree"] == 1  # no longer floating
+
+    hidden = edit(b, a, "hide").json()
+    pair = {a["id"], b["id"]}
+    assert not any({l["source"], l["target"]} == pair for l in hidden["links"])  # every scored link of the pair hidden
+    shown = edit(a, b, "hide", on=False).json()
+    assert any({l["source"], l["target"]} == pair for l in shown["links"])
+
+    save(client, s, "Yine deniz ve annem vardı, korktum.", ["deniz", "anne"], 2)  # re-scoring keeps the hand-made link
+    assert any(l["relation"] == "series" for l in client.get("/api/v1/brain", headers=auth()).json()["links"])
+    assert edit(a, a, "link").json()["code"] == "invalid_request"
+    other = client.post("/api/v1/dreams", headers=auth("dev-someone-else-entirely"), json=DREAM).json()
+    assert edit(a, other, "link").status_code == 404
