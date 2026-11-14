@@ -53,3 +53,18 @@ def test_english_claims_match_despite_turkish_lower_casing():
     text = 'I knew I was dreaming, so I flew. I had the same dream again.'
     f = Features(experiences=[{'kind': 'lucid', 'quote': 'I knew I was dreaming'}, {'kind': 'recurring', 'quote': 'I had the same dream again'}])
     assert [e.kind for e in grounded_features(f, text).experiences] == ['lucid', 'recurring']
+
+
+def test_version_two_reads_old_records_and_keeps_new_classes_tidy():
+    old = Features.model_validate({'version': 1, 'genres': ['daily']})
+    assert (old.characters, old.interactions, old.outcome, old.place, old.agency) == ([], [], 'none', 'unknown', 'unknown')
+    new = Features.model_validate({'version': 2, 'characters': [{'role': 'familiar', 'label': 'Annem'}, {'role': 'familiar', 'label': 'annem '},
+                                                                {'role': 'animal', 'label': 'kedi'}],
+                                   'interactions': ['aggressive', 'aggressive'], 'outcome': 'misfortune', 'place': 'distorted', 'agency': 'passive'})
+    tidy = grounded_features(new, 'Annemle eski evdeydik, bir kedi bize saldırdı.')
+    assert [(c.role, c.label) for c in tidy.characters] == [('familiar', 'Annem'), ('animal', 'kedi')]
+    assert tidy.interactions == ['aggressive'] and tidy.outcome == 'misfortune'
+    import pytest
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        Features.model_validate({'version': 2, 'characters': [{'role': 'boss', 'label': 'x'}]})

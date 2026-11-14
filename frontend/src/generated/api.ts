@@ -27,6 +27,8 @@ export type BrainLink = { relation: "shares_content" | "shares_concept" | "share
 
 export type BrainOut = { relations: Array<"shares_content" | "shares_concept" | "shares_emotion" | "near_in_time" | "series">; dreams: BrainDream[]; links: BrainLink[] };
 
+export type Character = { role: "familiar" | "stranger" | "animal" | "deceased" | "imaginary"; label: string };
+
 export type ClassificationOverrideInput = { genres?: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense"> | null; perspective?: "first-person" | "observer" | "mixed" | "unknown" | null; experiences?: Array<"lucid" | "recurring" | "nightmare"> | null; tags?: string[] | null };
 
 export type ClassificationOverrideOutput = { genres: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense"> | null; perspective: "first-person" | "observer" | "mixed" | "unknown" | null; experiences: Array<"lucid" | "recurring" | "nightmare"> | null; tags: string[] | null };
@@ -64,9 +66,9 @@ export type EventIn = { name: "session_open" | "record_started" | "transcript_re
 
 export type ExperienceEvidence = { kind: "lucid" | "recurring" | "nightmare"; quote: string };
 
-export type FeaturesInput = { version?: number; genres?: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense">; perspective?: "first-person" | "observer" | "mixed" | "unknown"; people?: string[]; places?: string[]; events?: string[]; experiences?: ExperienceEvidence[] };
+export type FeaturesInput = { version?: number; genres?: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense">; perspective?: "first-person" | "observer" | "mixed" | "unknown"; people?: string[]; places?: string[]; events?: string[]; experiences?: ExperienceEvidence[]; characters?: Character[]; interactions?: Array<"aggressive" | "friendly">; outcome?: "success" | "failure" | "misfortune" | "good_fortune" | "none"; place?: "familiar" | "unfamiliar" | "distorted" | "unknown"; agency?: "active" | "passive" | "unknown" };
 
-export type FeaturesOutput = { version: number; genres: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense">; perspective: "first-person" | "observer" | "mixed" | "unknown"; people: string[]; places: string[]; events: string[]; experiences: ExperienceEvidence[] };
+export type FeaturesOutput = { version: number; genres: Array<"daily" | "fantasy" | "scifi" | "romance" | "adventure" | "suspense">; perspective: "first-person" | "observer" | "mixed" | "unknown"; people: string[]; places: string[]; events: string[]; experiences: ExperienceEvidence[]; characters: Character[]; interactions: Array<"aggressive" | "friendly">; outcome: "success" | "failure" | "misfortune" | "good_fortune" | "none"; place: "familiar" | "unfamiliar" | "distorted" | "unknown"; agency: "active" | "passive" | "unknown" };
 
 export type ImagesIn = { prompt?: string; style?: string; count?: number };
 
