@@ -161,7 +161,7 @@ class MagazineSpecOut(BaseModel):
 
 
 class MagazineOut(BaseModel):
-    model_config = OUT
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("shareSlug"))
     id: str
     dreamId: str
     status: Literal["ready", "withdrawn"]
@@ -169,6 +169,19 @@ class MagazineOut(BaseModel):
     spec: MagazineSpecOut
     panels: list[Panel]  # signed, with G3 layout facts
     updatedAt: datetime
+    shareSlug: str = ""  # G6: only while it is shared; the page is /m/{shareSlug}
+
+
+class MagazineShare(BaseModel):
+    """G6: private closes the link (the slug is kept, so sharing again gives the same address back)."""
+    visibility: Literal["private", "link"]
+
+
+class SharedMagazineOut(BaseModel):
+    """G6: what anyone with the link reads; no owner, no dream id, no raw narration."""
+    model_config = OUT
+    spec: MagazineSpecOut
+    panels: list[Panel]
 
 
 def answers(model: type[BaseModel] | None, status: int = 200) -> dict:

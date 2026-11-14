@@ -65,7 +65,7 @@ Bugünkü manga kitapçığı derginin içeriğidir; dergi ona kapak, sayfa düz
 - `spec` yapısaldır: kapak (başlık, görsel, baskın renk), sayfalar (düzen adı, panel, altyazı, alıntı, ikonlar), künye. Okuyucu bunu istemcide çizer; sayfa çevirme animasyonu sunum katmanıdır ve sunucu bilmez.
 - Sayfa düzenleri adlandırılmış küçük bir kümedir; yeni düzen eklemek veri değil istemci işidir.
 - `magazine` işi (yapıldı, G4): kitapçıklı rüya kaydedilince, düzenlenince ya da panel yeniden çizilince kaydedilen panellerden `spec` kurar; model ve görsel ücreti yok. Kapak şimdilik ilk panel; ayrı kapak çizimi ücretli olduğu için sonraya.
-- Paylaşım: `link` yalnız adresi bilenle, `public` herkese açık kütüphanede. Paylaşılan sayfa kapaktan önizleme görseli taşır. Ham anlatım paylaşılmaz; altyazılar paylaşılır.
+- Paylaşım (G6, `link` yapıldı): `link` yalnız adresi bilenle, `public` herkese açık kütüphanede (K5). Paylaşılan sayfa kapaktan önizleme görseli taşır. Ham anlatım paylaşılmaz; altyazılar paylaşılır.
 - Yayın öncesi kontrol: fal içerik bayrağı ve bir moderasyon çağrısı; şikâyet ve geri çekme ucu.
 - PDF ya da görsel olarak indirme ayrı bir iş türü olarak sonra gelir.
 

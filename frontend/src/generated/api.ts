@@ -76,9 +76,12 @@ export type MagazineColophon = { dated: string; style: string; tags: string[]; e
 
 export type MagazineCover = { title: string; panel: number; color: string };
 
-export type MagazineOut = { id: string; dreamId: string; status: "ready" | "withdrawn"; visibility: "private" | "link" | "public"; spec: MagazineSpecOut; panels: PanelOutput[]; updatedAt: string };
+export type MagazineOut = { id: string; dreamId: string; status: "ready" | "withdrawn"; visibility: "private" | "link" | "public"; spec: MagazineSpecOut; panels: PanelOutput[]; updatedAt: string; shareSlug?: string };
 
 export type MagazinePage = { layout: "full" | "wide" | "pair" | "quote"; panels: number[]; text: string };
+
+/** G6: private closes the link (the slug is kept, so sharing again gives the same address back). */
+export type MagazineShare = { visibility: "private" | "link" };
 
 /** What the reader draws; page and cover panels are indexes into the answer's `panels`. */
 export type MagazineSpecOut = { version: number; cover: MagazineCover; pages: MagazinePage[]; colophon: MagazineColophon };
@@ -94,6 +97,9 @@ export type PanelOutput = { caption: string; path: string; url?: string; width?:
 export type ProfileOut = { id: string; displayName: string; avatar: AvatarSpecOutput | null; presetId: "dawn" | "moss" | "copper" | "ink" | null; revision: number; avatarUrl: string };
 
 export type ProfilePatch = { revision: number; displayName?: string | null; presetId?: "dawn" | "moss" | "copper" | "ink" | null; avatarJobId?: string | null; clearAvatar?: boolean };
+
+/** G6: what anyone with the link reads; no owner, no dream id, no raw narration. */
+export type SharedMagazineOut = { spec: MagazineSpecOut; panels: PanelOutput[] };
 
 export type SharedNode = { kind: string; key: string; label: string };
 
@@ -187,3 +193,15 @@ export const editBrain = (body: BrainEdit, signal?: AbortSignal) =>
 /** GET /api/v1/dreams/{dream_id}/magazine */
 export const magazine = (dreamId: string, signal?: AbortSignal) =>
   request<MagazineOut>('GET', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}/magazine`, undefined, signal);
+
+/** PUT /api/v1/dreams/{dream_id}/magazine/visibility */
+export const shareMagazine = (dreamId: string, body: MagazineShare, signal?: AbortSignal) =>
+  request<MagazineOut>('PUT', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}/magazine/visibility`, body, signal);
+
+/** GET /api/v1/m/{slug} */
+export const sharedMagazine = (slug: string, signal?: AbortSignal) =>
+  request<SharedMagazineOut>('GET', `/api/v1/m/${encodeURIComponent(String(slug))}`, undefined, signal);
+
+/** GET /api/v1/m/{slug}/cover */
+export const sharedCover = (slug: string, signal?: AbortSignal) =>
+  request<void>('GET', `/api/v1/m/${encodeURIComponent(String(slug))}/cover`, undefined, signal);

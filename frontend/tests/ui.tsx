@@ -9,6 +9,7 @@ import '../src/atmosphere.css';
 import '../src/editorial.css';
 import '../src/magazine.css';
 import { Workspace } from '../src/App';
+import { SharedMagazinePage } from '../src/Magazine';
 import Onboarding from '../src/Onboarding';
 import type { Dream } from '../src/api';
 import { defaultAvatar } from '../src/avatar';
@@ -31,6 +32,7 @@ const bookletRow = (): Dream => ({ ...dream, id:'booklet', title:'Denizin üstü
 const fakeMagazine = (row: Dream) => ({ id:'mag-1', dreamId:row.id, status:'ready', visibility:'private', updatedAt:'2026-11-14T07:00:00Z', panels: row.panels,
   spec: { version:1, cover:{ title:row.title, panel:0, color:'#203252' }, colophon:{ dated:'2026-11-13', style:'manga', tags:row.tags, emotions:['Huzur','Merak'] },
     pages:[{layout:'full',panels:[0],text:''},{layout:'pair',panels:[1,2],text:''},{layout:'quote',panels:[],text:'Denizin üstünde uçmak, özgürlük isteğini ve bilinmeyene duyulan merakı çağrıştırabilir.'},{layout:'full',panels:[3],text:''},{layout:'full',panels:[4],text:''}] } });
+const shareState = { visibility: 'private' };
 const rows: Dream[] = params.has('magazine') ? [bookletRow()] : params.has('themes') ? [dream, { ...dream, id:'second-dream', title:'Ormandaki ışık', tags:['DENİZ','orman'], features:{...dream.features,genres:['scifi']} }, { ...dream, id:'third-dream', title:'Eski ev', tags:['ev'], features:{...dream.features,genres:['daily']}, emotions:[{label:'Korku',pct:100,note:''}] }] : params.has('populated') ? [dream] : params.has('wall') ? wallRows() : fake.rows;
 const persist = () => { localStorage.setItem(testKey, JSON.stringify({ ...fake, rows })); trace(); };
 const calls: { path: string; method: string; bytes?: number; text?: string }[] = [];
@@ -71,11 +73,20 @@ globalThis.fetch = async (input, init) => {
   }
   if (path === '/api/v1/analyze') return json(dream);
   if (path === '/api/v1/dreams' && init?.method === 'POST') { const saved = { ...dream, ...payload }; rows.push(saved); return json(saved); }
+  if (path.endsWith('/magazine/visibility') && init?.method === 'PUT') {
+    const row = rows.find(d => d.id === path.split('/')[4]);
+    if (!row) return json({ error:'bu rüyanın dergisi yok', code:'not_found' }, 404);
+    shareState.visibility = payload.visibility;
+    return json({ ...fakeMagazine(row), visibility: shareState.visibility, ...(shareState.visibility === 'link' ? { shareSlug: 'abcDEF123_-x' } : {}) });
+  }
   if (path.startsWith('/api/v1/dreams/') && init?.method === 'PUT') {
     const saved = { ...dream, ...payload, id: path.split('/').pop(), panels: (payload.panels ?? []).map((p: object) => ({ ...p, url:'/favicon.png' })) };
     const index = rows.findIndex(row => row.id === saved.id);
     if (index < 0) rows.push(saved); else rows[index] = saved;
     persist(); return json(saved);
+  }
+  if (path.startsWith('/api/v1/m/')) {
+    return params.has('gone') ? json({ error:'bu dergi paylaşılmıyor', code:'not_found' }, 404) : json({ spec: fakeMagazine(bookletRow()).spec, panels: bookletRow().panels });
   }
   if (path.startsWith('/api/v1/dreams/') && path.endsWith('/magazine')) {
     const row = rows.find(d => d.id === path.split('/')[4]);
@@ -135,6 +146,6 @@ Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { 
   return destination.stream;
 } } });
 const account = { id: 'test', email: '', provider: '', profile: { onboarded: true, visibility: 'private' as const } };
-createRoot(document.getElementById('root')!).render(<StrictMode>{params.has('onboarding') || params.has('privacy')
+createRoot(document.getElementById('root')!).render(<StrictMode>{params.has('shared') ? <SharedMagazinePage slug="abcDEF123_-x" /> : params.has('onboarding') || params.has('privacy')
   ? <Onboarding account={params.has('privacy') ? account : null} replay={false} initialError="" onDone={async () => {}} />
   : <Workspace account={account} onSignOut={() => {}} />}</StrictMode>);

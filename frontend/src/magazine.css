@@ -1,3 +1,12 @@
+/* G6 sharing: under the read button in the dream's page; the shared page itself is only the reader. */
+.app-shell .magazine-share { display:grid; justify-items:start; gap:10px; margin:6px 0 18px; }
+.app-shell .magazine-share p { margin:0; max-width:52ch; color:#afc0d9; font-size:12px; line-height:1.8; }
+.app-shell .share-link { display:flex; gap:8px; width:100%; max-width:520px; }
+.app-shell .share-link input { flex:1; min-width:0; min-height:44px; padding:0 14px; border:1px solid #f6f1e633; border-radius:12px; background:#f6f1e608; color:#f6f1e6; font:inherit; font-size:12px; }
+.shared-page { display:grid; place-content:center; justify-items:center; gap:22px; min-height:100svh; padding:24px 16px; background:#0b1730; color:#f6f1e6; font-family:var(--font); text-align:center; }
+.shared-page h1 { margin:0; font-size:22px; font-weight:500; letter-spacing:-.05em; }
+.shared-page .go { display:inline-flex; align-items:center; min-height:50px; padding:14px 23px; border-radius:28px; background:#f3c84b; color:#102343; font-size:12px; text-decoration:none; }
+
 /* G5 magazine reader: one sheet at a time on the night page; layouts are named in the spec (G4). */
 .app-shell .read-magazine { gap:10px; margin:22px 0 4px; }
 .app-shell .read-magazine .icon { width:18px; height:18px; }

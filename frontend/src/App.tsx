@@ -5,6 +5,7 @@ import { clearAvatarDraft } from './avatar';
 import Brain from './Brain';
 import Library from './Library';
 import Onboarding from './Onboarding';
+import { SharedMagazinePage } from './Magazine';
 import type { Profile } from './profile';
 import { authMessage, initializeSession, saveProfile, signOut, watchAccount, type Account } from './session';
 import { tr } from './strings';
@@ -52,7 +53,15 @@ export function Workspace({ account, onSignOut }: { account: Account; onSignOut:
   </div>;
 }
 
+const SHARED = /^\/m\/([A-Za-z0-9_-]{8,32})\/?$/;
+
+/** G6: a shared magazine opens without an account; everything else is the signed-in app. */
 export default function App() {
+  const slug = window.location.pathname.match(SHARED)?.[1];
+  return slug ? <SharedMagazinePage slug={slug} /> : <AccountApp />;
+}
+
+function AccountApp() {
   const [account, setAccount] = useState<Account | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
