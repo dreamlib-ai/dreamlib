@@ -211,6 +211,11 @@ class ConsentOut(BaseModel):
     textVersion: str  # the current wording's version
 
 
+class AccountDelete(BaseModel):
+    """R2: the word the app asks the dreamer to confirm with."""
+    confirm: Literal["delete"]
+
+
 def answers(model: type[BaseModel] | None, status: int = 200) -> dict:
     """Route kwargs that document `model` as the answer without making FastAPI validate or filter it."""
     if model is None:

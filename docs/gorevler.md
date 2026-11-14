@@ -43,11 +43,10 @@ Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_alias
 
 ### Rıza ve hesap
 
-Yapıldı: rüya başına üç kademe (`private`, `collective`, `public`), `consents` defteri (kapsam, metin sürümü, verildi, geri çekildi), kademe yalnız `set_dream_tier` ile tek işlemde değişir, düşünce herkese açık dergi kapanır; `PUT /api/v1/dreams/{id}/consent`; `dream_neighbors` ve `dream_chain` `p_collective` ile başkalarının yalnız rızalı rüyalarını alır; eski herkese açık rüyalar `onboarding@1` rızasıyla deftere girdi (R1). Kademe seçim arayüzü henüz yok.
+Yapıldı: rüya başına üç kademe (`private`, `collective`, `public`), `consents` defteri (kapsam, metin sürümü, verildi, geri çekildi), kademe yalnız `set_dream_tier` ile tek işlemde değişir, düşünce herkese açık dergi kapanır; `PUT /api/v1/dreams/{id}/consent`; `dream_neighbors` ve `dream_chain` `p_collective` ile başkalarının yalnız rızalı rüyalarını alır; eski herkese açık rüyalar `onboarding@1` rızasıyla deftere girdi (R1). Kademe seçim arayüzü henüz yok. Profil sayfasında "Verilerimi indir" (tek JSON dosyası) ve iki adımlı "Hesabımı sil" (önce depo dosyaları, sonra hesap; tablolar cascade ile gider) (R2).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| R2 | Veriyi indir ve hesabı sil (rüya, görsel, kenar, vektör, rıza) | R1 |
 | R3 | [Hassas içerik](hassas-icerik.md) politikasını uygula: `sensitive` sınıflaması, destek kartı, eval seti | L6, A7 |
 
 ### İkon, dergi, kütüphane

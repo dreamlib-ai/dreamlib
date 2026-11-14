@@ -26,6 +26,8 @@ Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`.
 | `GET /api/v1/m/{slug}/cover` | hayır | Link önizlemesi için kapak küçük resmi |
 | `GET /api/v1/consent` | evet | Rıza metninin güncel sürümü: `{tier, textVersion}` (R1) |
 | `PUT /api/v1/dreams/{id}/consent` | evet | `{tier: private\|collective\|public, textVersion}` (R1): rüyanın kademesi. Açarken gösterilen metnin sürümü gerekir, eskiyse 409; düşürünce rıza geri çekilir ve herkese açık dergi kapanır, aynı işlemde (`set_dream_tier`). Kayıt sırasında `visibility` yalnız yeni rüyada onboarding seçimi olarak uygulanır (`onboarding@1`); sonra kademe yalnız bu uçla değişir |
+| `GET /api/v1/account/export` | evet | Bütün veriler tek JSON dosyası (R2): profil, rüyalar ve günlükleri, rıza defteri, dergiler, okumalar; görsel adresleri 1 saat geçerli |
+| `DELETE /api/v1/account` | evet | `{confirm: "delete"}` (R2): önce depodaki bütün dosyalar, sonra hesap; bütün tablolar hesapla gider, maliyet satırları yalnız bağını kaybeder. Geri alınamaz |
 | `GET /api/v1/brain` | evet | Beyin grafiği: `{relations, dreams:[{id, title, dated, emotions, thumbnail, degree}], links:[{relation, source, target, weight, evidence}]}`. Bağlar dört türde (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), eşiği geçenler; `degree` 0 olan rüya bağsız |
 | `POST /api/v1/brain/links` | evet | `{a, b, action: link\|hide, on}`: iki rüyayı elle bağlar (`series`) ya da aradaki puanlanmış bağları gizler; `on:false` geri alır. Yanıt yeni beyin grafiği; başkasının rüyası 404 |
 | `POST /api/v1/dreams/{id}/panels/{n}/redo` | evet | Kayıtlı çizim taslağından paneli yeniler; eski taslaksız kayıt 409 |

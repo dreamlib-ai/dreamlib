@@ -91,6 +91,14 @@ export const listDreamPage = (cursor?: string, limit = WALL_PAGE, signal?: Abort
 
 export const deleteDream = (id: string) => g.deleteDream(id);
 
+/** R2: every dream, journal, consent, magazine and reading as one JSON file. */
+export async function exportAccount(): Promise<Blob> {
+  const data = await g.exportAccount();
+  return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+}
+/** R2: deletes the account and everything in it; cannot be undone. */
+export const deleteAccount = () => g.deleteAccount({ confirm: 'delete' });
+
 export type Magazine = g.MagazineOut;
 export type MagazinePage = g.MagazinePage;
 /** G4: the dream's laid-out magazine; 404 (ApiError) until the job has made it or when there is no booklet. */

@@ -48,6 +48,8 @@ globalThis.fetch = async (input, init) => {
   calls.push({ path, method: init?.method ?? 'GET', text: payload.text ?? payload.originalText, personal: payload.personal, excludeId: payload.excludeId, useAvatar:payload.useAvatar,avatarRevision:payload.avatarRevision,perspective:payload.perspective, bytes: init?.body instanceof Blob ? init.body.size : undefined }); trace();
   const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
   if (path === '/api/v1/events') return new Response(null, { status: 204 });
+  if (path === '/api/v1/account/export') return json({ exportedAt: new Date().toISOString(), account: 'test', profile: fake.profile, dreams: rows, consents: [], magazines: [], analyses: [] });
+  if (path === '/api/v1/account' && init?.method === 'DELETE') return payload.confirm === 'delete' ? new Response(null, { status: 204 }) : json({ error: 'geçersiz', code: 'invalid_request' }, 400);
   if(path==='/api/v1/profile') {
     if(init?.method==='PATCH') {
       if(payload.revision!==fake.profile.revision)return json({error:'Profile changed'},409);

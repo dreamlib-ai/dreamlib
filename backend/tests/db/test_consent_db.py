@@ -39,3 +39,13 @@ def test_other_peoples_dreams_join_a_search_only_when_asked_and_consented(user, 
         assert sql(f"select dream_id from public.dream_chain('{user}', '{mine}', 2, true)") == theirs
     finally:
         sql("delete from public.entities where key = 'koala-r1'")
+
+
+def test_the_export_reads_only_the_owners_rows(sb, user, other):
+    mine = run(sb.save_dream(user, dream()))
+    theirs = run(sb.save_dream(other, dream()))
+    run(sb.set_tier(user, mine.id, "collective", "consent@1"))
+    run(sb.set_tier(other, theirs.id, "collective", "consent@1"))
+    rows = run(sb.rows_of(user, "consents", "dream_id,scope,text_version,granted_at,withdrawn_at"))
+    assert [(r["dream_id"], r["scope"]) for r in rows] == [(mine.id, "collective")]
+    assert run(sb.rows_of(user, "magazines", "dream_id")) == []

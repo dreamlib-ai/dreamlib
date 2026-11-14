@@ -150,6 +150,11 @@ export const tr = {
     copy: 'Linki kopyala', copied: 'Kopyalandı', copyFailed: 'Link kopyalanamadı; kutudan seçip kopyalayabilirsin.',
     unshare: 'Paylaşımı kapat', gone: 'Bu dergi artık paylaşılmıyor.', toApp: "Dreamlib'e git",
   },
+  account: {
+    heading: 'Verilerin', download: 'Verilerimi indir', delete: 'Hesabımı sil',
+    deleteSure: 'Bütün rüyaların, çizimlerin, dergilerin ve rıza kayıtların silinir. Geri alınamaz.',
+    deleteYes: 'Evet, hepsini sil',
+  },
   library: {
     heading: 'Kütüphane',
     empty: 'Henüz bir rüya kaydetmedin.',

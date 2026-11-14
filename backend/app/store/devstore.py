@@ -58,6 +58,20 @@ class DevStore:
             mine = [d for d in mine if (d.createdAt, d.id) < before]
         return [d.model_copy(deep=True) for d in mine[:min(max(limit, 1), 1000)]]
 
+    async def rows_of(self, user_id: str, table: str, select: str = "*", limit: int = 5000) -> list[dict]:
+        if table == "consents":
+            mine = {d.id for d in self.dreams.get(user_id, [])}
+            return [dict(r) for r in self.consents if r["dream_id"] in mine]
+        return []
+
+    async def files_of(self, user_id: str) -> list[str]:
+        return []  # no storage here: pictures stay remote URLs
+
+    async def delete_account(self, user_id: str) -> None:
+        mine = {d.id for d in self.dreams.pop(user_id, [])}
+        self.profiles.pop(user_id, None)
+        self.consents = [r for r in self.consents if r["dream_id"] not in mine]
+
     async def set_tier(self, user_id: str, dream_id: str, tier: str, version: str) -> str | None:
         """The same ledger as set_dream_tier, in memory: [{dream_id, scope, version, withdrawn}]."""
         ledger = self.consents
