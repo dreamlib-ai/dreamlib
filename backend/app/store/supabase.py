@@ -207,6 +207,46 @@ class Supabase:
             params["or"] = f'(created_at.lt."{at}",and(created_at.eq."{at}",id.lt.{last}))'
         return [self._from_row(r) for r in await self._rest("GET", params)]
 
+    # --- the account as a whole (R2) ------------------------------------
+
+    async def rows_of(self, user_id: str, table: str, select: str = "*", limit: int = 5000) -> list[dict]:
+        res = await self._do("GET", f"/rest/v1/{table}", self.key,
+                             params={"user_id": f"eq.{user_id}", "select": select, "limit": str(limit)})
+        if res.status_code != 200:
+            raise RuntimeError(f"export: {table} status {res.status_code}")
+        return res.json()
+
+    async def files_of(self, user_id: str) -> list[str]:
+        """Every stored file under the user's folder (pictures, thumbnails, avatars), one folder level deep."""
+        out: list[str] = []
+        todo = [f"{user_id}/"]
+        while todo:
+            prefix = todo.pop()
+            offset = 0
+            while True:
+                res = await self._do("POST", f"/storage/v1/object/list/{BUCKET}", self.key,
+                                     json_body={"prefix": prefix, "limit": 1000, "offset": offset})
+                if res.status_code != 200:
+                    raise RuntimeError(f"storage: list status {res.status_code}")
+                items = res.json()
+                for item in items:
+                    if item.get("id") is None:  # a folder
+                        if prefix.count("/") < 2:
+                            todo.append(f"{prefix}{item['name']}/")
+                    else:
+                        out.append(prefix + item["name"])
+                if len(items) < 1000:
+                    break
+                offset += 1000
+        return out
+
+    async def delete_account(self, user_id: str) -> None:
+        """Removes the auth user; every table that holds their data goes with it (on delete cascade)."""
+        res = await self._do("DELETE", f"/auth/v1/admin/users/{user_id}", self.key)
+        if res.status_code // 100 != 2 and res.status_code != 404:
+            raise RuntimeError(f"account: delete status {res.status_code}: {res.text.strip()[:200]}")
+        self.cache.clear()  # no token of theirs may pass from the cache
+
     async def set_tier(self, user_id: str, dream_id: str, tier: str, version: str) -> str | None:
         """R1: the dream's consent tier and its ledger rows, in one transaction; None when it is not theirs."""
         if not UUID.match(dream_id):

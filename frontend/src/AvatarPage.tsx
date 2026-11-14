@@ -1,3 +1,4 @@
+import AccountData from './AccountData';
 import { useEffect, useState } from 'react';
 import { ApiError, createAvatar, getJob, getSelfProfile, updateSelfProfile, type AvatarProfile } from './api';
 import { appearanceOptions, clearAvatarDraft, defaultAvatar, presetIds, readAvatarDraft, writeAvatarDraft, type AvatarSpec, type PresetId } from './avatar';
@@ -75,5 +76,6 @@ export default function AvatarPage({owner,onUpdated}:{owner:string;onUpdated:(pr
       <a className="avatar-about" href="/?onboarding">{tr.intro.replay}</a>
       {error&&<p className="error" role="alert">{error}<button className="text-action" disabled={busy||working} onClick={()=>{setError('');setLoad(value=>value+1);}}>{tr.app.retry}</button></p>}
     </div></div>
+    <AccountData owner={owner} />
   </section>;
 }

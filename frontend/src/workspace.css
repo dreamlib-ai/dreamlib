@@ -182,3 +182,10 @@
  .atlas-dialog { width: calc(100vw - 32px); padding: 24px; }
  .app-shell:has(textarea:focus) .links { display: none; }
 }
+
+/* R2: the dreamer's data, at the foot of the profile page */
+.app-shell .account-data { display:grid; justify-items:start; gap:12px; margin-top:44px; padding-top:22px; border-top:1px solid #f6f1e622; }
+.app-shell .account-data h2 { margin:0; font-size:16px; }
+.app-shell .account-delete { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.app-shell .account-delete p { flex-basis:100%; margin:0; color:var(--danger, #ffc4be); font-size:12px; line-height:1.8; }
+.app-shell .go.danger { background:#ffc4be; color:#102343; }
