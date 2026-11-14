@@ -68,13 +68,12 @@ Yapıldı: `/api/v1` ve yerinde eski yollar (S1); makine hata kodları (S2); şe
 
 ### Fikirlerden (süzme: [fikirler](fikirler.md))
 
-Yapıldı: uygulama doğrudan anlatma ekranıyla açılır, önünde bildirim, rozet ya da ara ekran yok (F3); kütüphanenin üstünde "Bir yıl önce bu gece" kartı o gecenin dergisini açar, gece kişinin saat dilimine göre (F2); `features` sürüm 2: karakterler rolüyle (tanıdık, yabancı, hayvan, ölmüş, hayali), etkileşim (saldırgan, dostça), sonuç (başarı, başarısızlık, talihsizlik, şans), mekân tanıdıklığı ve eylemlilik; `interpret@2`, eski kayıtlar varsayılanlarla okunur (F6).
+Yapıldı: uygulama doğrudan anlatma ekranıyla açılır, önünde bildirim, rozet ya da ara ekran yok (F3); kütüphanenin üstünde "Bir yıl önce bu gece" kartı o gecenin dergisini açar, gece kişinin saat dilimine göre (F2); `features` sürüm 2: karakterler rolüyle (tanıdık, yabancı, hayvan, ölmüş, hayali), etkileşim (saldırgan, dostça), sonuç (başarı, başarısızlık, talihsizlik, şans), mekân tanıdıklığı ve eylemlilik; `interpret@2`, eski kayıtlar varsayılanlarla okunur (F6); onboarding'de gizlilikten sonra isteğe bağlı "Bunlardan hangilerini gördün?" adımı: 12 tipik tema (temalar.md anahtarları), seçim `user_metadata.dreamlib.seenThemes` tercihinde, hiç seçmemek de geçerli (F5).
 
 | No | Görev | Önce |
 | --- | --- | --- |
 | F1 | Sembol kartı: gelenekler arası anlam, kaynak, kişide görülme sayısı; ikonu çizenin adı | M6, G1 |
 | F4 | Kâbus sonrası "sonunu yeniden yaz"; ilk anlatım korunur | R3 |
-| F5 | Onboarding'de isteğe bağlı "hangilerini gördün" tipik tema seçimi | G1 |
 
 ### Beyin grafiği
 

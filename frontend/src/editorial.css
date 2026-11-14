@@ -275,3 +275,8 @@
  .app-shell .wall-excerpt { font-size:11px; -webkit-line-clamp:4; }
 }
 @media (prefers-reduced-motion: reduce) { .app-shell .wall-cover img { transition:none; } .app-shell .wall-card:hover .wall-cover img.shown { transform:none; } }
+
+/* F5: optional typical themes in onboarding */
+.onb .theme-picks { display:flex; flex-wrap:wrap; gap:8px; max-width:520px; }
+.onb .theme-picks .choice { min-height:44px; padding:10px 16px; border-radius:22px; font-size:12px; }
+@media (max-width:640px) { .onb .theme-picks { gap:6px; } .onb .theme-picks .choice { min-height:40px; padding:8px 13px; font-size:11px; } }
