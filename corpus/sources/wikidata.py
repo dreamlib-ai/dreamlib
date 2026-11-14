@@ -2,7 +2,9 @@
 
 query.wikidata.org/sparql is disallowed by its robots.txt, so the script logs
 that refusal and uses the public QLever Wikidata SPARQL endpoint
-(qlever.cs.uni-freiburg.de, robots allows) for discovery, with a polite delay.
+(qlever.dev, robots allows) for discovery, with a polite delay. `--symbols` skips the concept, work and
+category discovery (the transitive concept query can run for a very long time) and fetches only the symbol
+candidates the lexicon (corpus/lexicon.py) needs.
 Full entity JSON comes from www.wikidata.org/wiki/Special:EntityData/<Q>.json
 (robots allows). Output: files/entities/<Q>.json, files/qlever/*.json and
 concepts.jsonl (labels, descriptions, aliases, sitelinks for 25 languages).
@@ -14,6 +16,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import time
 
 import httpx
@@ -24,7 +27,7 @@ from corpus.fetch import ROOT, Blocked, Fetcher, Meta
 SOURCE = "wikidata"
 LANGS = ["en", "tr", "ar", "fa", "ur", "he", "zh", "ja", "ko", "hi", "id", "vi", "th",
          "ru", "de", "fr", "es", "it", "pt", "pl", "el", "la", "sa", "bn", "sw"]
-QLEVER = "https://qlever.cs.uni-freiburg.de/api/wikidata"
+QLEVER = "https://qlever.dev/api/wikidata"  # moved from qlever.cs.uni-freiburg.de (308), 2026-11
 PREFIX = """PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -98,17 +101,18 @@ def main() -> None:
         if re.fullmatch(r"Q\d+", q):
             kinds.setdefault(q, set()).add(kind)
 
-    rows = ql(f, "concepts", f"""SELECT DISTINCT ?item WHERE {{ VALUES ?s {{ {seeds} }}
+    discover = "--symbols" not in sys.argv
+    rows = [] if not discover else ql(f, "concepts", f"""SELECT DISTINCT ?item WHERE {{ VALUES ?s {{ {seeds} }}
       {{ ?item wdt:P31/wdt:P279* ?s }} UNION {{ ?item wdt:P279+ ?s }} UNION
       {{ ?item wdt:P361 ?s }} UNION {{ ?item wdt:P1269 ?s }} UNION {{ ?s wdt:P279 ?item }} UNION
       {{ ?s wdt:P361 ?item }} UNION {{ ?s wdt:P1269 ?item }} }}""")
     for b in rows:
         add(qid(b), "concept")
-    rows = ql(f, "works", f"""SELECT DISTINCT ?item WHERE {{ VALUES ?s {{ {seeds} }}
+    rows = [] if not discover else ql(f, "works", f"""SELECT DISTINCT ?item WHERE {{ VALUES ?s {{ {seeds} }}
       ?item wdt:P921 ?s . ?item wikibase:sitelinks ?sl . FILTER(?sl > 0) }}""")
     for b in rows:
         add(qid(b), "work_about_dreams")
-    rows = ql(f, "categories", f"""SELECT DISTINCT ?item WHERE {{ VALUES ?s {{ {seeds} }}
+    rows = [] if not discover else ql(f, "categories", f"""SELECT DISTINCT ?item WHERE {{ VALUES ?s {{ {seeds} }}
       {{ ?item wdt:P301 ?s }} UNION {{ ?s wdt:P910 ?item }} }}""")
     for b in rows:
         add(qid(b), "wikipedia_category")
