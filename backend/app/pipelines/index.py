@@ -88,7 +88,7 @@ async def run(ctx: JobContext) -> None:
                     ids.update(await s.entities.ensure(nodes, status))
             await s.entities.link(d.id, extractor, [Link(ids[o.node.key], 1.0, o.quote) for o in items if o.node.key in ids], source)
             if s.queue and (s.images or s.editor):  # G1: approved symbols without an icon get one, once
-                await glyph.queue(s, job.user_id, await s.entities.without_glyph(list(ids.values())))
+                await glyph.queue(s, job.user_id, await s.entities.without_glyph(list(ids.values()), glyph.glyph_prompts.LATEST))
     edges = []
     if s.graph and s.entities:  # BG1: links to the dreamer's other dreams, weak ones dropped
         edges = relate(d.id, await s.graph.corpus(job.user_id))
