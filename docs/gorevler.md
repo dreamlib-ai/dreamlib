@@ -34,13 +34,12 @@ Yapıldı: görev tablosu, görev başına model, yedek dizi ve zaman aşımı (
 
 ### Motor ve yorum
 
-Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile); `relation_types` (9 ilişki), `edges` (simetrik kenar tek ve sıralı), `dream_embeddings`, `dream_neighbors` ve derinliği üçle sınırlı `dream_chain` (M2; arama yalnız kişinin kendi rüyalarında, rızalılar R1 ile); her yorum ve indeksleme `analyses` satırı, yorum kayıtla rüyaya bağlanır (M3); LLM'siz `index` işi: kayıt ve metin değişince kuyruğa girer, lab motorlarıyla duygu düğümlerini `dream_entities`'e kanıtıyla, bakış açısı ve beyanları `analyses`'e yazar; arka plan işi kullanıcıyı kilitlemez ve günlük haktan düşmez (M4).
+Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_aliases`, `dream_entities` (M1; embedding boyutu ve HNSW indeksi L4 ile); `relation_types` (9 ilişki), `edges` (simetrik kenar tek ve sıralı), `dream_embeddings`, `dream_neighbors` ve derinliği üçle sınırlı `dream_chain` (M2; arama yalnız kişinin kendi rüyalarında, rızalılar R1 ile); her yorum ve indeksleme `analyses` satırı, yorum kayıtla rüyaya bağlanır (M3); LLM'siz `index` işi: kayıt ve metin değişince kuyruğa girer, lab motorlarıyla duygu düğümlerini `dream_entities`'e kanıtıyla, bakış açısı ve beyanları `analyses`'e yazar; arka plan işi kullanıcıyı kilitlemez ve günlük haktan düşmez (M4); aynı iş yorumun `objects` ve `features` alanlarını da düğüme açar (sembol, karakter, yer, eylem aday düğüm; tür ve deneyim onaylı tema), kullanıcının düzelttiği tür ve deneyim `user` kaynağıyla yazılır, mevcut rüyalar bir migration'la bir kez yeniden dizinlenir (M8).
 
 | No | Görev | Önce |
 | --- | --- | --- |
 | M6 | Sözlük: A kademesi ilk dışa aktarım, `lexicon_entries`, düğüm tohumu | M1 |
 | M7 | Kümülatif yorum hattı: sözlük ve kişisel bağlamla getir, sentezle (benzer rüyalar M5 gelince) | M3, M6, L3 |
-| M8 | Mevcut `features` ve `objects` alanlarını `dream_entities`'e açan geçiş | M4 |
 
 ### Rıza ve hesap
 

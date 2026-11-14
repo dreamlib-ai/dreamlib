@@ -50,11 +50,11 @@ class SupabaseEntities:
                 self.ids[(kind, key)] = id_
         return {n.key: self.ids[(n.kind, n.key)] for n in nodes if (n.kind, n.key) in self.ids}
 
-    async def link(self, dream_id: str, extractor: str, links: list[Link]) -> None:
+    async def link(self, dream_id: str, extractor: str, links: list[Link], source: str = "model") -> None:
         await self._req("DELETE", "/rest/v1/dream_entities",
-                        params={"dream_id": f"eq.{dream_id}", "source": "eq.model", "extractor": f"eq.{extractor}"})
+                        params={"dream_id": f"eq.{dream_id}", "source": f"eq.{source}", "extractor": f"eq.{extractor}"})
         if links:
-            rows = [{"dream_id": dream_id, "entity_id": l.entity_id, "weight": l.weight, "source": "model",
+            rows = [{"dream_id": dream_id, "entity_id": l.entity_id, "weight": l.weight, "source": source,
                      "extractor": extractor, "quote": l.quote[:300]} for l in links]
             await self._req("POST", "/rest/v1/dream_entities", json_body=rows, prefer="return=minimal")
 
@@ -73,7 +73,7 @@ class MemoryEntities:
             out[n.key] = row["id"]
         return out
 
-    async def link(self, dream_id: str, extractor: str, links: list[Link]) -> None:
-        self.links = [l for l in self.links if not (l["dream_id"] == dream_id and l["extractor"] == extractor)]
-        self.links += [{"dream_id": dream_id, "entity_id": l.entity_id, "weight": l.weight, "source": "model",
+    async def link(self, dream_id: str, extractor: str, links: list[Link], source: str = "model") -> None:
+        self.links = [l for l in self.links if not (l["dream_id"] == dream_id and l["extractor"] == extractor and l["source"] == source)]
+        self.links += [{"dream_id": dream_id, "entity_id": l.entity_id, "weight": l.weight, "source": source,
                         "extractor": extractor, "quote": l.quote} for l in links]

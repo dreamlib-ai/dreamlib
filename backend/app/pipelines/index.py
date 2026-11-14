@@ -4,7 +4,8 @@ Runs after a dream is saved or its text changes (app/indexing.py queues it). The
 (app/lab, docs/lab.md) take the narrative as the dreamer wrote it:
 - emotions: the five Hall–Van de Castle classes stated in the text, each linked to an `emotion` node
   (hvdc.<class>) in `dream_entities` with the word that stated it;
-- perspective and experience claims (lucid, recurring, nightmare, quoted word for word).
+- perspective and experience claims (lucid, recurring, nightmare, quoted word for word);
+- the interpretation fields the dream already carries, `objects` and `features` (M8, app/pipelines/fields.py).
 Everything, negated hits included, goes into one `analyses` row (pipeline lab.index) so a later reader can
 see why. Vectors and neighbours come later (docs/gorevler.md, Sonraki major)."""
 import re
@@ -15,6 +16,7 @@ from ..lab.experiences import claims
 from ..lab.perspective import read
 from ..store.entities import Link, Node
 from .context import JobContext
+from .fields import opened
 
 FAILED = "rüya dizinlenemedi"
 TIMEOUT = 60
@@ -75,8 +77,17 @@ async def run(ctx: JobContext) -> None:
         await s.entities.link(d.id, EXTRACTOR, links)
     elif s.entities:
         await s.entities.link(d.id, EXTRACTOR, [])  # an edit removed the last stated emotion
+    fields = opened(d, out["lang"])
+    if s.entities:
+        for (extractor, source), items in fields.items():
+            ids: dict[str, str] = {}
+            for status in ("approved", "candidate"):
+                if nodes := [o.node for o in items if o.status == status]:
+                    ids.update(await s.entities.ensure(nodes, status))
+            await s.entities.link(d.id, extractor, [Link(ids[o.node.key], 1.0, o.quote) for o in items if o.node.key in ids], source)
     if s.analyses:
         await s.analyses.add(job.user_id, "lab.index", {**out, "revision": d.revision}, prompt=LAB,
                              input_text=text, dream_id=d.id)
     ctx.state["result"] = {"emotions": [e["class"] for e in out["emotions"]], "perspective": out["perspective"],
-                           "experiences": [e["kind"] for e in out["experiences"]], "revision": d.revision}
+                           "experiences": [e["kind"] for e in out["experiences"]], "revision": d.revision,
+                           "fields": {extractor: len(items) for (extractor, _), items in fields.items()}}

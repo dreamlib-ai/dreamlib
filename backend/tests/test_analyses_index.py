@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from app.pipelines.fields import quote, slug
 from app.pipelines.index import language, reading
 from app.store.analyses import MemoryAnalyses
 from app.store.entities import MemoryEntities
@@ -76,7 +77,7 @@ def test_saving_indexes_the_dream_without_a_model(lab_api):
     calls = s.llm.calls if hasattr(s.llm, "calls") else None
     dream = client.post("/api/dreams", headers=auth(), json={**DREAM, "originalText": "Karanlık bir ormanda kayboldum. Çok korktum."}).json()
     wait_indexed(s, dream["id"])
-    links = [l for l in s.entities.links if l["dream_id"] == dream["id"]]
+    links = [l for l in s.entities.links if l["dream_id"] == dream["id"] and l["extractor"] == "lab.emotions@1"]
     keys = {key for (kind, key), node in s.entities.nodes.items() if node["id"] in {l["entity_id"] for l in links}}
     assert keys == {"hvdc.apprehension"} and links[0]["quote"] == "korktum" and links[0]["extractor"] == "lab.emotions@1"
     row = next(r for r in s.analyses.rows if r["pipeline"] == "lab.index")
@@ -93,7 +94,7 @@ def test_editing_the_text_reindexes_and_replaces_old_links(lab_api):
     edited = client.patch(f"/api/dreams/{dream['id']}/journal", headers=auth(),
                           json={"revision": dream["revision"], "originalText": "Çok mutluydum."}).json()
     wait_indexed(s, dream["id"], count=2)
-    links = [l for l in s.entities.links if l["dream_id"] == dream["id"]]
+    links = [l for l in s.entities.links if l["dream_id"] == dream["id"] and l["extractor"] == "lab.emotions@1"]
     happy = s.entities.nodes[("emotion", "hvdc.happiness")]["id"]
     assert [l["entity_id"] for l in links] == [happy]  # the fear link of the old text is gone
     assert len([r for r in s.analyses.rows if r["pipeline"] == "lab.index"]) == 2 and edited["revision"] > dream["revision"]
@@ -126,3 +127,55 @@ def test_a_deleted_dream_is_skipped_not_failed(lab_api):
             break
         time.sleep(0.02)
     assert job.status == "done" and job.state.get("skipped") == "dream deleted"
+
+
+def node_of(s, entity_id):
+    return next((kind, key, node) for (kind, key), node in s.entities.nodes.items() if node["id"] == entity_id)
+
+
+def test_slug_and_quote_fold_turkish():
+    assert slug("Işıklı Şehir") == "isikli-sehir" and slug("  ") == "" and slug("İstanbul'da ev") == "istanbul-da-ev"
+    assert quote("orman", "Ormanın üstünde uçtum.") == "Orman"  # Turkish case, suffix allowed
+    assert quote("ışık", "ISIK yoktu") == "" and quote("ışık", "IŞIK vardı") == "IŞIK"
+    assert quote("deniz", "Denizli'ye gittim") == "Deniz" and quote("eniz", "Denizde") == ""  # word starts only
+
+
+def test_objects_and_features_become_nodes(lab_api):
+    client, s = lab_api
+    features = {"version": 1, "genres": ["fantasy"], "perspective": "first-person", "people": ["annem"],
+                "places": ["Eski ev"], "events": ["uçmak"],
+                "experiences": [{"kind": "lucid", "quote": "rüyada olduğumu bildim"}]}
+    text = "Annemle eski evdeydik, sonra ormanın üstünde uçtum; rüyada olduğumu bildim."
+    dream = client.post("/api/dreams", headers=auth(), json={**DREAM, "originalText": text, "features": features}).json()
+    wait_indexed(s, dream["id"])
+    got = {}
+    for l in s.entities.links:
+        if l["dream_id"] == dream["id"] and l["extractor"] != "lab.emotions@1":
+            kind, key, node = node_of(s, l["entity_id"])
+            got[key] = (kind, node["status"], l["extractor"], l["source"], l["quote"])
+    assert got == {
+        "sym.orman": ("symbol", "candidate", "interpret.objects@1", "model", "orman"),
+        "chr.annem": ("character", "candidate", "interpret.features@1", "model", "Annem"),
+        "plc.eski-ev": ("place", "candidate", "interpret.features@1", "model", "eski ev"),
+        "act.ucmak": ("action", "candidate", "interpret.features@1", "model", ""),
+        "genre.fantasy": ("theme", "approved", "interpret.features@1", "model", ""),
+        "experience.lucid": ("theme", "approved", "interpret.features@1", "model", "rüyada olduğumu bildim"),
+    }
+    assert s.entities.nodes[("place", "plc.eski-ev")]["labels"] == {"tr": "Eski ev"}
+    job = index_jobs(s, dream["id"])[0]
+    assert job.state["result"]["fields"] == {"interpret.objects@1": 1, "interpret.features@1": 5, "user.classification@1": 0}
+
+
+def test_a_corrected_classification_is_linked_as_the_users(lab_api):
+    client, s = lab_api
+    features = {"version": 1, "genres": ["daily"], "experiences": [{"kind": "nightmare", "quote": "çok korktum"}]}
+    dream = client.post("/api/dreams", headers=auth(), json={**DREAM, "originalText": "Çok korktum.", "features": features}).json()
+    wait_indexed(s, dream["id"])
+    edited = client.patch(f"/api/dreams/{dream['id']}/journal", headers=auth(),
+                          json={"revision": dream["revision"], "classification": {"genres": ["suspense"]}}).json()
+    assert edited["revision"] > dream["revision"]
+    wait_indexed(s, dream["id"], count=2)
+    mine = {node_of(s, l["entity_id"])[1]: (l["source"], l["extractor"]) for l in s.entities.links if l["dream_id"] == dream["id"]}
+    assert mine["genre.suspense"] == ("user", "user.classification@1")
+    assert "genre.daily" not in mine  # the model's guess the dreamer replaced is gone
+    assert mine["experience.nightmare"] == ("model", "interpret.features@1")  # experiences were not corrected
