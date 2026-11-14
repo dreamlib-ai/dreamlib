@@ -49,8 +49,8 @@ Korunan mevcut davranışlar: lease ve heartbeat, süreç ölünce devralma, sak
 
 Yorum metni akarken semboller küçük resimlerle görünür. Bunlar rüya başına üretilmez.
 
-- Her onaylı `symbol` düğümü için bir kez, tek üslupta küçük bir ikon üretilir ve açık depoda durur; adres düğüm kimliğinden türetilir (yapıldı, G1: `glyphs/<düğüm>.webp`, `entities.glyph_path`).
-- Sözlüğün en sık birkaç yüz sembolü betadan önce toplu üretilir.
+- Her onaylı `symbol` düğümü için bir kez, tek üslupta küçük bir ikon üretilir ve açık depoda durur; adres düğüm kimliğinden türetilir (yapıldı, G1: `glyphs/<düğüm>-<sürüm>.webp`, `entities.glyph_path`; G2: çizildiği şablon sürümü `entities.glyph_prompt`, yeni sürüm eskileri yeniden çizer).
+- Sözlüğün onaylı sembolleri toplu üretilir (G2: ilk 48'i bir migration'la kuyruğa girdi); sözlük büyüdükçe aynı yolla.
 - Yeni düğüm onaylanınca `glyph` işi kuyruğa girer; ikon gelene kadar düğüm türünün genel ikonu gösterilir.
 - Üslup tek bir istem şablonu ve referans görselle sabitlenir; şablon repoda durur.
 - İkonlar toplulukça elle çizilip değiştirilebilir ([açık kaynak](acik-kaynak.md)); elle çizilen, üretilenin önüne geçer.

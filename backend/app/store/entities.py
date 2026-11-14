@@ -52,21 +52,22 @@ class SupabaseEntities:
 
     async def get(self, entity_id: str) -> dict | None:
         res = await self._req("GET", "/rest/v1/entities", params={"id": f"eq.{entity_id}",
-                                                                    "select": "id,kind,key,labels,status,glyph_path"})
+                                                                    "select": "id,kind,key,labels,status,glyph_path,glyph_prompt"})
         rows = res.json()
         return rows[0] if rows else None
 
-    async def without_glyph(self, ids: list[str]) -> list[str]:
-        """G1: of these nodes, the approved symbols that have no icon yet."""
+    async def without_glyph(self, ids: list[str], version: str) -> list[str]:
+        """G1, G2: of these nodes, the approved symbols with no icon yet or one drawn with an older revision."""
         if not ids:
             return []
         res = await self._req("GET", "/rest/v1/entities", params={
-            "id": f"in.({','.join(ids)})", "kind": "eq.symbol", "status": "eq.approved", "glyph_path": "eq.", "select": "id"})
+            "id": f"in.({','.join(ids)})", "kind": "eq.symbol", "status": "eq.approved", "glyph_prompt": f"neq.{version}",
+            "select": "id"})
         return [r["id"] for r in res.json()]
 
-    async def set_glyph(self, entity_id: str, path: str) -> None:
-        await self._req("PATCH", "/rest/v1/entities", params={"id": f"eq.{entity_id}"}, json_body={"glyph_path": path},
-                        prefer="return=minimal")
+    async def set_glyph(self, entity_id: str, path: str, version: str) -> None:
+        await self._req("PATCH", "/rest/v1/entities", params={"id": f"eq.{entity_id}"},
+                        json_body={"glyph_path": path, "glyph_prompt": version}, prefer="return=minimal")
 
     async def link(self, dream_id: str, extractor: str, links: list[Link], source: str = "model") -> None:
         await self._req("DELETE", "/rest/v1/dream_entities",
@@ -88,21 +89,21 @@ class MemoryEntities:
         out = {}
         for n in nodes:
             row = self.nodes.setdefault((n.kind, n.key), {"id": str(uuid.uuid4()), "labels": n.labels, "status": status,
-                                                          "kind": n.kind, "key": n.key, "glyph_path": ""})
+                                                          "kind": n.kind, "key": n.key, "glyph_path": "", "glyph_prompt": ""})
             out[n.key] = row["id"]
         return out
 
     async def get(self, entity_id: str) -> dict | None:
         return next((dict(r) for r in self.nodes.values() if r["id"] == entity_id), None)
 
-    async def without_glyph(self, ids: list[str]) -> list[str]:
+    async def without_glyph(self, ids: list[str], version: str) -> list[str]:
         return [r["id"] for r in self.nodes.values()
-                if r["id"] in ids and r["kind"] == "symbol" and r["status"] == "approved" and not r["glyph_path"]]
+                if r["id"] in ids and r["kind"] == "symbol" and r["status"] == "approved" and r["glyph_prompt"] != version]
 
-    async def set_glyph(self, entity_id: str, path: str) -> None:
+    async def set_glyph(self, entity_id: str, path: str, version: str) -> None:
         for r in self.nodes.values():
             if r["id"] == entity_id:
-                r["glyph_path"] = path
+                r["glyph_path"], r["glyph_prompt"] = path, version
 
     async def link(self, dream_id: str, extractor: str, links: list[Link], source: str = "model") -> None:
         self.links = [l for l in self.links if not (l["dream_id"] == dream_id and l["extractor"] == extractor and l["source"] == source)]

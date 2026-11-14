@@ -88,9 +88,12 @@ def test_only_approved_symbols_without_an_icon_are_drawn(sb):
     cand = run(ents.ensure([Node("symbol", "g1-door", {"en": "door"})], "candidate"))
     try:
         both = [ids["g1-moon"], cand["g1-door"]]
-        assert run(ents.without_glyph(both)) == [ids["g1-moon"]]
-        run(ents.set_glyph(ids["g1-moon"], "https://x.test/glyphs/a.webp"))
-        assert run(ents.without_glyph(both)) == [] and run(ents.get(ids["g1-moon"]))["glyph_path"].endswith("a.webp")
+        assert run(ents.without_glyph(both, "glyph@2")) == [ids["g1-moon"]]
+        run(ents.set_glyph(ids["g1-moon"], "https://x.test/glyphs/a.webp", "glyph@1"))
+        assert run(ents.without_glyph(both, "glyph@2")) == [ids["g1-moon"]]  # an older revision is drawn again
+        run(ents.set_glyph(ids["g1-moon"], "https://x.test/glyphs/b.webp", "glyph@2"))
+        node = run(ents.get(ids["g1-moon"]))
+        assert run(ents.without_glyph(both, "glyph@2")) == [] and node["glyph_path"].endswith("b.webp") and node["glyph_prompt"] == "glyph@2"
         assert sql("select public from storage.buckets where id = 'glyphs'") == "t"
     finally:
         sql("delete from public.entities where key in ('g1-moon', 'g1-door')")
