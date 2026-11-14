@@ -75,8 +75,10 @@ def test_manga_rejects_bad_input_and_a_second_running_job(api):
 
     # a booklet already in the making, held by another worker
     s.queue.jobs["x"] = Job(id="x", user_id=TOKEN, kind="manga", status="running", worker="elsewhere", created_at=datetime.now(timezone.utc))
-    assert client.post("/api/v1/manga", headers=auth(), json={"text": "x"}).status_code == 429
-    assert client.post("/api/v1/dreams", headers=auth(), json=DREAM).status_code == 409
+    busy = client.post("/api/v1/manga", headers=auth(), json={"text": "x"})
+    assert busy.status_code == 429 and busy.json()["code"] == "job_busy"
+    held = client.post("/api/v1/dreams", headers=auth(), json=DREAM)
+    assert held.status_code == 409 and held.json()["code"] == "job_busy"
 
 
 def test_manga_fails_on_a_short_storyboard(api):
@@ -146,7 +148,7 @@ def test_daily_limit_is_smaller_for_guests_and_failed_jobs_are_free(api):
     assert wait_job(client, first, headers=guest)["status"] == "done"
     assert s.queue.jobs[first].cost_usd == 0.04  # four panels at the fake price
     res = client.post("/api/v1/manga", headers=guest, json={"text": "x"})
-    assert res.status_code == 429 and "1 çizim" in res.json()["error"]
+    assert res.status_code == 429 and "1 çizim" in res.json()["error"] and res.json()["code"] == "daily_limit"
 
     s.queue.jobs[first].status = "failed"
     assert client.post("/api/v1/manga", headers=guest, json={"text": "x"}).status_code == 202

@@ -41,7 +41,7 @@ async def update_profile(body: ProfilePatch, user_id: str = Depends(current_user
     async with s.locks.hold(user_id,s.queue):
         profile = await s.store.get_profile(user_id)
         if profile.revision != body.revision:
-            raise ApiError(409,'profil başka bir yerde değişti; yeniden açıp dene')
+            raise ApiError(409, 'profil başka bir yerde değişti; yeniden açıp dene', 'revision_conflict')
         if body.displayName is not None:
             profile.displayName = body.displayName.strip()
         if body.clearAvatar:
@@ -64,7 +64,7 @@ async def update_profile(body: ProfilePatch, user_id: str = Depends(current_user
         try:
             profile = await s.store.update_profile(user_id,profile,body.revision)
         except Conflict:
-            raise ApiError(409,'profil değişti; yeniden açıp dene')
+            raise ApiError(409, 'profil değişti; yeniden açıp dene', 'revision_conflict')
     return await public_profile(s,profile)
 
 
@@ -87,7 +87,7 @@ async def create_avatar(body: AvatarIn, user_id: str = Depends(current_user), s:
         return {'id':old.id}
     profile = await s.store.get_profile(user_id)
     if profile.revision != body.baseRevision:
-        raise ApiError(409,'profil değişti; yeniden açıp dene')
+        raise ApiError(409, 'profil değişti; yeniden açıp dene', 'revision_conflict')
     if profile.avatarPath and not s.editor:
         raise ApiError(503,'karakter tutarlılığı servisi kurulu değil')
     return await _queue(s,user_id,'image',{'purpose':'avatar','avatarSpec':body.spec.model_dump(),'baseRevision':body.baseRevision,'basePath':profile.avatarPath,'prompt':avatar_prompt(body.spec),'style':'illustration'},1,str(body.requestId))

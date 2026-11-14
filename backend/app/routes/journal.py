@@ -42,7 +42,7 @@ async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends
         d = await _load(s, user_id, dream_id)
         text_before, entries_before, analysis_id = d.originalText, len(d.journal.entries), ""
         if d.revision != body.revision:
-            raise ApiError(409, "kayıt başka bir yerde değişti; yeniden açıp dene")
+            raise ApiError(409, "kayıt başka bir yerde değişti; yeniden açıp dene", "revision_conflict")
         if body.title is not None:
             if not body.title.strip():
                 raise ApiError(400, "başlık boş olamaz")
@@ -91,7 +91,7 @@ async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends
         try:
             saved = await s.store.update_journal(user_id, d, body.revision)
         except Conflict:
-            raise ApiError(409, "kayıt değişti; yeniden açıp dene")
+            raise ApiError(409, "kayıt değişti; yeniden açıp dene", "revision_conflict")
         except NotFound:
             raise ApiError(404, "rüya bulunamadı")
         if (analysis_id or saved.originalText != text_before or len(saved.journal.entries) != entries_before

@@ -59,7 +59,7 @@ async def save_record(body: DreamIn, user_id: str, s: Services, dream_id: str = 
             if existing and previous is None:
                 raise ApiError(404, "rüya silinmiş; yeni bir rüya başlatabilirsin")
             if previous and existing and previous.revision > 0 and d.originalText.strip() != previous.originalText:
-                raise ApiError(409, "rüya kütüphanede değişti; güncel kaydı açıp devam et")
+                raise ApiError(409, "rüya kütüphanede değişti; güncel kaydı açıp devam et", "revision_conflict")
         if d.jobId:
             job = await job_or_404(s, d.jobId, user_id)
             if job.kind != "manga" or job.status != "done":
@@ -230,7 +230,7 @@ async def redo_saved_panel(dream_id: str, n: int, user_id: str = Depends(current
                         except Exception:
                             log.warning("redo cleanup failed", exc_info=True)
                     if isinstance(e, (Conflict, NotFound)):
-                        raise ApiError(409, "rüya değişti, yeniden yükle")
+                        raise ApiError(409, "rüya değişti, yeniden yükle", "revision_conflict")
                     log.exception("redo: save failed")
                     raise ApiError(502, "yeni panel kaydedilemedi")
         except TimeoutError:

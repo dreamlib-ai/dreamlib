@@ -60,13 +60,13 @@ async def _queue(s: Services, user_id: str, kind: str, input: dict, total: int, 
             log.exception("jobs: quota check failed")
             raise ApiError(502, "iş başlatılamadı")
         if used >= limit:
-            raise ApiError(429, f"bugünlük {limit} çizim hakkın doldu, yarın yine gel")
+            raise ApiError(429, f"bugünlük {limit} çizim hakkın doldu, yarın yine gel", "daily_limit")
     try:
         job = await s.queue.create(user_id, kind, input, total, request_id)
     except Busy:
         if found := await existing():
             return found
-        raise ApiError(429, "önceki işin hâlâ hazırlanıyor")
+        raise ApiError(429, "önceki işin hâlâ hazırlanıyor", "job_busy")
     except Exception:
         log.exception("jobs: create failed")
         raise ApiError(502, "iş başlatılamadı")
@@ -108,7 +108,7 @@ async def start_manga(body: MangaIn, user_id: str = Depends(current_user), s: Se
             raise ApiError(400,'avatarla çizimde tutarlılık açık olmalı')
         profile = await s.store.get_profile(user_id)
         if profile.revision != body.avatarRevision:
-            raise ApiError(409,'avatarın değişti; çizimi yeniden başlatabilirsin')
+            raise ApiError(409,'avatarın değişti; çizimi yeniden başlatabilirsin','revision_conflict')
         if not profile.avatar or not profile.avatarPath:
             raise ApiError(400,'önce bir avatar seç')
         input.update(avatarPath=profile.avatarPath,avatarSpec=profile.avatar.model_dump(),avatarRevision=profile.revision)
