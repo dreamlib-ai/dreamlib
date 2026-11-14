@@ -37,3 +37,15 @@ def test_the_corpus_scores_into_edges_that_follow_the_dreams(sb, user, dream):
         assert run(g.edges(user)) == []  # edges leave with either dream
     finally:
         sql(f"delete from entities where key = '{sea.key}'")
+
+
+def test_the_dreamers_own_marks_survive_rescoring(sb, user, dream):
+    other = str(uuid.uuid4())
+    sql(f"insert into public.dreams (id, user_id, title, original_text) values ('{other}', '{user}', 'b', 'b')")
+    g = SupabaseGraph(sb)
+    run(g.mark(user, other, dream, "series", True))   # either order; stored sorted
+    run(g.mark(user, dream, other, "hidden", True))
+    run(g.replace(user, dream, []))                    # scoring clears only its own relations
+    assert sorted(r["relation"] for r in run(g.edges(user))) == ["hidden", "series"]
+    run(g.mark(user, dream, other, "hidden", False))
+    assert [r["relation"] for r in run(g.edges(user))] == ["series"]

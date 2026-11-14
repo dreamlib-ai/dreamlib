@@ -4,9 +4,10 @@ export const tr = {
     nav: 'Beyin', label: 'Rüyalarının haritası', loading: 'Yükleniyor', filter: 'Bağ türleri',
     empty: 'Rüyaların burada birbirine bağlanır.', tell: 'Rüyanı anlat', untitled: 'Adsız rüya', close: 'Kapat',
     floating: 'Henüz başka bir rüyaya bağlanmadı.',
-    relations: { shares_content: 'Ortak içerik', shares_concept: 'Ortak kavram', shares_emotion: 'Ortak duygu', near_in_time: 'Yakın zaman' },
+    relations: { shares_content: 'Ortak içerik', shares_concept: 'Ortak kavram', shares_emotion: 'Ortak duygu', near_in_time: 'Yakın zaman', series: 'Senin bağın' },
     daysApart: (n: number) => n === 0 ? 'aynı gün' : `${n} gün arayla`,
     linkCount: (n: number) => n === 0 ? 'bağsız' : `${n} bağ`,
+    connect: 'Bir rüyaya bağla', pick: 'Bağlamak için bir rüyaya dokun', cancel: 'Vazgeç', hide: 'Bağı gizle', unlink: 'Bağı kaldır',
   },
   avatar: {
     heading:'Avatarın', profile:'Profilim', active:'Seçili avatarın', preview:'Önizleme', oldPreview:'Önizleme önceki seçimlerine ait',

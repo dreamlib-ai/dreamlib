@@ -3,6 +3,8 @@ edges the relation scorers write (app/engine/relations.py). Edges carry user_id;
 from datetime import date, datetime
 
 from ..engine.relations import RELATIONS, DreamNodes, Edge, Node
+
+USER = ("series", "hidden")  # the dreamer's own links and hidden pairs (BG4); scoring never touches them
 from .supabase import Supabase
 
 
@@ -40,9 +42,18 @@ class SupabaseGraph:
             await self._req("POST", "/rest/v1/edges", json_body=rows, prefer="return=minimal")
 
     async def edges(self, user_id: str) -> list[dict]:
-        params = {"user_id": f"eq.{user_id}", "relation": f"in.({','.join(RELATIONS)})",
+        params = {"user_id": f"eq.{user_id}", "relation": f"in.({','.join(RELATIONS + USER)})",
                   "select": "relation,source_id,target_id,weight,evidence", "order": "weight.desc", "limit": "5000"}
         return (await self._req("GET", "/rest/v1/edges", params=params)).json()
+
+    async def mark(self, user_id: str, a: str, b: str, relation: str, on: bool) -> None:
+        """Sets or clears one of the dreamer's own pair marks (series or hidden)."""
+        a, b = sorted((a, b))
+        await self._req("DELETE", "/rest/v1/edges", params={"user_id": f"eq.{user_id}", "relation": f"eq.{relation}",
+                                                             "source_id": f"eq.{a}", "target_id": f"eq.{b}"})
+        if on:
+            await self._req("POST", "/rest/v1/edges", prefer="return=minimal", json_body={
+                "relation": relation, "source_id": a, "target_id": b, "user_id": user_id, "weight": 1, "evidence": {}})
 
 
 class MemoryGraph:
@@ -67,10 +78,17 @@ class MemoryGraph:
         return _corpus(rows)
 
     async def replace(self, user_id: str, dream_id: str, edges: list[Edge]) -> None:
-        self.rows = [r for r in self.rows if not (r["user_id"] == user_id and dream_id in (r["source_id"], r["target_id"]))]
+        self.rows = [r for r in self.rows if not (r["user_id"] == user_id and r["relation"] in RELATIONS
+                                                  and dream_id in (r["source_id"], r["target_id"]))]
         self.rows += [{"relation": e.relation, "source_id": e.source, "target_id": e.target, "user_id": user_id,
                        "weight": e.weight, "evidence": e.evidence} for e in edges]
 
     async def edges(self, user_id: str) -> list[dict]:
         return sorted(({k: v for k, v in r.items() if k != "user_id"} for r in self.rows if r["user_id"] == user_id),
                       key=lambda r: -r["weight"])
+
+    async def mark(self, user_id: str, a: str, b: str, relation: str, on: bool) -> None:
+        a, b = sorted((a, b))
+        self.rows = [r for r in self.rows if (r["user_id"], r["relation"], r["source_id"], r["target_id"]) != (user_id, relation, a, b)]
+        if on:
+            self.rows.append({"relation": relation, "source_id": a, "target_id": b, "user_id": user_id, "weight": 1.0, "evidence": {}})

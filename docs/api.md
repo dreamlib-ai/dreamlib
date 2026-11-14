@@ -19,6 +19,7 @@ Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`.
 | `GET /api/v1/dreams/{id}/status` | evet | Rüya için çalışan tüm işler (`index`, `glyph`, `magazine`…) tek yerden: `{dreamId, busy, jobs:[{id, kind, status, done, total, error, parentId}]}`. Başkasının rüyası 404 |
 | `DELETE /api/v1/dreams/{id}` | evet | Rüyayı ve görsellerini siler |
 | `GET /api/v1/brain` | evet | Beyin grafiği: `{relations, dreams:[{id, title, dated, emotions, thumbnail, degree}], links:[{relation, source, target, weight, evidence}]}`. Bağlar dört türde (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), eşiği geçenler; `degree` 0 olan rüya bağsız |
+| `POST /api/v1/brain/links` | evet | `{a, b, action: link\|hide, on}`: iki rüyayı elle bağlar (`series`) ya da aradaki puanlanmış bağları gizler; `on:false` geri alır. Yanıt yeni beyin grafiği; başkasının rüyası 404 |
 | `POST /api/v1/dreams/{id}/panels/{n}/redo` | evet | Kayıtlı çizim taslağından paneli yeniler; eski taslaksız kayıt 409 |
 
 Notlar

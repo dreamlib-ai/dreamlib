@@ -99,7 +99,7 @@ class ProfileOut(BaseModel):
     avatarUrl: str
 
 
-Relation = Literal["shares_content", "shares_concept", "shares_emotion", "near_in_time"]
+Relation = Literal["shares_content", "shares_concept", "shares_emotion", "near_in_time", "series"]  # series: drawn by the dreamer
 
 
 class SharedNode(BaseModel):
@@ -132,6 +132,14 @@ class BrainDream(BaseModel):
     emotions: list[str]  # Hall–Van de Castle classes stated in the narrative (anger, apprehension, …)
     thumbnail: str  # the first panel's viewable address, empty without pictures
     degree: int  # links kept; 0 floats free in the graph
+
+
+class BrainEdit(BaseModel):
+    """BG4: the dreamer links two dreams (link) or hides a scored link between them (hide); on=false undoes it."""
+    a: str
+    b: str
+    action: Literal["link", "hide"]
+    on: bool = True
 
 
 class BrainOut(BaseModel):

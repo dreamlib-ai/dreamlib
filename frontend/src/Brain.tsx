@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getBrain, type Brain as BrainData, type BrainDream, type BrainLink, type Relation } from './api';
+import { editBrain, getBrain, type Brain as BrainData, type BrainDream, type BrainLink, type Relation } from './api';
 import { tr } from './strings';
 
 // BG3: the dreamer's dreams as a night sky. Links are coloured by relation type (BG1); a dream with no
 // link drifts on an outer ring. Hand-written force layout on a canvas; no graph library.
 
 export const RELATION_COLORS: Record<Relation, string> = {
-  shares_content: '#86a8ff', shares_concept: '#f3c84b', shares_emotion: '#f29bbb', near_in_time: '#cfd6e6',
+  shares_content: '#86a8ff', shares_concept: '#f3c84b', shares_emotion: '#f29bbb', near_in_time: '#cfd6e6', series: '#ffffff',
 };
 const EMOTION_COLORS: Record<string, string> = {
   anger: '#ef7d63', apprehension: '#a99cff', sadness: '#79b3e6', confusion: '#f3c84b', happiness: '#9bdc9a',
@@ -71,6 +71,16 @@ export default function Brain({ onTell }: { onTell: () => void }) {
   const [data, setData] = useState<BrainData | null>(null);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
+  const linkingRef = useRef<string | null>(null);
+  linkingRef.current = linking ? selected : null;
+  const choose = (id: string | null) => {  // while linking, the next dream tapped is the other end
+    const from = linkingRef.current;
+    if (from && id && id !== from) { setLinking(false); editBrain(from, id, 'link').then(setData).catch((cause) => setError(cause instanceof Error ? cause.message : tr.genericError)); return; }
+    if (!from) setSelected(id);
+  };
+  const chooseRef = useRef(choose);
+  chooseRef.current = choose;
   const [hidden, setHidden] = useState<Set<Relation>>(new Set());
   const canvas = useRef<HTMLCanvasElement>(null);
   const world = useRef<{ nodes: Body[]; view: View; drag: Body | null; dirty: boolean; fit: boolean }>({ nodes: [], view: { x: 0, y: 0, k: 1 }, drag: null, dirty: true, fit: true });
@@ -90,7 +100,11 @@ export default function Brain({ onTell }: { onTell: () => void }) {
 
   useEffect(() => {
     if (!data) return;
-    world.current.nodes = bodies(data);
+    const before = new Map(world.current.nodes.map((b) => [b.d.id, b]));
+    world.current.nodes = bodies(data).map((b) => {  // an edit keeps the sky where it was
+      const old = before.get(b.d.id);
+      return old ? { ...b, x: old.x, y: old.y, vx: old.vx, vy: old.vy, phase: old.phase } : b;
+    });
     if (reduced()) for (let i = 0; i < 400; i++) step(world.current.nodes, data.links, i * 16, null);
     world.current.dirty = true;
   }, [data]);
@@ -182,7 +196,7 @@ export default function Brain({ onTell }: { onTell: () => void }) {
     };
     const up = (e: PointerEvent) => {
       pointers.delete(e.pointerId);
-      if (!moved && pointers.size === 0) { const b = hit(e.clientX, e.clientY); setSelected(b ? b.d.id : null); }
+      if (!moved && pointers.size === 0) { const b = hit(e.clientX, e.clientY); chooseRef.current(b ? b.d.id : null); }
       if (pointers.size < 2) pinch = 0;
       if (world.current.drag) { world.current.drag.free = world.current.drag.d.degree === 0; world.current.drag = null; }
       kick();
@@ -220,7 +234,7 @@ export default function Brain({ onTell }: { onTell: () => void }) {
       </button>)}
     </div>
     <ul className="brain-sr">
-      {data.dreams.map((d) => <li key={d.id}><button onClick={() => setSelected(d.id)}>{d.title || tr.brain.untitled}, {tr.brain.linkCount(d.degree)}</button></li>)}
+      {data.dreams.map((d) => <li key={d.id}><button onClick={() => choose(d.id)}>{d.title || tr.brain.untitled}, {tr.brain.linkCount(d.degree)}</button></li>)}
     </ul>
     {chosen && <aside className="brain-card" aria-live="polite">
       {chosen.thumbnail && <img src={chosen.thumbnail} alt="" />}
@@ -232,12 +246,16 @@ export default function Brain({ onTell }: { onTell: () => void }) {
           return <li key={`${l.relation}${l.source}${l.target}`}>
             <button onClick={() => other && setSelected(other.id)}>
               <span className="swatch" style={{ color: RELATION_COLORS[l.relation] }} aria-hidden="true" />
-              <strong>{other?.title || tr.brain.untitled}</strong><small>{tr.brain.relations[l.relation]} · {evidenceText(l)}</small>
+              <strong>{other?.title || tr.brain.untitled}</strong><small>{tr.brain.relations[l.relation]}{l.relation === 'series' ? '' : ` · ${evidenceText(l)}`}</small>
             </button>
+            {other && <button className="brain-unlink" aria-label={l.relation === 'series' ? tr.brain.unlink : tr.brain.hide}
+              onClick={() => editBrain(chosen.id, other.id, l.relation === 'series' ? 'link' : 'hide', l.relation !== 'series').then(setData).catch((cause) => setError(cause instanceof Error ? cause.message : tr.genericError))}>×</button>}
           </li>;
         })}</ul> : <p>{tr.brain.floating}</p>}
+        {linking ? <p className="brain-pick">{tr.brain.pick} <button onClick={() => setLinking(false)}>{tr.brain.cancel}</button></p>
+          : data.dreams.length > 1 && <button className="brain-connect" onClick={() => setLinking(true)}>{tr.brain.connect}</button>}
       </div>
-      <button className="brain-close" onClick={() => setSelected(null)} aria-label={tr.brain.close}>×</button>
+      <button className="brain-close" onClick={() => { setLinking(false); setSelected(null); }} aria-label={tr.brain.close}>×</button>
     </aside>}
   </section>;
 }
