@@ -49,7 +49,7 @@ Korunan mevcut davranışlar: lease ve heartbeat, süreç ölünce devralma, sak
 
 Yorum metni akarken semboller küçük resimlerle görünür. Bunlar rüya başına üretilmez.
 
-- Her onaylı `symbol` düğümü için bir kez, tek üslupta küçük bir ikon üretilir ve açık depoda durur; adres düğüm kimliğinden türetilir.
+- Her onaylı `symbol` düğümü için bir kez, tek üslupta küçük bir ikon üretilir ve açık depoda durur; adres düğüm kimliğinden türetilir (yapıldı, G1: `glyphs/<düğüm>.webp`, `entities.glyph_path`).
 - Sözlüğün en sık birkaç yüz sembolü betadan önce toplu üretilir.
 - Yeni düğüm onaylanınca `glyph` işi kuyruğa girer; ikon gelene kadar düğüm türünün genel ikonu gösterilir.
 - Üslup tek bir istem şablonu ve referans görselle sabitlenir; şablon repoda durur.

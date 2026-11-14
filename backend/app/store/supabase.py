@@ -391,6 +391,24 @@ class Supabase:
             raise RuntimeError(f"images: read status {res.status_code}")
         return {r["path"]: r for r in res.json()}
 
+    async def fetch(self, url: str) -> bytes:
+        """A provider's picture, for pictures we shrink before keeping (G1 icons)."""
+        if not url.startswith("https://") and not (self.allow_http and url.startswith("http://")):
+            raise RuntimeError("storage: source must be https")
+        src = await self.http.get(url, timeout=60, follow_redirects=True)
+        if src.status_code != 200 or len(src.content) > MAX_IMAGE:
+            raise RuntimeError(f"storage: source status {src.status_code}")
+        return src.content
+
+    async def put_public(self, bucket: str, path: str, data: bytes, ctype: str) -> str:
+        """Writes (or replaces) a file in a public bucket and returns its lasting public address."""
+        up = await self.http.post(f"{self.url}/storage/v1/object/{bucket}/{path}", content=data, timeout=60,
+                                  headers={"apikey": self.key, "Authorization": f"Bearer {self.key}", "Content-Type": ctype,
+                                           "x-upsert": "true"})
+        if up.status_code // 100 != 2:
+            raise RuntimeError(f"storage: public upload status {up.status_code}: {up.text[:300]}")
+        return f"{self.public_url}/storage/v1/object/public/{bucket}/{path}"
+
     async def read(self, path: str) -> tuple[bytes, str]:
         """A stored picture's bytes and type, for pictures served under our own address (G6 shared magazines)."""
         res = await self.http.get(f"{self.url}/storage/v1/object/{BUCKET}/{path}", timeout=60,
