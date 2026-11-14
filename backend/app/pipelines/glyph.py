@@ -1,14 +1,14 @@
 """`glyph` (G1, G2): the icon of one approved symbol node, drawn once for everyone (docs/uretim.md, İkon kütüphanesi).
 
 Queued by the index job when a dream links an approved symbol whose icon is missing or drawn with an older template
-revision, at most once per node and revision; the G2 migration queued every approved symbol once. The paper around
+revision, at most once per node and revision; the G2 migrations queued every approved symbol once. The paper around
 the object is trimmed so it fills the icon, then the picture is shrunk to a 256 px WebP and kept in the public
 `glyphs` bucket as `<node id>-<revision>.webp` (a new address per revision, so no cache serves the old one); the
 node's `glyph_path` and `glyph_prompt` record it. Until then the client shows its kind's general icon."""
 import base64
 import io
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from ..prompts import glyph as glyph_prompts
 from .context import JobContext
@@ -16,28 +16,54 @@ from .context import JobContext
 FAILED = "ikon çizilemedi"
 TIMEOUT = 120
 SIZE = 256
+WORK = 384  # the drawing is trimmed at this size
 MARGIN = 0.06  # of the icon's side, left around the trimmed object
 INK = 28  # how far a pixel must be from the paper colour to count as the object
+CREAM = (248, 242, 230)  # every icon's paper
+LIGHT, GREY = 214, 34  # a pixel this light and this close to grey is paper, whatever shade the model drew
+
+
+def _ink(img: Image.Image, paper: tuple[int, int, int]) -> Image.Image:
+    return ImageChops.difference(img, Image.new("RGB", img.size, paper)).convert("L").point(lambda v: 255 if v > INK else 0)
+
+
+def _even(img: Image.Image) -> Image.Image:
+    """Paints every light, nearly grey pixel the one paper cream: the model's paper, card and vignette tones differ
+    by a few shades and would otherwise show as a box around the object."""
+    r, g, b = img.split()
+    low = ImageChops.darker(ImageChops.darker(r, g), b)
+    high = ImageChops.lighter(ImageChops.lighter(r, g), b)
+    light = low.point(lambda v: 255 if v >= LIGHT else 0)
+    grey = ImageChops.subtract(high, low).point(lambda v: 255 if v <= GREY else 0)
+    out = img.copy()
+    out.paste(CREAM, mask=ImageChops.multiply(light, grey))
+    return out
 
 
 def fill(img: Image.Image) -> Image.Image:
-    """Crops the plain paper around the object and centres it on a square of the same paper with a thin margin."""
-    w, h = img.size
-    corners = [img.getpixel(p) for p in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1))]
-    paper = tuple(sorted(c[i] for c in corners)[1] for i in range(3))  # a corner may be touched; take a low middle
-    diff = ImageChops.difference(img, Image.new("RGB", img.size, paper)).convert("L").point(lambda v: 255 if v > INK else 0)
-    box = diff.getbbox()
+    """Crops the paper around the object and centres it on a cream square with a thin margin. A model that draws
+    the object on a card inside a coloured frame gets the frame (whatever touches a corner) painted cream, and the
+    card's few shades off the paper evened to it."""
+    obj = img.copy()
+    w, h = obj.size
+    for corner in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        ImageDraw.floodfill(obj, corner, CREAM, thresh=INK * 2)
+    obj = _even(obj)
+    ink = _ink(obj, CREAM).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3))  # no hairline rims or specks
+    box = ink.getbbox()
     if not box:
-        return img
-    obj = img.crop(box)
+        return obj
+    obj = obj.crop(box)
     side = round(max(obj.size) / (1 - 2 * MARGIN))
-    out = Image.new("RGB", (side, side), paper)
+    out = Image.new("RGB", (side, side), CREAM)
     out.paste(obj, ((side - obj.width) // 2, (side - obj.height) // 2))
     return out
 
 
 def shrink(data: bytes) -> bytes:
-    img = fill(Image.open(io.BytesIO(data)).convert("RGB"))
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    img.thumbnail((WORK, WORK))  # floodfill walks pixels in Python; the icon is 256 px anyway
+    img = fill(img)
     if img.width == img.height:
         img = img.resize((SIZE, SIZE), Image.LANCZOS)  # a small trimmed object is scaled up too
     else:
@@ -59,7 +85,7 @@ async def run(ctx: JobContext) -> None:
     if "request" not in st:
         labels = node.get("labels") or {}
         st["prompt_version"] = glyph_prompts.LATEST
-        text = glyph_prompts.prompt(labels.get("en") or labels.get("tr") or node["key"], st["prompt_version"])
+        text = glyph_prompts.prompt(labels.get("en") or labels.get("tr") or node["key"], st["prompt_version"], node["key"])
         reference = glyph_prompts.REFERENCE
         if reference.is_file() and s.editor:
             client = s.editor
