@@ -89,11 +89,10 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 
 Her kullanıcının rüyaları bir uzay kanvasında düğüm; ilişkiler türüne göre renkli bağlar. Zayıf ilişki tutulmaz, bağı olmayan rüya uzayda süzülür (Cenker, 2026-11-14). İlk sürüm LLM'siz, M4 ve M8'in düğümlerinden; vektör benzerliği (M10) gelince ayrı bir bağ türü olarak eklenir.
 
-Yapıldı: dört ilişki türü (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), IDF ağırlıklı puanlayıcılar `backend/app/engine/relations.py`'de; eşiğin altı yazılmaz, tür başına en güçlü birkaç bağ kalır; `index` işi yeni rüyanın bağlarını yazar ve eskilerini siler, `brain_links` kişinin derlemini tek sorguda verir, mevcut rüyalar bir kez yeniden dizinlenir (BG1).
+Yapıldı: dört ilişki türü (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), IDF ağırlıklı puanlayıcılar `backend/app/engine/relations.py`'de; eşiğin altı yazılmaz, tür başına en güçlü birkaç bağ kalır; `index` işi yeni rüyanın bağlarını yazar ve eskilerini siler, `brain_links` kişinin derlemini tek sorguda verir, mevcut rüyalar bir kez yeniden dizinlenir (BG1); `GET /api/v1/brain` bütün rüyaları (tarih, duygular, küçük resim, bağ sayısı) ve bağları kanıtıyla tek yanıtta verir (BG2).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| BG2 | `GET /api/brain`: kişinin rüya düğümleri (başlık, tarih, baskın duygu, küçük resim) ve eşiği geçen bağlar türü, ağırlığı ve kanıtıyla; bağsız rüyalar ayrı | BG3 | Beyin ekranı: uzay kanvası, bağımlılıksız kuvvet yerleşimi, ilişki türüne göre renk, bağsız rüyalar süzülür; dokununca rüya önizlemesi ve komşuları öne çıkar, tür filtresi, azaltılmış hareket | BG2, G3 |
 | BG4 | Grafikte etkileşim: iki rüyayı elle bağla ya da bir bağı gizle (`series`, kaynak `user`), bağın neden kurulduğunu gösteren kanıt kartı | BG3 |
 
 ## Sonraki major (betadan sonra)

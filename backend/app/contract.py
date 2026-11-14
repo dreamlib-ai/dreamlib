@@ -99,6 +99,48 @@ class ProfileOut(BaseModel):
     avatarUrl: str
 
 
+Relation = Literal["shares_content", "shares_concept", "shares_emotion", "near_in_time"]
+
+
+class SharedNode(BaseModel):
+    model_config = OUT
+    kind: str
+    key: str
+    label: str
+
+
+class BrainEvidence(BaseModel):
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("shared", "days"))
+    shared: list[SharedNode] = []  # node relations: what the two dreams have in common, rarest first
+    days: int = 0  # near_in_time: days apart
+
+
+class BrainLink(BaseModel):
+    model_config = OUT
+    relation: Relation
+    source: str
+    target: str
+    weight: float
+    evidence: BrainEvidence
+
+
+class BrainDream(BaseModel):
+    model_config = OUT
+    id: str
+    title: str
+    dated: str  # YYYY-MM-DD: the day it was dreamt, else the day it was saved
+    emotions: list[str]  # Hall–Van de Castle classes stated in the narrative (anger, apprehension, …)
+    thumbnail: str  # the first panel's viewable address, empty without pictures
+    degree: int  # links kept; 0 floats free in the graph
+
+
+class BrainOut(BaseModel):
+    model_config = OUT
+    relations: list[Relation]  # legend order
+    dreams: list[BrainDream]
+    links: list[BrainLink]
+
+
 def answers(model: type[BaseModel] | None, status: int = 200) -> dict:
     """Route kwargs that document `model` as the answer without making FastAPI validate or filter it."""
     if model is None:

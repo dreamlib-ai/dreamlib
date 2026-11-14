@@ -85,6 +85,12 @@ export const listDreams = () => g.listDreams().then((r) => r.dreams.map(asDream)
 
 export const deleteDream = (id: string) => g.deleteDream(id);
 
+export type Brain = g.BrainOut;
+export type BrainDream = g.BrainDream;
+export type BrainLink = g.BrainLink;
+export type Relation = g.BrainLink['relation'];
+export const getBrain = (signal?: AbortSignal) => g.brain(signal);
+
 export const trackEvent = (name: ProductEvent, eventId: string, platform: g.EventIn['platform']) =>
   g.event({ name, eventId, platform });
 
