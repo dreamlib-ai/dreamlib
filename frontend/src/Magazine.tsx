@@ -53,7 +53,7 @@ export function ShareMagazine({ magazine, onChange }: { magazine: MagazineData; 
 
 type Sheet = { kind: 'cover' } | { kind: 'page'; page: MagazinePage } | { kind: 'colophon' };
 
-function Figure({ panel, eager }: { panel: Panel | undefined; eager: boolean }) {
+function Figure({ panel, eager }: { panel: Pick<Panel, 'caption' | 'url' | 'thumb' | 'width' | 'height' | 'color' | 'blurhash'> | undefined; eager: boolean }) {
   if (!panel) return null;
   return <figure className="mag-figure"><Picture panel={panel} className="mag-picture" alt={panel.caption} eager={eager} />{panel.caption && <figcaption>{panel.caption}</figcaption>}</figure>;
 }

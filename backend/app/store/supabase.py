@@ -333,6 +333,14 @@ class Supabase:
             raise RuntimeError(f"images: read status {res.status_code}")
         return {r["path"]: r for r in res.json()}
 
+    async def read(self, path: str) -> tuple[bytes, str]:
+        """A stored picture's bytes and type, for pictures served under our own address (G6 shared magazines)."""
+        res = await self.http.get(f"{self.url}/storage/v1/object/{BUCKET}/{path}", timeout=60,
+                                  headers={"apikey": self.key, "Authorization": f"Bearer {self.key}"})
+        if res.status_code != 200:
+            raise RuntimeError(f"storage: read status {res.status_code}")
+        return res.content, res.headers.get("content-type", "application/octet-stream")
+
     async def sign(self, paths: list[str]) -> list[str]:
         """An hour-long viewable URL for each storage path, in the same order ('' when it could not be signed)."""
         if not paths:
