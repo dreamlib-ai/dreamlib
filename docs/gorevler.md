@@ -66,12 +66,10 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 
 ### Sözleşme
 
+Yapıldı: `/api/v1` ve yerinde eski yollar (S1); makine hata kodları (S2); şemadan üretilen TS istemci (S3); ana ekrana eklenebilir web: manifest ve elle yazılmış service worker, API hiç önbelleğe alınmaz (S4).
+
 | No | Görev | Önce |
 | --- | --- | --- |
-| S1 | `/api/v1` ve eski yolların yönlendirmesi | — |
-| S2 | Makine hata kodları | S1 |
-| S3 | OpenAPI'den üretilen TS istemci; `api.ts` onu kullansın | S1 |
-| S4 | Ana ekrana eklenebilir web (PWA) | — |
 | S5 | Fiziksel iOS ve Android kabul testi listesi ve koşusu; aynı turda rakiplerin telefonda görülecek maddeleri ([karşılaştırma](arastirma/notlar/uygulamalar-karsilastirma.md)) | G8 |
 
 ### Fikirlerden (süzme: [fikirler](fikirler.md))
