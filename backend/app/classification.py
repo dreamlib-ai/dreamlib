@@ -11,11 +11,13 @@ ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1
 
 
 class ExperienceEvidence(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     kind: Experience = Field(validation_alias=AliasChoices('kind', 'type'))
     quote: str = Field(max_length=200)
 
 
 class Features(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
     version: int = Field(default=0, ge=0, le=1)
     genres: list[Genre] = Field(default_factory=list, max_length=6)
     perspective: Perspective = 'unknown'
@@ -26,7 +28,7 @@ class Features(BaseModel):
 
 
 class ClassificationOverride(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra='forbid', json_schema_serialization_defaults_required=True)
     genres: list[Genre] | None = Field(default=None, max_length=6)
     perspective: Perspective | None = None
     experiences: list[Experience] | None = Field(default=None, max_length=3)

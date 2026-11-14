@@ -16,6 +16,8 @@ from ..providers.fake import PLACEHOLDER_PREFIX, FakeFal
 from ..services import MAX_DREAM, Services, current_user, remove_files, services, sign_panels
 
 log = logging.getLogger("dreamlib")
+from ..contract import answers, DreamList, DreamOut, DreamStatus
+
 router = APIRouter()
 
 MAX_TITLE = 200
@@ -37,12 +39,12 @@ def valid_path(s: Services, user_id: str, path: str) -> bool:
     return path.startswith(user_id + "/") and ".." not in path
 
 
-@router.post("/dreams", status_code=201)
+@router.post("/dreams", status_code=201, **answers(DreamOut, 201))
 async def save_dream(body: DreamIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     return await save_record(body, user_id, s)
 
 
-@router.put("/dreams/{dream_id}")
+@router.put("/dreams/{dream_id}", **answers(DreamOut, 200))
 async def put_dream(dream_id: UUID, body: DreamIn, existing: bool = False, user_id: str = Depends(current_user), s: Services = Depends(services)):
     return await save_record(body, user_id, s, str(dream_id), existing)
 
@@ -125,7 +127,7 @@ async def save_record(body: DreamIn, user_id: str, s: Services, dream_id: str = 
     return saved.public()
 
 
-@router.get("/dreams")
+@router.get("/dreams", **answers(DreamList, 200))
 async def list_dreams(user_id: str = Depends(current_user), s: Services = Depends(services)):
     try:
         dreams = await s.store.list_dreams(user_id)
@@ -146,14 +148,14 @@ async def _load(s: Services, user_id: str, dream_id: str) -> Dream:
         raise ApiError(502, "rüya açılamadı")
 
 
-@router.get("/dreams/{dream_id}")
+@router.get("/dreams/{dream_id}", **answers(DreamOut, 200))
 async def get_dream(dream_id: str, user_id: str = Depends(current_user), s: Services = Depends(services)):
     d = await _load(s, user_id, dream_id)
     await sign_panels(s, [d.panels])
     return d.public()
 
 
-@router.get("/dreams/{dream_id}/status")
+@router.get("/dreams/{dream_id}/status", **answers(DreamStatus, 200))
 async def dream_status(dream_id: str, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """Every job working for this dream (index, glyph, magazine...), so the app follows one address."""
     await _load(s, user_id, dream_id)  # 404 unless the dream is theirs
@@ -169,7 +171,7 @@ async def dream_status(dream_id: str, user_id: str = Depends(current_user), s: S
     return {"dreamId": dream_id, "busy": any(j["status"] == "running" for j in out), "jobs": out}
 
 
-@router.delete("/dreams/{dream_id}", status_code=204)
+@router.delete("/dreams/{dream_id}", status_code=204, **answers(None, 204))
 async def delete_dream(dream_id: str, user_id: str = Depends(current_user), s: Services = Depends(services)):
     files: list[str] = []
     if s.blobs:  # read the picture paths first: once the row is gone they are lost
@@ -192,7 +194,7 @@ async def delete_dream(dream_id: str, user_id: str = Depends(current_user), s: S
     return Response(status_code=204)
 
 
-@router.post("/dreams/{dream_id}/panels/{n}/redo")
+@router.post("/dreams/{dream_id}/panels/{n}/redo", **answers(Panel, 200))
 async def redo_saved_panel(dream_id: str, n: int, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """Works from the stored storyboard, independently of the job cache."""
     async with s.locks.hold(user_id, s.queue):

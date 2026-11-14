@@ -8,6 +8,8 @@ from ..errors import ApiError, Conflict
 from ..services import Services, current_user, services
 from .jobs import _queue, job_or_404
 
+from ..contract import answers, JobRef, ProfileOut
+
 router = APIRouter()
 
 
@@ -20,7 +22,7 @@ async def public_profile(s: Services, profile: SelfProfile) -> dict:
     return out
 
 
-@router.get('/profile')
+@router.get('/profile', **answers(ProfileOut, 200))
 async def get_profile(user_id: str = Depends(current_user), s: Services = Depends(services)):
     return await public_profile(s, await s.store.get_profile(user_id))
 
@@ -34,7 +36,7 @@ class ProfilePatch(BaseModel):
     clearAvatar: bool = False
 
 
-@router.patch('/profile')
+@router.patch('/profile', **answers(ProfileOut, 200))
 async def update_profile(body: ProfilePatch, user_id: str = Depends(current_user), s: Services = Depends(services)):
     if sum((body.presetId is not None,body.avatarJobId is not None,body.clearAvatar)) > 1:
         raise ApiError(400,'tek bir avatar seçimi yap')
@@ -75,7 +77,7 @@ class AvatarIn(BaseModel):
     baseRevision: int = Field(ge=0)
 
 
-@router.post('/avatar',status_code=202)
+@router.post('/avatar',status_code=202, **answers(JobRef, 202))
 async def create_avatar(body: AvatarIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     if not s.images:
         raise ApiError(503,'görsel servisi kurulu değil')

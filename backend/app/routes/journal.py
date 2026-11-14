@@ -13,6 +13,8 @@ from ..classification import ClassificationOverride
 from ..services import Services, current_user, services, sign_panels
 from ..indexing import after_save
 
+from ..contract import answers, DreamOut
+
 router = APIRouter()
 
 
@@ -36,7 +38,7 @@ class JournalPatch(BaseModel):
     recall: str | None = Field(default=None, pattern='^(|clear|fragmentary|faint)$')
 
 
-@router.patch("/dreams/{dream_id}/journal")
+@router.patch("/dreams/{dream_id}/journal", **answers(DreamOut, 200))
 async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends(current_user), s: Services = Depends(services)):
     async with s.locks.hold(user_id, s.queue):
         d = await _load(s, user_id, dream_id)
