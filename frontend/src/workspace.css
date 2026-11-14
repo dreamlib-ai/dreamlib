@@ -102,17 +102,8 @@
 .library-empty { display: grid; justify-items: center; align-content: center; gap: 22px; min-height: 470px; padding: 24px; border: 1.5px solid #bdc8dd; border-radius: 22px; background: #fff; text-align: center; }
 .library-empty img { width: 150px; height: 190px; object-fit: contain; }
 .library-empty h2 { max-width: 18ch; margin: 0; font-size: 23px; line-height: 1.5; }
-.app-shell .dreams { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
-.app-shell .dream { display: block; overflow: hidden; border: 1.5px solid #bac6da; border-radius: 18px; background: white; }
-.app-shell .cover { aspect-ratio: 4/3; border-radius: 0; }
-.app-shell .cover img { transition: transform .2s; }
-.app-shell .dream:hover .cover img { transform: scale(1.025); }
 .text-cover { display: flex; align-items: center; padding: 24px; background: #dfe8ff; color: var(--cobalt-deep); }
 .text-cover > span { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 5; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.9; }
-.dream-info { display: grid; padding: 18px; gap: 8px; }
-.app-shell .dream b { margin: 0; font-size: 16px; line-height: 1.5; }
-.app-shell .dream small { font-size: 10px; }
-.app-shell .dream .tags { margin: 0; }
 .app-shell .tag { font-size: 10px; line-height: 1.7; }
 .no-results { padding: 40px 0; text-align: center; color: var(--soft); font-size: 13px; }
 .original-dream { padding: 18px 0; margin: 0 0 26px; border-block: 1px solid var(--line); }
@@ -122,7 +113,6 @@
  .app-shell .link { padding-inline: 12px; }
  .app-shell .page { padding-inline: 24px; }
  .atlas-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
- .app-shell .dreams { grid-template-columns: repeat(2,minmax(0,1fr)); }
  .explore-top { grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 16px; }
  .welcome-card { padding: 24px; }
  .journal-card { padding: 22px; }
@@ -187,13 +177,8 @@
  .library-empty { min-height: 390px; padding: 24px 18px; gap: 18px; }
  .library-empty img { height: 155px; width: 120px; }
  .library-empty h2 { font-size: 21px; }
- .app-shell .dreams { gap: 14px; }
- .dream-info { padding: 12px; gap: 8px; }
- .app-shell .dream b { font-size: 13px; }
- .app-shell .dream small, .app-shell .dream .tag { font-size: 8px; }
  .text-cover { padding: 14px; }
  .text-cover > span { font-size: 10px; -webkit-line-clamp: 4; }
  .atlas-dialog { width: calc(100vw - 32px); padding: 24px; }
  .app-shell:has(textarea:focus) .links { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .app-shell .cover img { transition: none; } }

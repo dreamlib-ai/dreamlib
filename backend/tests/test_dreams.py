@@ -30,6 +30,28 @@ def test_save_list_get_delete(api):
     assert client.get(f"/api/v1/dreams/{saved['id']}", headers=auth()).status_code == 404
 
 
+def test_list_pages_with_a_cursor(api):
+    client, _ = api
+    ids = [client.post("/api/v1/dreams", headers=auth(), json={**DREAM, "title": f"Rüya {i}"}).json()["id"] for i in range(5)]
+    whole = client.get("/api/v1/dreams", headers=auth()).json()
+    assert "next" not in whole and [d["id"] for d in whole["dreams"]] == ids[::-1]
+
+    seen, cursor = [], ""
+    while True:
+        page = client.get("/api/v1/dreams", headers=auth(), params={"limit": 2, **({"cursor": cursor} if cursor else {})}).json()
+        assert len(page["dreams"]) <= 2
+        seen += [d["id"] for d in page["dreams"]]
+        if "next" not in page:
+            break
+        cursor = page["next"]
+    assert seen == ids[::-1]
+    assert client.get("/api/v1/dreams", headers=auth(OTHER), params={"limit": 2}).json() == {"dreams": []}
+
+    for params in [{"limit": 0}, {"limit": 201}, {"cursor": "bozuk"}, {"cursor": "MjAyNnww"}]:
+        res = client.get("/api/v1/dreams", headers=auth(), params=params)
+        assert res.status_code == 400 and res.json()["code"] == "invalid_request", params
+
+
 def test_save_rejects_bad_input(api):
     client, _ = api
     for patch in [

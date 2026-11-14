@@ -51,7 +51,7 @@ Yapıldı: pgvector, `entity_kinds` (11 tür tohumlu), `entities`, `entity_alias
 
 ### İkon, dergi, kütüphane
 
-Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, öğrenen süre tahmini ve `etaSeconds`; her kaydedilen görselin genişlik, yükseklik, BlurHash, baskın renk ve 480 px WebP küçük resmi `images` tablosunda, paneller bunlarla gönderilir (G3, Pillow).
+Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, öğrenen süre tahmini ve `etaSeconds`; her kaydedilen görselin genişlik, yükseklik, BlurHash, baskın renk ve 480 px WebP küçük resmi `images` tablosunda, paneller bunlarla gönderilir (G3, Pillow). Kütüphane duvarı: `GET /api/v1/dreams` imleçle 24'erli sayfa, masonry kartlar sayfada tarih sırasında, kapak küçük resim + BlurHash/renk yer tutucu ve gerçek oran; arama ya da süzgeç açılınca kalan sayfalar da yüklenir (G7).
 
 | No | Görev | Önce |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 | G4 | `magazines` tablosu ve `spec`; `magazine` işi (kapak dahil) | B3, G3 |
 | G5 | Dergi okuyucu: sayfa düzenleri, sayfa çevirme, azaltılmış hareket | G4 |
 | G6 | Linkle paylaşım, girişsiz dergi sayfası, önizleme görseli | G4 |
-| G7 | Masonry kütüphane duvarı, imleçli sayfalama | G8 | Akışlı yorum ekranı: parça dizisi, satır içi ikon | M7, G1 |
+| G8 | Akışlı yorum ekranı: parça dizisi, satır içi ikon | M7, G1 |
 
 ### Sözleşme
 

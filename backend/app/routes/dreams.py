@@ -1,6 +1,8 @@
 """The library: save, list, open, delete and redraw the dreams of the signed-in user."""
 import asyncio
+import base64
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response
@@ -27,6 +29,7 @@ MAX_EMOTIONS = 12
 MAX_URL = 2000
 MAX_CAPTION = 300
 MAX_PANELS = 9
+PAGE_MAX = 200  # also the page without `limit`, as before G7
 
 
 def valid_path(s: Services, user_id: str, path: str) -> bool:
@@ -128,14 +131,39 @@ async def save_record(body: DreamIn, user_id: str, s: Services, dream_id: str = 
 
 
 @router.get("/dreams", **answers(DreamList, 200))
-async def list_dreams(user_id: str = Depends(current_user), s: Services = Depends(services)):
+async def list_dreams(limit: int = PAGE_MAX, cursor: str = "", user_id: str = Depends(current_user),
+                      s: Services = Depends(services)):
+    """Newest first, `limit` at a time (G7). `next` comes only when more remain; send it back as `cursor`."""
+    if not 1 <= limit <= PAGE_MAX:
+        raise ApiError(400, f"limit 1 ile {PAGE_MAX} arasında olmalı")
+    before = read_cursor(cursor) if cursor else None
     try:
-        dreams = await s.store.list_dreams(user_id)
+        dreams = await s.store.list_dreams(user_id, limit=limit + 1, before=before)
     except Exception:
         log.exception("dreams: list failed")
         raise ApiError(502, "kütüphane açılamadı")
-    await sign_panels(s, [d.panels for d in dreams])
-    return {"dreams": [d.public() for d in dreams]}
+    page, more = dreams[:limit], len(dreams) > limit
+    await sign_panels(s, [d.panels for d in page])
+    answer: dict = {"dreams": [d.public() for d in page]}
+    if more and page[-1].createdAt:
+        answer["next"] = make_cursor(page[-1].createdAt, page[-1].id)
+    return answer
+
+
+def make_cursor(at: datetime, dream_id: str) -> str:
+    """Opaque to the client: where the page ended, as (createdAt, id) of its last dream."""
+    return base64.urlsafe_b64encode(f"{at.isoformat()}|{dream_id}".encode()).decode().rstrip("=")
+
+
+def read_cursor(cursor: str) -> tuple[datetime, str]:
+    try:
+        at, dream_id = base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4)).decode().split("|", 1)
+        when = datetime.fromisoformat(at)
+    except (ValueError, UnicodeDecodeError):
+        raise ApiError(400, "sayfa imleci geçersiz")
+    if when.tzinfo is None or not dream_id or len(dream_id) > 64:
+        raise ApiError(400, "sayfa imleci geçersiz")
+    return when, dream_id
 
 
 async def _load(s: Services, user_id: str, dream_id: str) -> Dream:

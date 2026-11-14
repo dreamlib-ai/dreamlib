@@ -50,9 +50,12 @@ class DevStore:
         self.dreams.setdefault(user_id, []).append(saved)
         return saved.model_copy(deep=True)
 
-    async def list_dreams(self, user_id: str, limit: int = 200, exclude_id: str = "") -> list[Dream]:
-        mine = sorted((d for d in self.dreams.get(user_id, []) if d.id != exclude_id), key=lambda d: d.createdAt, reverse=True)
-        return [d.model_copy(deep=True) for d in mine[:min(max(limit, 1), 200)]]
+    async def list_dreams(self, user_id: str, limit: int = 200, exclude_id: str = "",
+                          before: tuple[datetime, str] | None = None) -> list[Dream]:
+        mine = sorted((d for d in self.dreams.get(user_id, []) if d.id != exclude_id), key=lambda d: (d.createdAt, d.id), reverse=True)
+        if before:
+            mine = [d for d in mine if (d.createdAt, d.id) < before]
+        return [d.model_copy(deep=True) for d in mine[:min(max(limit, 1), 1000)]]
 
     async def update_journal(self, user_id: str, d: Dream, revision: int) -> Dream:
         for i, prior in enumerate(self.dreams.get(user_id, [])):

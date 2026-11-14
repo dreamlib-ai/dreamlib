@@ -15,7 +15,8 @@ Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`.
 | `POST /api/v1/dreams` | evet | Rüyayı kaydeder (`jobId` verilirse paneller ve çizim taslağı sunucudan alınır) |
 | `PUT /api/v1/dreams/{uuid}?existing=false` | evet | Aynı rüyayı sabit kimlikle oluşturur/günceller; tekrar istek kayıt çoğaltmaz. `existing=true` silinen kaydı yeniden oluşturmaz |
 | `POST /api/v1/events` | evet | Yalnız sabit ürün olayı, UUID olay kimliği ve platform; içerik/ek alan kabul etmez, servis loguna takma hesap koduyla yazar |
-| `GET /api/v1/dreams`, `GET /api/v1/dreams/{id}` | evet | Kütüphane; panel `url`'leri süreli imzalı |
+| `GET /api/v1/dreams?limit=&cursor=` | evet | Kütüphane, yeniden eskiye (`created_at`, sonra `id`). `limit` 1-200 (verilmezse 200); daha varsa yanıtta `next` gelir, `cursor` olarak geri gönderilir. Geçersiz imleç ya da limit 400. Panel `url`'leri süreli imzalı; G3 bilgisi (`width`, `height`, `blurhash`, `color`, `thumb`) panelle gelir |
+| `GET /api/v1/dreams/{id}` | evet | Tek rüya, aynı panel bilgisiyle |
 | `GET /api/v1/dreams/{id}/status` | evet | Rüya için çalışan tüm işler (`index`, `glyph`, `magazine`…) tek yerden: `{dreamId, busy, jobs:[{id, kind, status, done, total, error, parentId}]}`. Başkasının rüyası 404 |
 | `DELETE /api/v1/dreams/{id}` | evet | Rüyayı ve görsellerini siler |
 | `GET /api/v1/brain` | evet | Beyin grafiği: `{relations, dreams:[{id, title, dated, emotions, thumbnail, degree}], links:[{relation, source, target, weight, evidence}]}`. Bağlar dört türde (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), eşiği geçenler; `degree` 0 olan rüya bağsız |
