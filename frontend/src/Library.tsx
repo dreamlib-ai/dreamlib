@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { deleteDream, listDreamPage, type Dream, type Panel } from './api';
-import { decodeBlurhash } from './blurhash';
+import Picture from './Picture';
+import Magazine, { useMagazine } from './Magazine';
 import { placeCards, wallColumns } from './wall';
 import Result from './Result';
 import Icon from './Icon';
@@ -17,6 +18,8 @@ const day = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'n
 function Detail({ dream, onBack, onRemoved, onUpdated }: { dream: Dream; onBack: () => void; onRemoved: () => void; onUpdated: (dream: Dream) => void }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
+  const magazine = useMagazine(dream.id, dream.panels.length > 0);
+  const [reading, setReading] = useState(false);
 
   async function remove() {
     try {
@@ -36,6 +39,8 @@ function Detail({ dream, onBack, onRemoved, onUpdated }: { dream: Dream; onBack:
       <Result analysis={dream}>
         <details className="original-dream"><summary>{tr.app.original}</summary><p>{dream.originalText}</p></details>
         <JournalEditor dream={dream} onUpdated={onUpdated} />
+        {magazine && <button className="go read-magazine" onClick={() => setReading(true)}><Icon name="book" />{tr.magazine.open}</button>}
+        {reading && magazine && <Magazine magazine={magazine} onClose={() => setReading(false)} />}
         {dream.panels.length > 0 && (
           <div className="shots">
             {dream.panels.map((p) => (
@@ -183,32 +188,8 @@ function MoreSentinel({ onMore }: { onMore?: () => void }) {
   return <div ref={spot} className="wall-sentinel" aria-hidden="true" />;
 }
 
-const placeholders = new Map<string, string>();
-/** A 32×32 picture of the BlurHash, drawn once per hash. */
-function placeholder(hash: string): string {
-  if (!hash) return '';
-  const known = placeholders.get(hash);
-  if (known !== undefined) return known;
-  let url = '';
-  const pixels = decodeBlurhash(hash, 32, 32);
-  const canvas = pixels ? document.createElement('canvas') : null;
-  const ctx = canvas?.getContext('2d');
-  if (pixels && canvas && ctx) {
-    canvas.width = canvas.height = 32;
-    ctx.putImageData(new ImageData(new Uint8ClampedArray(pixels), 32, 32), 0, 0);
-    url = canvas.toDataURL();
-  }
-  placeholders.set(hash, url);
-  return url;
-}
-
 function Cover({ panel }: { panel: Panel }) {
-  const [shown, setShown] = useState(false);
-  const hash = placeholder(panel.blurhash ?? '');
-  const ratio = panel.width && panel.height ? `${panel.width} / ${panel.height}` : '1 / 1';
-  return <span className="wall-cover" style={{ aspectRatio: ratio, backgroundColor: panel.color || undefined, backgroundImage: hash ? `url(${hash})` : undefined }}>
-    <img src={panel.thumb || panel.url} alt="" loading="lazy" decoding="async" className={shown ? 'shown' : ''} onLoad={() => setShown(true)} />
-  </span>;
+  return <Picture panel={panel} className="wall-cover" thumb />;
 }
 
 /** Masonry: each card goes under the shortest column; the page keeps them in date order for keyboards and screen readers. */

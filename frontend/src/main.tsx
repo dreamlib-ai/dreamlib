@@ -7,6 +7,7 @@ import './workspace.css';
 import './atmosphere.css';
 import './editorial.css';
 import './brain.css';
+import './magazine.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);

@@ -7,6 +7,7 @@ import '../src/app.css';
 import '../src/workspace.css';
 import '../src/atmosphere.css';
 import '../src/editorial.css';
+import '../src/magazine.css';
 import { Workspace } from '../src/App';
 import Onboarding from '../src/Onboarding';
 import type { Dream } from '../src/api';
@@ -25,7 +26,12 @@ const pictures = ['/avatar-512.png','/avatars/ink.webp','/favicon.png'];
 const wallRows = (): Dream[] => Array.from({length:60}, (_, i) => ({ ...dream, id:`wall-${i}`, title: i % 7 === 3 ? 'Uzun bir koridorun sonunda, hiç görmediğim bir kapının önünde bekliyordum' : `Rüya ${60 - i}`,
   createdAt: new Date(Date.UTC(2026, 10, 14) - i * 86400000).toISOString(),
   panels: i % 5 === 2 ? [] : [{ path:`wall/${i}`, caption:'', url: pictures[i % 3], thumb: pictures[i % 3], width: shapes[i % 5][0], height: shapes[i % 5][1], color: ['#203252','#5a3b6e','#2e5a4f'][i % 3], blurhash: i % 2 ? 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' : '' }] }));
-const rows: Dream[] = params.has('themes') ? [dream, { ...dream, id:'second-dream', title:'Ormandaki ışık', tags:['DENİZ','orman'], features:{...dream.features,genres:['scifi']} }, { ...dream, id:'third-dream', title:'Eski ev', tags:['ev'], features:{...dream.features,genres:['daily']}, emotions:[{label:'Korku',pct:100,note:''}] }] : params.has('populated') ? [dream] : params.has('wall') ? wallRows() : fake.rows;
+// ?magazine: one dream with a five-picture booklet and its laid-out magazine (G5).
+const bookletRow = (): Dream => ({ ...dream, id:'booklet', title:'Denizin üstündeki şehir', panels: [0,1,2,3,4].map(i => ({ path:`book/${i}`, caption:`Sahne ${i + 1}: ışıkları yanan şehrin üstünden geçiyorum`, url: pictures[i % 3], width: [832,1216,1216,1024,832][i], height: [1216,832,832,1024,1216][i], color: ['#203252','#5a3b6e','#2e5a4f'][i % 3], blurhash:'LEHV6nWB2yk8pyo0adR*.7kCMdnj' })) });
+const fakeMagazine = (row: Dream) => ({ id:'mag-1', dreamId:row.id, status:'ready', visibility:'private', updatedAt:'2026-11-14T07:00:00Z', panels: row.panels,
+  spec: { version:1, cover:{ title:row.title, panel:0, color:'#203252' }, colophon:{ dated:'2026-11-13', style:'manga', tags:row.tags, emotions:['Huzur','Merak'] },
+    pages:[{layout:'full',panels:[0],text:''},{layout:'pair',panels:[1,2],text:''},{layout:'quote',panels:[],text:'Denizin üstünde uçmak, özgürlük isteğini ve bilinmeyene duyulan merakı çağrıştırabilir.'},{layout:'full',panels:[3],text:''},{layout:'full',panels:[4],text:''}] } });
+const rows: Dream[] = params.has('magazine') ? [bookletRow()] : params.has('themes') ? [dream, { ...dream, id:'second-dream', title:'Ormandaki ışık', tags:['DENİZ','orman'], features:{...dream.features,genres:['scifi']} }, { ...dream, id:'third-dream', title:'Eski ev', tags:['ev'], features:{...dream.features,genres:['daily']}, emotions:[{label:'Korku',pct:100,note:''}] }] : params.has('populated') ? [dream] : params.has('wall') ? wallRows() : fake.rows;
 const persist = () => { localStorage.setItem(testKey, JSON.stringify({ ...fake, rows })); trace(); };
 const calls: { path: string; method: string; bytes?: number; text?: string }[] = [];
 // A visible, read-only test trace in the DOM lets browser checks inspect requests.
@@ -70,6 +76,10 @@ globalThis.fetch = async (input, init) => {
     const index = rows.findIndex(row => row.id === saved.id);
     if (index < 0) rows.push(saved); else rows[index] = saved;
     persist(); return json(saved);
+  }
+  if (path.startsWith('/api/v1/dreams/') && path.endsWith('/magazine')) {
+    const row = rows.find(d => d.id === path.split('/')[4]);
+    return row?.panels.length ? json(fakeMagazine(row)) : json({ error:'bu rüyanın dergisi yok', code:'not_found' }, 404);
   }
   if (path === '/api/v1/dreams') {
     const query = new URL(String(input), location.origin).searchParams;

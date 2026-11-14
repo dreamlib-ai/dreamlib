@@ -141,6 +141,11 @@ export const tr = {
     googleDisabled: 'Google girişi için sağlayıcı ayarı tamamlanmalı.',
     notConfigured: 'Giriş servisine bağlanılamıyor.',
   },
+  magazine: {
+    open: 'Dergiyi oku', close: 'Dergiyi kapat', label: 'Sayfalar', next: 'Sonraki sayfa', prev: 'Önceki sayfa',
+    page: (at: number, of: number) => `${at} / ${of}`,
+    dreamt: 'Rüya gecesi', style: 'Üslup', felt: 'Duygular', tags: 'Semboller',
+  },
   library: {
     heading: 'Kütüphane',
     empty: 'Henüz bir rüya kaydetmedin.',
