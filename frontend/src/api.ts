@@ -95,6 +95,12 @@ export type Magazine = g.MagazineOut;
 export type MagazinePage = g.MagazinePage;
 /** G4: the dream's laid-out magazine; 404 (ApiError) until the job has made it or when there is no booklet. */
 export const getMagazine = (dreamId: string, signal?: AbortSignal) => g.magazine(dreamId, signal);
+/** G6: open the magazine to anyone with the link, or close it again; the link stays the same. */
+export const shareMagazine = (dreamId: string, visibility: 'private' | 'link') => g.shareMagazine(dreamId, { visibility });
+export type SharedMagazine = g.SharedMagazineOut;
+/** G6: a shared magazine, read without signing in. */
+export const getSharedMagazine = (slug: string, signal?: AbortSignal) => g.sharedMagazine(slug, signal);
+export const sharedPath = (slug: string) => `/m/${slug}`;
 
 export type Brain = g.BrainOut;
 export type BrainDream = g.BrainDream;

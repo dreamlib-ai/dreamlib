@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { getMagazine, type Magazine as MagazineData, type MagazinePage, type Panel } from './api';
+import { getMagazine, getSharedMagazine, shareMagazine, sharedPath, type Magazine as MagazineData, type MagazinePage, type Panel, type SharedMagazine } from './api';
 import Icon from './Icon';
 import Picture from './Picture';
 import { tr } from './strings';
@@ -19,7 +19,36 @@ export function useMagazine(dreamId: string, hasPanels: boolean) {
     getMagazine(dreamId, stop.signal).then(setMagazine).catch(() => { /* none yet, or not reachable: no button */ });
     return () => stop.abort();
   }, [dreamId, hasPanels]);
-  return magazine;
+  return [magazine, setMagazine] as const;
+}
+
+/** G6: the owner opens the magazine to anyone with the link, copies it, or closes it again. */
+export function ShareMagazine({ magazine, onChange }: { magazine: MagazineData; onChange: (next: MagazineData) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+  const link = magazine.shareSlug ? new URL(sharedPath(magazine.shareSlug), window.location.origin).href : '';
+  async function set(visibility: 'private' | 'link') {
+    setBusy(true); setError(''); setCopied(false);
+    try { onChange(await shareMagazine(magazine.dreamId, visibility)); }
+    catch (e) { setError(e instanceof Error ? e.message : tr.genericError); }
+    finally { setBusy(false); }
+  }
+  async function copy() {
+    try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setError(text.copyFailed); }
+  }
+  return <section className="magazine-share" aria-label={text.share}>
+    {link ? <>
+      <p>{text.sharedNote}</p>
+      <div className="share-link"><input readOnly value={link} aria-label={text.link} onFocus={e => e.currentTarget.select()} />
+        <button className="go tiny" onClick={copy}>{copied ? text.copied : text.copy}</button></div>
+      <button className="text-action" onClick={() => set('private')} disabled={busy}>{text.unshare}</button>
+    </> : <>
+      <button className="go tiny quiet" onClick={() => set('link')} disabled={busy}>{text.share}</button>
+      <p>{text.shareNote}</p>
+    </>}
+    {error && <p className="error" role="alert">{error}</p>}
+  </section>;
 }
 
 type Sheet = { kind: 'cover' } | { kind: 'page'; page: MagazinePage } | { kind: 'colophon' };
@@ -29,7 +58,9 @@ function Figure({ panel, eager }: { panel: Panel | undefined; eager: boolean }) 
   return <figure className="mag-figure"><Picture panel={panel} className="mag-picture" alt={panel.caption} eager={eager} />{panel.caption && <figcaption>{panel.caption}</figcaption>}</figure>;
 }
 
-function SheetView({ sheet, magazine, eager }: { sheet: Sheet; magazine: MagazineData; eager: boolean }) {
+type Readable = Pick<MagazineData, 'spec' | 'panels'> | SharedMagazine;
+
+function SheetView({ sheet, magazine, eager }: { sheet: Sheet; magazine: Readable; eager: boolean }) {
   const { spec, panels } = magazine;
   if (sheet.kind === 'cover') {
     const panel = panels[spec.cover.panel];
@@ -51,7 +82,7 @@ function SheetView({ sheet, magazine, eager }: { sheet: Sheet; magazine: Magazin
 }
 
 /** G5: reads a magazine page by page; buttons, arrow keys and swipes turn pages, Escape closes. */
-export default function Magazine({ magazine, onClose }: { magazine: MagazineData; onClose: () => void }) {
+export default function Magazine({ magazine, onClose }: { magazine: Readable; onClose: () => void }) {
   const sheets: Sheet[] = [{ kind: 'cover' }, ...magazine.spec.pages.map(page => ({ kind: 'page' as const, page })), { kind: 'colophon' }];
   const [at, setAt] = useState(0);
   const [way, setWay] = useState<'forward' | 'back'>('forward');
@@ -104,4 +135,21 @@ export default function Magazine({ magazine, onClose }: { magazine: MagazineData
       <button onClick={() => at === last ? onClose() : turn(at + 1)} aria-label={at === last ? text.close : text.next}>{at === last ? <Icon name="check" /> : <Icon name="chevron" className="flip" />}</button>
     </nav>
   </div>, document.body);  // outside the page: its entry animation would hold a fixed layer inside it
+}
+
+/** G6: /m/{slug}, read without an account; closing it leads into the app. */
+export function SharedMagazinePage({ slug }: { slug: string }) {
+  const [magazine, setMagazine] = useState<SharedMagazine | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const stop = new AbortController();
+    getSharedMagazine(slug, stop.signal).then(m => { setMagazine(m); document.title = `${m.spec.cover.title} · ${tr.brand}`; })
+      .catch(() => { if (!stop.signal.aborted) setFailed(true); });
+    return () => stop.abort();
+  }, [slug]);
+  const home = () => window.location.assign('/');
+  if (magazine) return <Magazine magazine={magazine} onClose={home} />;
+  return <main className="shared-page">{failed
+    ? <><h1>{text.gone}</h1><a className="go" href="/">{text.toApp}</a></>
+    : <p role="status">{tr.library.loading}</p>}</main>;
 }

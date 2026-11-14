@@ -9,7 +9,7 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/healthz"]
+    "run_worker_first": ["/api/*", "/healthz", "/m/*"]
   },
   "vars": { "API_ORIGIN": "https://dreamlib-api-production.up.railway.app" },
   "observability": { "enabled": true, "head_sampling_rate": 0.1 }

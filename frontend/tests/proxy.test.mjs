@@ -33,3 +33,30 @@ test('network failures produce a recoverable JSON error', async () => {
     assert.ok(!(await response.text()).includes('internal address'));
   } finally { globalThis.fetch = original; }
 });
+
+test('a shared magazine page carries link-preview tags with an escaped title', async () => {
+  const original = globalThis.fetch;
+  const html = '<html><head><title>Dreamlib</title></head><body></body></html>';
+  const assets = { fetch: async request => { assert.equal(new URL(request.url).pathname, '/'); return new Response(html); } };
+  globalThis.fetch = async request => {
+    assert.equal(String(request.url ?? request), 'https://api.example.test/api/v1/m/abcDEF123_-x');
+    return Response.json({ spec: { cover: { title: 'Ev <ve> "deniz"' } } });
+  };
+  try {
+    const response = await worker.fetch(new Request('https://dreamlib.cenker.dev/m/abcDEF123_-x'), { ...env, ASSETS: assets });
+    const body = await response.text();
+    assert.equal(response.status, 200);
+    assert.match(body, /<meta property="og:title" content="Ev &lt;ve&gt; &quot;deniz&quot;" \/>/);
+    assert.match(body, /og:image" content="https:\/\/dreamlib.cenker.dev\/api\/v1\/m\/abcDEF123_-x\/cover"/);
+    assert.match(body, /<title>Ev &lt;ve&gt; &quot;deniz&quot; · Dreamlib<\/title>/);
+  } finally { globalThis.fetch = original; }
+});
+test('an unknown or closed share is still the app, with no preview tags', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({ error: 'yok' }, { status: 404 });
+  const assets = { fetch: async () => new Response('<html><head><title>Dreamlib</title></head></html>') };
+  try {
+    const body = await (await worker.fetch(new Request('https://dreamlib.cenker.dev/m/abcDEF123_-x'), { ...env, ASSETS: assets })).text();
+    assert.ok(!body.includes('og:title') && body.includes('noindex') && body.includes('<title>Dreamlib</title>'));
+  } finally { globalThis.fetch = original; }
+});

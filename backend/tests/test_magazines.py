@@ -104,3 +104,36 @@ def test_without_the_magazine_store_nothing_is_queued(api):
     saved = client.post("/api/v1/dreams", headers=auth(), json=DREAM).json()
     assert not magazine_jobs(s, saved["id"])
     assert client.get(f"/api/v1/dreams/{saved['id']}/magazine", headers=auth()).status_code == 503
+
+
+def test_the_owner_shares_by_link_and_anyone_with_it_reads_without_signing_in(mag_api):
+    client, s = mag_api
+    s.llm.reply = storyboard(4)
+    job = wait_job(client, client.post("/api/v1/manga", headers=auth(), json={"title": "Uçan orman", "text": "Uçuyordum.",
+                                                                              "panels": 4}).json()["id"])
+    saved = client.post("/api/v1/dreams", headers=auth(), json={**DREAM, "jobId": job["id"], "style": "manga"}).json()
+    wait_laid_out(s, saved["id"])
+    url = f"/api/v1/dreams/{saved['id']}/magazine/visibility"
+    assert "shareSlug" not in client.get(f"/api/v1/dreams/{saved['id']}/magazine", headers=auth()).json()
+    assert client.put(url, headers=auth(OTHER), json={"visibility": "link"}).status_code == 404
+    assert client.put(url, headers=auth(), json={"visibility": "public"}).status_code == 400  # the public library is later
+    shared = client.put(url, headers=auth(), json={"visibility": "link"}).json()
+    slug = shared["shareSlug"]
+    assert shared["visibility"] == "link" and len(slug) == 12
+
+    spec = client.app.openapi()
+    page = client.get(f"/api/v1/m/{slug}")  # no Authorization header
+    assert page.status_code == 200
+    check(spec, spec["components"]["schemas"]["SharedMagazineOut"], page.json())
+    body = page.text
+    assert saved["id"] not in body and DREAM["originalText"] not in body and "user" not in page.json()
+    cover = client.get(f"/api/v1/m/{slug}/cover", follow_redirects=False)
+    assert cover.status_code == 302 and cover.headers["location"] and "max-age" in cover.headers["cache-control"]
+
+    closed = client.put(url, headers=auth(), json={"visibility": "private"}).json()
+    assert closed["visibility"] == "private" and "shareSlug" not in closed
+    assert client.get(f"/api/v1/m/{slug}").status_code == 404 and client.get(f"/api/v1/m/{slug}/cover").status_code == 404
+    again = client.put(url, headers=auth(), json={"visibility": "link"}).json()
+    assert again["shareSlug"] == slug  # sharing again gives the same address back
+    for bad in ["kisa", "x" * 40, "../../etc"]:
+        assert client.get(f"/api/v1/m/{bad}").status_code == 404

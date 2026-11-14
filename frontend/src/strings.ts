@@ -145,6 +145,10 @@ export const tr = {
     open: 'Dergiyi oku', close: 'Dergiyi kapat', label: 'Sayfalar', next: 'Sonraki sayfa', prev: 'Önceki sayfa',
     page: (at: number, of: number) => `${at} / ${of}`,
     dreamt: 'Rüya gecesi', style: 'Üslup', felt: 'Duygular', tags: 'Semboller',
+    share: 'Linkle paylaş', shareNote: 'Linki bilen kişi başlığı, çizimleri ve yorumdan bir cümleyi görür; anlattığın metin görünmez.',
+    sharedNote: 'Linki bilen herkes bu dergiyi giriş yapmadan okuyabilir.', link: 'Dergi linki',
+    copy: 'Linki kopyala', copied: 'Kopyalandı', copyFailed: 'Link kopyalanamadı; kutudan seçip kopyalayabilirsin.',
+    unshare: 'Paylaşımı kapat', gone: 'Bu dergi artık paylaşılmıyor.', toApp: "Dreamlib'e git",
   },
   library: {
     heading: 'Kütüphane',

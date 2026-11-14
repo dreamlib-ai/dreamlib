@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { deleteDream, listDreamPage, type Dream, type Panel } from './api';
 import Picture from './Picture';
-import Magazine, { useMagazine } from './Magazine';
+import Magazine, { ShareMagazine, useMagazine } from './Magazine';
 import { placeCards, wallColumns } from './wall';
 import Result from './Result';
 import Icon from './Icon';
@@ -18,7 +18,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'n
 function Detail({ dream, onBack, onRemoved, onUpdated }: { dream: Dream; onBack: () => void; onRemoved: () => void; onUpdated: (dream: Dream) => void }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
-  const magazine = useMagazine(dream.id, dream.panels.length > 0);
+  const [magazine, setMagazine] = useMagazine(dream.id, dream.panels.length > 0);
   const [reading, setReading] = useState(false);
 
   async function remove() {
@@ -41,6 +41,7 @@ function Detail({ dream, onBack, onRemoved, onUpdated }: { dream: Dream; onBack:
         <JournalEditor dream={dream} onUpdated={onUpdated} />
         {magazine && <button className="go read-magazine" onClick={() => setReading(true)}><Icon name="book" />{tr.magazine.open}</button>}
         {reading && magazine && <Magazine magazine={magazine} onClose={() => setReading(false)} />}
+        {magazine && <ShareMagazine magazine={magazine} onChange={setMagazine} />}
         {dream.panels.length > 0 && (
           <div className="shots">
             {dream.panels.map((p) => (

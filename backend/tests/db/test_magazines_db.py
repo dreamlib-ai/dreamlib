@@ -28,3 +28,17 @@ def test_one_magazine_per_dream_kept_private_and_removed_with_it(sb, user):
     run(mags.put(user, saved.id, {}, "", 0))
     run(mags.remove(user, saved.id))
     assert run(mags.for_dream(user, saved.id)) is None
+
+
+def test_a_shared_magazine_is_found_by_its_slug_only_while_shared(sb, user):
+    mags = SupabaseMagazines(sb)
+    saved = run(sb.save_dream(user, dream()))
+    run(mags.put(user, saved.id, {"version": 1}, "u/1.png", 0))
+    assert run(mags.share("00000000-0000-4000-8000-0000000000bb", saved.id, "link")) is None  # not theirs
+    row = run(mags.share(user, saved.id, "link"))
+    slug = row["share_slug"]
+    assert row["visibility"] == "link" and len(slug) == 12 and run(mags.by_slug(slug))["id"] == row["id"]
+    run(mags.share(user, saved.id, "private"))
+    assert run(mags.by_slug(slug)) is None and run(mags.share(user, saved.id, "link"))["share_slug"] == slug
+    sql(f"update magazines set status = 'withdrawn' where id = '{row['id']}'")
+    assert run(mags.by_slug(slug)) is None and run(mags.by_slug("../x")) is None
