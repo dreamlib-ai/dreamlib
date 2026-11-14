@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import load_settings
 from .errors import ApiError, code_for
-from .routes import analysis, brain, dreams, jobs, events, journal, profile
+from .routes import analysis, brain, dreams, jobs, events, journal, magazines, profile
 from .services import Services, build_services
 from .worker import Worker
 
@@ -108,7 +108,7 @@ def create_app(services: Services | None = None) -> FastAPI:
             "editor": bool(s.editor), "worker": bool(s.worker), "queued": queued,
         }
 
-    for module in (analysis, jobs, dreams, events, journal, profile, brain):
+    for module in (analysis, jobs, dreams, events, journal, profile, brain, magazines):
         app.include_router(module.router, prefix=API)
     app.add_middleware(LegacyPaths)  # outermost: the body limit and the router already see /api/v1
     return app

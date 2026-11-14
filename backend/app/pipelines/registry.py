@@ -3,7 +3,7 @@ The queue refuses a kind that is not listed; the worker fails such a job instead
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
-from . import image, index, manga
+from . import image, index, magazine, manga
 from .context import JobContext
 
 
@@ -20,6 +20,7 @@ KINDS: dict[str, Kind] = {
     "manga": Kind(manga.run, manga.MANGA_TIMEOUT, manga.FAILED, priority=10),
     "image": Kind(image.run, 3 * 60, image.FAILED, priority=10),
     "index": Kind(index.run, index.TIMEOUT, index.FAILED, exclusive=False),  # background; never blocks the user
+    "magazine": Kind(magazine.run, magazine.TIMEOUT, magazine.FAILED, exclusive=False),  # lays out saved panels; free
 }
 
 UNKNOWN = "bu iş türü artık desteklenmiyor"

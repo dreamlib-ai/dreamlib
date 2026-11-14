@@ -98,6 +98,6 @@ async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends
             raise ApiError(404, "rüya bulunamadı")
         if (analysis_id or saved.originalText != text_before or len(saved.journal.entries) != entries_before
                 or "classification" in body.model_fields_set):
-            await after_save(s, user_id, saved.id, saved.revision, analysis_id)
+            await after_save(s, user_id, saved.id, saved.revision, analysis_id, [p.path for p in saved.panels])
     await sign_panels(s, [saved.panels])
     return saved.public()

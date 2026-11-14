@@ -72,6 +72,17 @@ export type JournalEntry = { id: string; text: string; createdAt: string };
 
 export type JournalPatch = { revision: number; title?: string | null; originalText?: string | null; dreamedOn?: string | null; favorite?: boolean | null; reflection?: string | null; addition?: AdditionIn | null; refresh?: boolean; personal?: boolean; classification?: ClassificationOverrideInput | null; recall?: string | null };
 
+export type MagazineColophon = { dated: string; style: string; tags: string[]; emotions: string[] };
+
+export type MagazineCover = { title: string; panel: number; color: string };
+
+export type MagazineOut = { id: string; dreamId: string; status: "ready" | "withdrawn"; visibility: "private" | "link" | "public"; spec: MagazineSpecOut; panels: PanelOutput[]; updatedAt: string };
+
+export type MagazinePage = { layout: "full" | "wide" | "pair" | "quote"; panels: number[]; text: string };
+
+/** What the reader draws; page and cover panels are indexes into the answer's `panels`. */
+export type MagazineSpecOut = { version: number; cover: MagazineCover; pages: MagazinePage[]; colophon: MagazineColophon };
+
 export type MangaIn = { title?: string; text?: string; style?: string; panels?: number; consistent?: boolean; requestId?: string | null; useAvatar?: boolean; avatarRevision?: number; perspective?: "first-person" | "observer" | "mixed" | "unknown" };
 
 /** One picture of a booklet. path is a storage path (or, without storage, the remote image */
@@ -172,3 +183,7 @@ export const brain = (signal?: AbortSignal) =>
 /** POST /api/v1/brain/links */
 export const editBrain = (body: BrainEdit, signal?: AbortSignal) =>
   request<BrainOut>('POST', `/api/v1/brain/links`, body, signal);
+
+/** GET /api/v1/dreams/{dream_id}/magazine */
+export const magazine = (dreamId: string, signal?: AbortSignal) =>
+  request<MagazineOut>('GET', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}/magazine`, undefined, signal);

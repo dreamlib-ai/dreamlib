@@ -14,7 +14,7 @@ def run(coro):
 
 
 def test_registry_lists_the_running_kinds():
-    assert set(KINDS) == {"manga", "image", "index"}
+    assert set(KINDS) == {"manga", "image", "index", "magazine"}
     assert check("manga") is KINDS["manga"]
     with pytest.raises(UnknownKind):
         check("video")
