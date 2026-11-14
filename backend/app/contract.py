@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 from .avatar import AvatarSpec, PresetId
 from .models import Analysis, Journal, Panel
+from .pipelines.magazine import MagazineColophon, MagazineCover, MagazinePage
 
 OUT = ConfigDict(json_schema_serialization_defaults_required=True)
 JobStatus = Literal["running", "done", "failed"]
@@ -148,6 +149,26 @@ class BrainOut(BaseModel):
     relations: list[Relation]  # legend order
     dreams: list[BrainDream]
     links: list[BrainLink]
+
+
+class MagazineSpecOut(BaseModel):
+    """What the reader draws; page and cover panels are indexes into the answer's `panels`."""
+    model_config = OUT
+    version: int
+    cover: MagazineCover
+    pages: list[MagazinePage]
+    colophon: MagazineColophon
+
+
+class MagazineOut(BaseModel):
+    model_config = OUT
+    id: str
+    dreamId: str
+    status: Literal["ready", "withdrawn"]
+    visibility: Literal["private", "link", "public"]
+    spec: MagazineSpecOut
+    panels: list[Panel]  # signed, with G3 layout facts
+    updatedAt: datetime
 
 
 def answers(model: type[BaseModel] | None, status: int = 200) -> dict:
