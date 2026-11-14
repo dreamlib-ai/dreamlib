@@ -17,6 +17,7 @@ from ..lab.perspective import read
 from ..store.entities import Link, Node
 from .context import JobContext
 from .fields import opened
+from ..engine.relations import relate
 
 FAILED = "rüya dizinlenemedi"
 TIMEOUT = 60
@@ -85,9 +86,14 @@ async def run(ctx: JobContext) -> None:
                 if nodes := [o.node for o in items if o.status == status]:
                     ids.update(await s.entities.ensure(nodes, status))
             await s.entities.link(d.id, extractor, [Link(ids[o.node.key], 1.0, o.quote) for o in items if o.node.key in ids], source)
+    edges = []
+    if s.graph and s.entities:  # BG1: links to the dreamer's other dreams, weak ones dropped
+        edges = relate(d.id, await s.graph.corpus(job.user_id))
+        await s.graph.replace(job.user_id, d.id, edges)
     if s.analyses:
         await s.analyses.add(job.user_id, "lab.index", {**out, "revision": d.revision}, prompt=LAB,
                              input_text=text, dream_id=d.id)
     ctx.state["result"] = {"emotions": [e["class"] for e in out["emotions"]], "perspective": out["perspective"],
                            "experiences": [e["kind"] for e in out["experiences"]], "revision": d.revision,
-                           "fields": {extractor: len(items) for (extractor, _), items in fields.items()}}
+                           "fields": {extractor: len(items) for (extractor, _), items in fields.items()},
+                           "relations": {r: sum(e.relation == r for e in edges) for r in {e.relation for e in edges}}}
