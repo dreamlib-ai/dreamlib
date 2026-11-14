@@ -45,7 +45,7 @@ def test_recovery_ids_never_authorize_another_account(api):
     assert client.post("/api/manga", headers=auth(), json={**body, "text": "different"}).status_code == 409
     assert client.post("/api/manga", headers=auth(OTHER), json=body).status_code == 429
     assert client.get(f"/api/jobs/{jid}", headers=auth(OTHER)).status_code == 404
-    assert len(s.queue.jobs) == 1
+    assert len([j for j in s.queue.jobs.values() if j.kind != "index"]) == 1  # index jobs come with saved dreams
 
 
 def test_measurement_accepts_only_content_free_events(api, caplog):

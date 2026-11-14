@@ -9,7 +9,7 @@ from pydantic import BaseModel, ValidationError
 
 from ..errors import ApiError
 from ..models import Analysis, CleanOut
-from ..prompts import ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HINTS
+from ..prompts import VERSIONS, ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HINTS
 from ..services import MAX_DREAM, Services, current_user, extract_json, one_line, services
 
 log = logging.getLogger("dreamlib")
@@ -144,12 +144,25 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
         result = Analysis.model_validate(extract_json(reply))
         from ..classification import grounded_features
         result.features = grounded_features(result.features, text)
-        return result.model_dump()
     except (ValueError, ValidationError) as error:
         # Do not leak private narrative fragments through Pydantic's input_value traceback.
         issues = [{"field": ".".join(map(str, issue["loc"])), "type": issue["type"]} for issue in error.errors(include_input=False, include_context=False)][:8] if isinstance(error, ValidationError) else [{"type": type(error).__name__}]
         log.warning("analyze: invalid model response %s", json.dumps(issues))
         raise ApiError(502, "yorum okunamadı, tekrar dene")
+    out = result.model_dump()
+    if s.analyses:  # M3: every interpretation is a row; the dream picks it up by analysisId when saved
+        try:
+            out["analysisId"] = await s.analyses.add(user_id, "interpret", result.model_dump(mode="json"),
+                                                     prompt=VERSIONS["interpret"], model=_model(s.llm), input_text=text)
+        except Exception:
+            log.warning("analyses: could not record an interpretation", exc_info=True)
+    return out
+
+
+def _model(llm) -> str:
+    """The model the interpret task asks first; OpenRouter may answer with a fallback."""
+    models = llm.models_for("interpret") if hasattr(llm, "models_for") else []
+    return models[0] if models else getattr(llm, "model", "")
 
 
 @router.post("/api/transcribe")

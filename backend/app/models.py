@@ -93,6 +93,7 @@ class DreamIn(Analysis):
     visibility: str = ""
     panels: list[Panel] = []
     jobId: str = ""
+    analysisId: str = ""  # the analyses row /api/analyze returned; tied to the dream when it is saved
 
 
 class JournalEntry(BaseModel):
@@ -121,6 +122,6 @@ class Dream(DreamIn):
     revision: int = 0
 
     def public(self) -> dict:
-        out = self.model_dump(mode="json", exclude={"manga_meta", "jobId", "panels"})
+        out = self.model_dump(mode="json", exclude={"manga_meta", "jobId", "panels", "analysisId"})
         out["panels"] = [p.public() for p in self.panels]
         return out

@@ -113,12 +113,13 @@ class SupabaseJobs:
         return [Job(**r) for r in await self._rest("GET", params)]
 
     async def active(self, user_id: str) -> bool:
-        params = {"user_id": f"eq.{user_id}", "status": f"in.({','.join(ACTIVE)})", "select": "id", "limit": "1"}
+        """A paid drawing job (exclusive) queued or running; background work such as index does not count."""
+        params = {"user_id": f"eq.{user_id}", "status": f"in.({','.join(ACTIVE)})", "exclusive": "is.true", "select": "id", "limit": "1"}
         return bool(await self._rest("GET", params))
 
     async def count_since(self, user_id: str, since: datetime) -> int:
-        """Jobs the user started since then; failed ones do not count against them."""
-        params = {"user_id": f"eq.{user_id}", "status": "neq.failed", "created_at": f"gte.{since.isoformat()}", "select": "id", "limit": "1000"}
+        """Paid drawing jobs (exclusive) the user started since then; failed ones and background work do not count."""
+        params = {"user_id": f"eq.{user_id}", "status": "neq.failed", "exclusive": "is.true", "created_at": f"gte.{since.isoformat()}", "select": "id", "limit": "1000"}
         return len(await self._rest("GET", params))
 
     async def depth(self) -> int:
@@ -181,10 +182,10 @@ class MemoryJobs:
         return [j.model_copy(deep=True) for j in sorted(mine, key=lambda j: j.created_at)]
 
     async def active(self, user_id: str) -> bool:
-        return any(j.user_id == user_id and j.status in ACTIVE for j in self.jobs.values())
+        return any(j.user_id == user_id and j.exclusive and j.status in ACTIVE for j in self.jobs.values())
 
     async def count_since(self, user_id: str, since: datetime) -> int:
-        return sum(1 for j in self.jobs.values() if j.user_id == user_id and j.status != "failed" and j.created_at >= since)
+        return sum(1 for j in self.jobs.values() if j.user_id == user_id and j.exclusive and j.status != "failed" and j.created_at >= since)
 
     async def depth(self) -> int:
         return sum(1 for j in self.jobs.values() if j.status in ACTIVE)

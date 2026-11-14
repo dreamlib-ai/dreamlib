@@ -17,7 +17,8 @@ def test_one_address_shows_every_job_of_a_dream(api, monkeypatch):
 
     monkeypatch.setitem(KINDS, "index", Kind(index, 5, "x", exclusive=False, priority=0))
     dream = client.post("/api/dreams", headers=auth(), json=DREAM).json()
-    assert client.get(f"/api/dreams/{dream['id']}/status", headers=auth()).json() == {"dreamId": dream["id"], "busy": False, "jobs": []}
+    status = client.get(f"/api/dreams/{dream['id']}/status", headers=auth()).json()
+    assert status["dreamId"] == dream["id"] and [j["kind"] for j in status["jobs"]] == ["index"]  # saving queues the index job
 
     owner = asyncio.run(s.auth.user_id("dev-testuser-one"))
     first = asyncio.run(s.queue.create(owner, "index", {}, 1, dream_id=dream["id"]))
@@ -25,8 +26,8 @@ def test_one_address_shows_every_job_of_a_dream(api, monkeypatch):
     s.wake()
 
     status = client.get(f"/api/dreams/{dream['id']}/status", headers=auth()).json()
-    assert status["busy"] and [j["kind"] for j in status["jobs"]] == ["index", "index"]
-    assert status["jobs"][1]["parentId"] == first.id
+    assert status["busy"] and [j["kind"] for j in status["jobs"]] == ["index", "index", "index"]
+    assert status["jobs"][2]["parentId"] == first.id
 
     assert client.get(f"/api/dreams/{dream['id']}/status", headers=auth(OTHER)).status_code == 404
 
@@ -37,4 +38,4 @@ def test_one_address_shows_every_job_of_a_dream(api, monkeypatch):
         if not status["busy"]:
             break
         time.sleep(0.02)
-    assert [j["status"] for j in status["jobs"]] == ["done", "done"]
+    assert [j["status"] for j in status["jobs"]] == ["done", "done", "done"]
