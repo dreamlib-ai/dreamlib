@@ -47,7 +47,7 @@ Tek mikrofon düğmesi, yazı ikincil; mevcut ekran korunur. Yeni özellikler bu
 ### Dergi okuyucu
 - Girdi `spec` ([üretim](uretim.md)); sayfa düzenleri adlandırılmış bileşenlerdir.
 - Sayfa çevirme dokunma, klavye ve düğmeyle; görseller blurhash'ten netleşir.
-- Dergi hazır olunca okuyucu açılır, kapanınca dergi kütüphanede durur.
+- Yapıldı (G5): `frontend/src/Magazine.tsx`, rüya detayından açılır; sayfa düzenleri `magazine.css`'te. Kayıttan hemen sonra kendiliğinden açılması henüz yok.
 
 ### Kütüphane duvarı
 - Pinterest benzeri masonry: kapaklar gerçek en-boy oranıyla dizilir. Sunucu genişlik ve yüksekliği verdiği için yerleşim görsel yüklenmeden hesaplanır, sayfa zıplamaz.

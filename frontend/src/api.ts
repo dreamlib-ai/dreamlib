@@ -91,6 +91,11 @@ export const listDreamPage = (cursor?: string, limit = WALL_PAGE, signal?: Abort
 
 export const deleteDream = (id: string) => g.deleteDream(id);
 
+export type Magazine = g.MagazineOut;
+export type MagazinePage = g.MagazinePage;
+/** G4: the dream's laid-out magazine; 404 (ApiError) until the job has made it or when there is no booklet. */
+export const getMagazine = (dreamId: string, signal?: AbortSignal) => g.magazine(dreamId, signal);
+
 export type Brain = g.BrainOut;
 export type BrainDream = g.BrainDream;
 export type BrainLink = g.BrainLink;
