@@ -177,11 +177,23 @@ class MagazineShare(BaseModel):
     visibility: Literal["private", "link"]
 
 
+class SharedPanel(BaseModel):
+    """G6: a picture of a shared magazine under our own address; storage paths name the owner, so none is sent."""
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("width", "height", "blurhash", "color"))
+    caption: str
+    url: str  # /api/v1/m/{slug}/p/{n}
+    thumb: str  # the same with ?thumb=true
+    width: int = 0
+    height: int = 0
+    blurhash: str = ""
+    color: str = ""
+
+
 class SharedMagazineOut(BaseModel):
-    """G6: what anyone with the link reads; no owner, no dream id, no raw narration."""
+    """G6: what anyone with the link reads; no owner, no dream id, no raw narration, no storage path."""
     model_config = OUT
     spec: MagazineSpecOut
-    panels: list[Panel]
+    panels: list[SharedPanel]
 
 
 def answers(model: type[BaseModel] | None, status: int = 200) -> dict:

@@ -128,7 +128,7 @@ def test_the_owner_shares_by_link_and_anyone_with_it_reads_without_signing_in(ma
     body = page.text
     assert saved["id"] not in body and DREAM["originalText"] not in body and "user" not in page.json()
     cover = client.get(f"/api/v1/m/{slug}/cover", follow_redirects=False)
-    assert cover.status_code == 302 and cover.headers["location"] and "max-age" in cover.headers["cache-control"]
+    assert cover.status_code == 302 and cover.headers["location"]  # no storage here: the remote placeholder
 
     closed = client.put(url, headers=auth(), json={"visibility": "private"}).json()
     assert closed["visibility"] == "private" and "shareSlug" not in closed
@@ -137,3 +137,45 @@ def test_the_owner_shares_by_link_and_anyone_with_it_reads_without_signing_in(ma
     assert again["shareSlug"] == slug  # sharing again gives the same address back
     for bad in ["kisa", "x" * 40, "../../etc"]:
         assert client.get(f"/api/v1/m/{bad}").status_code == 404
+
+
+class StoredPictures:
+    """Storage that holds a picture and its thumbnail, as on Supabase."""
+
+    def __init__(self):
+        self.files = {"owner-1234/a.png": (b"full", "image/png"), "owner-1234/a.png.t.webp": (b"small", "image/webp")}
+
+    async def sign(self, paths):
+        return [f"https://storage.test/sign/{p}" for p in paths]
+
+    async def image_meta(self, paths):
+        return {p: {"width": 832, "height": 1216, "blurhash": "LEHV6n", "color": "#203252", "thumb_path": p + ".t.webp"}
+                for p in paths if p in self.files}
+
+    async def read(self, path):
+        if path not in self.files:
+            raise RuntimeError("missing")
+        return self.files[path]
+
+
+def test_shared_pictures_come_from_our_address_and_never_name_the_owner(mag_api):
+    client, s = mag_api
+    s.blobs = StoredPictures()
+    spec = build(dream(1), {}).model_dump(mode="json")
+    spec["panels"][0]["path"] = "owner-1234/a.png"
+    s.magazines.rows["d1"] = {"id": "mag-9", "user_id": "owner-1234", "dream_id": "d1", "status": "ready", "visibility": "link",
+                              "share_slug": "abcDEF123_-x", "spec": spec, "cover_path": "owner-1234/a.png",
+                              "dream_revision": 0, "created_at": "", "updated_at": ""}
+    page = client.get("/api/v1/m/abcDEF123_-x")
+    assert page.status_code == 200 and "owner-1234" not in page.text and "storage.test" not in page.text
+    panel = page.json()["panels"][0]
+    assert panel["url"] == "/api/v1/m/abcDEF123_-x/p/0" and panel["thumb"].endswith("?thumb=true") and panel["width"] == 832
+    openapi = client.app.openapi()
+    check(openapi, openapi["components"]["schemas"]["SharedMagazineOut"], page.json())
+    full = client.get(panel["url"])
+    assert full.content == b"full" and full.headers["content-type"] == "image/png" and "max-age" in full.headers["cache-control"]
+    assert client.get(panel["thumb"]).content == b"small"
+    assert client.get("/api/v1/m/abcDEF123_-x/cover").content == b"small"
+    assert client.get("/api/v1/m/abcDEF123_-x/p/9").status_code == 404
+    s.magazines.rows["d1"]["visibility"] = "private"
+    assert client.get(panel["url"]).status_code == 404

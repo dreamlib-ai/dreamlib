@@ -33,7 +33,9 @@ export default {
     try {
       const response = await fetch(new Request(upstream, { method: request.method, headers, body: request.body, redirect: 'manual', duplex: 'half' }));
       const outgoing = new Headers(response.headers);
-      outgoing.set('Cache-Control', 'no-store');
+      // G6: a shared magazine's pictures may be kept for as long as the API says; every other answer never is
+      const shared = request.method === 'GET' && url.pathname.startsWith('/api/v1/m/') && response.ok;
+      if (!shared || !outgoing.get('Cache-Control')?.startsWith('public')) outgoing.set('Cache-Control', 'no-store');
       return new Response(response.body, { status: response.status, statusText: response.statusText, headers: outgoing });
     } catch {
       return Response.json({ error: 'servise şu an ulaşılamıyor' }, { status: 502, headers: { 'Cache-Control': 'no-store' } });

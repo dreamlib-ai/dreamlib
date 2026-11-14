@@ -98,10 +98,13 @@ export type ProfileOut = { id: string; displayName: string; avatar: AvatarSpecOu
 
 export type ProfilePatch = { revision: number; displayName?: string | null; presetId?: "dawn" | "moss" | "copper" | "ink" | null; avatarJobId?: string | null; clearAvatar?: boolean };
 
-/** G6: what anyone with the link reads; no owner, no dream id, no raw narration. */
-export type SharedMagazineOut = { spec: MagazineSpecOut; panels: PanelOutput[] };
+/** G6: what anyone with the link reads; no owner, no dream id, no raw narration, no storage path. */
+export type SharedMagazineOut = { spec: MagazineSpecOut; panels: SharedPanel[] };
 
 export type SharedNode = { kind: string; key: string; label: string };
+
+/** G6: a picture of a shared magazine under our own address; storage paths name the owner, so none is sent. */
+export type SharedPanel = { caption: string; url: string; thumb: string; width?: number; height?: number; blurhash?: string; color?: string };
 
 const search = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
@@ -201,6 +204,10 @@ export const shareMagazine = (dreamId: string, body: MagazineShare, signal?: Abo
 /** GET /api/v1/m/{slug} */
 export const sharedMagazine = (slug: string, signal?: AbortSignal) =>
   request<SharedMagazineOut>('GET', `/api/v1/m/${encodeURIComponent(String(slug))}`, undefined, signal);
+
+/** GET /api/v1/m/{slug}/p/{n} */
+export const sharedPicture = (slug: string, n: number, query: { thumb?: boolean } = {}, signal?: AbortSignal) =>
+  request<void>('GET', `/api/v1/m/${encodeURIComponent(String(slug))}/p/${encodeURIComponent(String(n))}${search(query)}`, undefined, signal);
 
 /** GET /api/v1/m/{slug}/cover */
 export const sharedCover = (slug: string, signal?: AbortSignal) =>

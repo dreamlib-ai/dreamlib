@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { decodeBlurhash } from './blurhash';
 import type { Panel } from './api';
 
+/** What a picture needs to be drawn: an owner's panel or a shared magazine's picture (G6). */
+type Shown = Pick<Panel, 'url' | 'thumb' | 'width' | 'height' | 'color' | 'blurhash'>;
+
 const placeholders = new Map<string, string>();
 /** A 32×32 picture of the BlurHash, drawn once per hash. */
 export function placeholder(hash: string): string {
@@ -22,7 +25,7 @@ export function placeholder(hash: string): string {
 }
 
 /** A stored picture at its real shape: dominant colour and BlurHash first, the picture fades in over them (G3). */
-export default function Picture({ panel, className, alt = '', thumb = false, eager = false }: { panel: Panel; className: string; alt?: string; thumb?: boolean; eager?: boolean }) {
+export default function Picture({ panel, className, alt = '', thumb = false, eager = false }: { panel: Shown; className: string; alt?: string; thumb?: boolean; eager?: boolean }) {
   const [shown, setShown] = useState(false);
   const hash = placeholder(panel.blurhash ?? '');
   const ratio = panel.width && panel.height ? `${panel.width} / ${panel.height}` : '1 / 1';

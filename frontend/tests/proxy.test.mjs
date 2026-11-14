@@ -60,3 +60,14 @@ test('an unknown or closed share is still the app, with no preview tags', async 
     assert.ok(!body.includes('og:title') && body.includes('noindex') && body.includes('<title>Dreamlib</title>'));
   } finally { globalThis.fetch = original; }
 });
+
+test('shared magazine pictures keep their public cache time; private answers never do', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response('png', { headers: { 'Cache-Control': 'public, max-age=3600' } });
+  try {
+    const picture = await worker.fetch(new Request('https://dreamlib.cenker.dev/api/v1/m/abcDEF123_-x/p/0'), env);
+    assert.equal(picture.headers.get('Cache-Control'), 'public, max-age=3600');
+    const mine = await worker.fetch(new Request('https://dreamlib.cenker.dev/api/v1/dreams'), env);
+    assert.equal(mine.headers.get('Cache-Control'), 'no-store');
+  } finally { globalThis.fetch = original; }
+});
