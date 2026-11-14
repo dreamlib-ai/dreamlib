@@ -1,4 +1,4 @@
-export type IconName = 'person' | 'heart' | 'send' | 'stop' | 'upload' | 'loader' | 'home' | 'pen' | 'book' | 'moon' | 'compass' | 'check' | 'chevron' | 'logout' | 'cloud' | 'waves' | 'door' | 'mic' | 'search' | 'plus';
+export type IconName = 'person' | 'heart' | 'send' | 'stop' | 'upload' | 'loader' | 'home' | 'pen' | 'book' | 'moon' | 'compass' | 'check' | 'chevron' | 'logout' | 'cloud' | 'waves' | 'door' | 'mic' | 'search' | 'plus' | 'spark';
 const paths: Record<IconName, string> = {
   person: 'M20 21v-2a7 7 0 0 0-14 0v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
   heart: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',
@@ -12,6 +12,7 @@ const paths: Record<IconName, string> = {
   mic: 'M9 5a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0ZM5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8',
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
   plus: 'M12 5v14M5 12h14',
+  spark: 'M6 7a2 2 0 1 0 0-.01M18 5a2 2 0 1 0 0-.01M12 19a2 2 0 1 0 0-.01M7.6 7.8l3.4 9.4M16.4 6.6l-3.4 10.6M8 6.2l8-.8',
   logout: 'M9 4H4v16h5m6-12 4 4-4 4m-7-4h11',
   home: 'm3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z',
   pen: 'm15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-4-4L5 15Z',

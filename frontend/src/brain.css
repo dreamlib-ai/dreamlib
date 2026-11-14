@@ -1,0 +1,58 @@
+/* BG3: the brain graph. A night-sky surface inside the app; three tabs in the navigation now. */
+.app-shell .nav-selection { width: calc((100% - 10px) / 3); }
+.app-shell .links[data-view='library'] .nav-selection { transform: translateX(100%); }
+.app-shell .links[data-view='brain'] .nav-selection { transform: translateX(200%); }
+
+.brain {
+  position: relative; height: min(76vh, 820px); min-height: 460px; border-radius: var(--radius-panel); overflow: hidden;
+  background:
+    radial-gradient(1.2px 1.2px at 12% 18%, #f6f1e6aa, transparent 60%), radial-gradient(1px 1px at 72% 12%, #f6f1e688, transparent 60%),
+    radial-gradient(1.4px 1.4px at 38% 76%, #f6f1e699, transparent 60%), radial-gradient(1px 1px at 88% 64%, #f6f1e677, transparent 60%),
+    radial-gradient(1px 1px at 22% 52%, #f6f1e666, transparent 60%), radial-gradient(1.2px 1.2px at 58% 38%, #f6f1e677, transparent 60%),
+    radial-gradient(ellipse at 50% 45%, #1d3f72 0%, var(--night) 62%, #0a1730 100%);
+  color: var(--paper);
+}
+.brain-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.brain-canvas:active { cursor: grabbing; }
+
+.brain-legend { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+.brain-legend button {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px;
+  border: 1px solid #f6f1e633; border-radius: 999px; background: #0a173099; color: var(--paper); font: inherit; font-size: 13px; cursor: pointer;
+}
+.brain-legend button[aria-pressed='false'] { opacity: .45; }
+.brain .swatch { width: 18px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; flex: none; }
+.brain .swatch.dashed { border-top-style: dashed; }
+
+.brain-card {
+  position: absolute; left: 16px; right: 16px; bottom: 16px; max-width: 420px; max-height: 58%; display: flex; gap: 14px;
+  padding: 16px; border: 1px solid #f6f1e626; border-radius: var(--radius-card); background: #0c1d3cf0; color: var(--paper); box-shadow: 0 18px 40px #0008; overflow: auto; backdrop-filter: blur(8px);
+}
+.brain-card img { width: 76px; height: 76px; object-fit: cover; border-radius: var(--radius-small); flex: none; }
+.brain-card-body { min-width: 0; flex: 1; }
+.brain-card h2 { margin: 0 28px 2px 0; font-size: 16px; line-height: 1.3; color: var(--paper); }
+.brain-card time, .brain-card p { color: #f6f1e6b3; font-size: 13px; }
+.brain-card ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.brain-card li button {
+  width: 100%; display: grid; grid-template-columns: 18px 1fr; column-gap: 10px; align-items: center; text-align: left;
+  padding: 8px 10px; border: 0; border-radius: var(--radius-small); background: #f6f1e612; color: var(--paper); font: inherit; cursor: pointer;
+}
+.brain-card li .swatch { grid-row: span 2; }
+.brain-card li button:hover { background: #f6f1e622; }
+.brain-card li strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brain-card li small { color: #f6f1e6b3; font-size: 12px; }
+.brain-close { position: absolute; top: 8px; right: 10px; width: 36px; height: 36px; border: 0; background: none; font-size: 22px; color: var(--paper); cursor: pointer; }
+
+.brain-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; padding: 0; }
+.brain-sr:focus-within { position: absolute; left: 16px; bottom: 16px; width: auto; height: auto; max-height: 40%; overflow: auto; clip: auto; background: var(--paper); color: var(--ink); border-radius: var(--radius-small); padding: 8px; list-style: none; }
+
+.brain-state { display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; font-size: 15px; }
+.brain-tell { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: var(--accent); color: var(--ink); font: inherit; cursor: pointer; }
+
+@media (min-width: 761px) { .brain-card { left: auto; top: 68px; bottom: auto; width: 360px; max-height: calc(100% - 84px); } }
+@media (max-width: 760px) {
+  .brain { height: calc(100vh - 190px); min-height: 420px; border-radius: var(--radius-card); }
+  .brain-legend { flex-wrap: nowrap; overflow-x: auto; right: 0; padding-right: 16px; scrollbar-width: none; }
+  .brain-legend button { flex: none; min-height: 32px; padding: 0 12px; font-size: 12px; }
+  .brain-card { max-width: none; max-height: 44%; left: 10px; right: 10px; bottom: 10px; }
+}
