@@ -10,10 +10,9 @@ Her satır tek PR'a sığacak büyüklüktedir. Kimlik faz ve sırayı verir; "�
 
 | No | Görev |
 | --- | --- |
-| A4 | Mirror, Oniri, The Dream Drop, Remora ve Türkiye'deki rüya uygulamalarını elle dene; karşılaştırma kartını tamamla |
-| A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula |
-| A9 | 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz |
-| A14 | Çelepi'nin *Türk Halk Kültüründe Rüya* tezini indir (Açık Bilim, CC BY 4.0 görünüyor); lisansı teyit et, pratik listesini halkbilimi kartına ve korpus atlasına ekle |
+| A7 | Hassas içerik taslağını bir ruh sağlığı uzmanına okut; Türkiye destek kaynaklarını doğrula (kenarda; R3 ile betaya çıkarken) |
+
+İkinci tur (2026-11-14): uygulama karşılaştırması güncellendi, Türkiye'deki rüya uygulamaları ve Faladdin eklendi; telefonda görülecek maddeler beta telefon testine (S5) bağlandı (A4). Çelepi tezi indirilemediği için bırakıldı (A14). Kendi kültürünün rüya geleneği kartı topluluğa açık işlere taşındı (A9).
 
 Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştırma](arastirma.md).
 
@@ -21,9 +20,7 @@ Faz 0 kod içermez. Kartlar `docs/arastirma/notlar/` altına; program: [araştı
 
 Yapıldı (2026-11-13): canlı sürüm, avatar, belgeler ve zemin `main`'de (Z1, Z2); birleşmiş dallar silindi (Z3); migration'lar tek klasörde (Z4); yerel not ve env dosyaları git dışı (Z5); tüm geçmişte sır taraması temiz (Z6); yalnız kontrol çalıştıran CI, Actions açık (Z7); proje kimlikleri ve kişisel bilgiler repodan çıktı (Z8); `DREAMLIB_FAKE_AI=1` ile anahtarsız yerel akış (Z9); temiz geçmişli public repo, AGPL-3.0 ve şablonlar (Z10); tercih anketi sitesi duraklatıldı, sonuçlar veritabanında (Z11); ilk altı `good first issue` GitHub'da açık (Z12). Kalanlar:
 
-| No | Görev | Önce |
-| --- | --- | --- |
-| Z5b | Bakımcının yerel `dreamlib-vibe/` env dosyasındaki anahtarları sağlayıcı panellerinden döndür | — |
+Anahtarlar sağlayıcı panellerinden döndürüldü, eski Supabase anahtarları kapatıldı (Z5b, 2026-11-14).
 
 ## Faz 2: beta çekirdeği
 
@@ -78,7 +75,7 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 | S2 | Makine hata kodları | S1 |
 | S3 | OpenAPI'den üretilen TS istemci; `api.ts` onu kullansın | S1 |
 | S4 | Ana ekrana eklenebilir web (PWA) | — |
-| S5 | Fiziksel iOS ve Android kabul testi listesi ve koşusu | G8 |
+| S5 | Fiziksel iOS ve Android kabul testi listesi ve koşusu; aynı turda rakiplerin telefonda görülecek maddeleri ([karşılaştırma](arastirma/notlar/uygulamalar-karsilastirma.md)) | G8 |
 
 ### Fikirlerden (süzme: [fikirler](fikirler.md))
 
@@ -140,3 +137,4 @@ Beta, anlat → yorum → dergi → kütüphane akışına odaklanır; benzerlik
 - 🌱 Eval setine zor bir rüya örneği ekle.
 - 🌱 Yeni bir dergi sayfa düzeni tasarla.
 - 🌱 Arayüz metinlerini çevir.
+- 🌱 Kendi kültürünün rüya geleneği üzerine bir araştırma kartı yaz (Türkçesi: [halkbilimi kartı](arastirma/notlar/kultur-turk-halkbilimi.md)).

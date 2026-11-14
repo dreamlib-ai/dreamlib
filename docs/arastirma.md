@@ -75,7 +75,7 @@ Kart yazmak dışarıdan katkıya açıktır: bir kültürün rüya geleneğini 
 
 ## Faz 0 çıktıları
 
-İlk tur 2026-11-13'te yapıldı: [kartlar](arastirma/notlar/), [tema listesi](arastirma/temalar.md), [hassas içerik taslağı](hassas-icerik.md), [fikir süzmesi](fikirler.md). İkinci tur aynı gün (A10–A13). Kalanlar [görevler](gorevler.md) içinde (A4, A7, A9, A14).
+İlk tur 2026-11-13'te yapıldı: [kartlar](arastirma/notlar/), [tema listesi](arastirma/temalar.md), [hassas içerik taslağı](hassas-icerik.md), [fikir süzmesi](fikirler.md). İkinci tur aynı gün (A10–A13). Üçüncü tur 2026-11-14: uygulama karşılaştırmasının ikinci turu (A4). Kalan yalnız uzman okuması (A7, kenarda); kültür kartı topluluğa açık iş.
 
 Faz 0'ın bitmesi için kod gerekmez; şunlar gerekir:
 

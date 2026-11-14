@@ -14,7 +14,7 @@ Benzer ürünler ne yaptı, ne tuttu, ne battı; rüya dışı ürünlerden hang
 | Dreamseer ✓ | Örüntü, duygu teması ve sembol çözümlemesi | Kişisel örüntü gösterimi |
 | Dream Dictionary ✓ | Kayıt, yorum, örüntü takibi ve başkalarının paylaştığı rüyalara göz atma | Paylaşılan rüya akışının biçimi |
 | Elsewhere, Capture, Temenos ○ | Yorumlu ve görselli günlükler | Varlıkları ve güncel durumları teyit edilecek |
-| Faladdin ○ | Türkiye'de fal ve yorum alışkanlığı | Yerel kullanıcı beklentisi, gelir modeli |
+| Faladdin ✓ | Kahve falı, tarot, burç; rüya özelliği yok (2026-11-14) | Türkçe rüya uygulamaları: [karşılaştırma](notlar/uygulamalar-karsilastirma.md) |
 
 ## Kolektif ve paylaşım denemeleri
 
