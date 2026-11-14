@@ -7,6 +7,12 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, StringConstrain
 Genre = Literal['daily', 'fantasy', 'scifi', 'romance', 'adventure', 'suspense']
 Perspective = Literal['first-person', 'observer', 'mixed', 'unknown']
 Experience = Literal['lucid', 'recurring', 'nightmare']
+# F6, version 2: Hall–Van de Castle style character, interaction and outcome classes, kept coarse
+CharacterRole = Literal['familiar', 'stranger', 'animal', 'deceased', 'imaginary']
+Interaction = Literal['aggressive', 'friendly']
+Outcome = Literal['success', 'failure', 'misfortune', 'good_fortune', 'none']
+Familiarity = Literal['familiar', 'unfamiliar', 'distorted', 'unknown']
+Agency = Literal['active', 'passive', 'unknown']
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
 
 
@@ -16,15 +22,27 @@ class ExperienceEvidence(BaseModel):
     quote: str = Field(max_length=200)
 
 
+class Character(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
+    role: CharacterRole
+    label: ShortText
+
+
 class Features(BaseModel):
     model_config = ConfigDict(json_schema_serialization_defaults_required=True)  # answers always carry every field
-    version: int = Field(default=0, ge=0, le=1)
+    version: int = Field(default=0, ge=0, le=2)
     genres: list[Genre] = Field(default_factory=list, max_length=6)
     perspective: Perspective = 'unknown'
     people: list[ShortText] = Field(default_factory=list, max_length=12)
     places: list[ShortText] = Field(default_factory=list, max_length=12)
     events: list[ShortText] = Field(default_factory=list, max_length=12)
     experiences: list[ExperienceEvidence] = Field(default_factory=list, max_length=3)
+    # version 2 (F6); older records read with these defaults
+    characters: list[Character] = Field(default_factory=list, max_length=12)
+    interactions: list[Interaction] = Field(default_factory=list, max_length=2)
+    outcome: Outcome = 'none'
+    place: Familiarity = 'unknown'  # how familiar the main setting is to the dreamer
+    agency: Agency = 'unknown'  # whether the dreamer acts or things happen to them
 
 
 class ClassificationOverride(BaseModel):
@@ -69,4 +87,9 @@ def grounded_features(features: Features, text: str) -> Features:
     for field in ('people', 'places', 'events'):
         values = getattr(result, field)
         setattr(result, field, list(dict.fromkeys(v.strip()[:80] for v in values if v.strip())))
+    result.interactions = list(dict.fromkeys(result.interactions))
+    unique = {}
+    for c in result.characters:
+        unique.setdefault((c.role, normalized(c.label)), c)
+    result.characters = list(unique.values())
     return result

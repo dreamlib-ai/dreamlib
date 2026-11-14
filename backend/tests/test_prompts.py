@@ -7,7 +7,7 @@ from app.providers.openrouter import TASKS
 # file and update both columns here.
 PINNED = {
     "clean": ("clean@1", "f7fdb8d0a250"),
-    "interpret": ("interpret@1", "ad018c8e7bc0"),
+    "interpret": ("interpret@2", "b8aaae56822b"),
     "storyboard": ("storyboard@1", "0435565ec848"),
 }
 
