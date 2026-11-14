@@ -14,7 +14,8 @@ Migrations are tracked like the Supabase CLI does (supabase_migrations.schema_mi
     python scripts/local_db.py migrate   # apply pending migrations only
     python scripts/local_db.py psql      # open a SQL shell
     python scripts/local_db.py down      # stop both groups; data is kept
-    python scripts/local_db.py reset     # delete the data and start again from the migrations
+    python scripts/local_db.py reset     # delete the data and start again from the migrations (Google accounts stay)
+    python scripts/local_db.py login     # a fresh session for the local Google account, without Google (`login <email>`)
 
 `npm run db -- <command>` does the same. Postgres listens on 127.0.0.1:55432, PostgREST on :55433, and
 Supabase's API on :55431: a gateway that serves PostgREST, GoTrue (sign-in) and storage-api (pictures) under
@@ -55,6 +56,8 @@ def local_key(role: str) -> str:
 
 
 ANON_KEY, SERVICE_KEY = local_key("anon"), local_key("service_role")
+SESSION = COMPOSE.with_name(".session.json")  # git-ignored: the last `login` answer
+STORAGE_KEY = "sb-127-auth-token"  # supabase-js keeps the session here for http://127.0.0.1:55431
 SECRETS = COMPOSE.with_name(".env")  # git-ignored: DREAMLIB_GOOGLE_ENABLED, _CLIENT_ID, _SECRET for local Google sign-in
 
 
@@ -273,6 +276,69 @@ VITE_SUPABASE_URL={stack.api_url}
 VITE_SUPABASE_ANON_KEY={ANON_KEY}""")
 
 
+ACCOUNT_TABLES = ("auth.users", "auth.identities")  # parents first
+
+
+def keep_accounts(stack: Stack) -> dict[str, str]:
+    """The non-guest accounts (Google sign-ins), as COPY text, so `reset` does not ask for Google again."""
+    if not exists(stack):
+        return {}
+    who = "select id from auth.users where not coalesce(is_anonymous, false)"
+    picks = {"auth.users": f"select * from auth.users where id in ({who})",
+             "auth.identities": f"select * from auth.identities where user_id in ({who})"}
+    out = {}
+    for table in ACCOUNT_TABLES:
+        schema, name = table.split(".")
+        cols = stack.psql("select string_agg(quote_ident(column_name), ',' order by ordinal_position) from "
+                          f"information_schema.columns where table_schema = '{schema}' and table_name = '{name}' "
+                          "and is_generated = 'NEVER'", tuples=True)  # generated ones (confirmed_at) are not copied in
+        res = stack.psql(f"copy ({picks[table].replace('*', cols.stdout.strip(), 1)}) to stdout")
+        if cols.returncode or not cols.stdout.strip() or res.returncode:
+            return {}  # auth not created yet: nothing to keep
+        out[table] = f"{cols.stdout.strip()}\n{res.stdout}"
+    return out
+
+
+def restore_accounts(stack: Stack, rows: dict[str, str]) -> None:
+    for table in ACCOUNT_TABLES:
+        cols, _, data = rows.get(table, "").partition("\n")
+        if data.strip():
+            stack.must(stack.compose("exec", "-T", "db", "psql", "-U", "postgres", "-d", stack.name, "-v", "ON_ERROR_STOP=1",
+                                     "-q", "-c", f"copy {table} ({cols}) from stdin", input=data, check=False,
+                                     capture_output=True, text=True, encoding="utf-8"), f"restore {table}")
+    kept = rows.get("auth.users", "").partition("\n")[2].strip()
+    if kept:
+        print(f"kept {len(kept.splitlines())} signed-in account(s)")
+
+
+def call(url: str, body: dict) -> dict:
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers={
+        "apikey": SERVICE_KEY, "Authorization": f"Bearer {SERVICE_KEY}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=15) as res:
+        return json.loads(res.read())
+
+
+def login(stack: Stack, email: str = "") -> int:
+    """A real GoTrue session for a local account (the last Google sign-in unless `email` names one): a one-time
+    link made with the service key and redeemed at once. Local stack only; the secret is the local one."""
+    where = f"email = '{email.replace(chr(39), '')}'" if email else "not coalesce(is_anonymous, false) and email is not null"
+    found = stack.must(stack.psql(f"select email from auth.users where {where} order by last_sign_in_at desc nulls last limit 1",
+                                  tuples=True), "account lookup")
+    if not found:
+        print("No local Google account yet: sign in once with Google at http://localhost:5173, then run `login` again.",
+              file=sys.stderr)
+        return 1
+    link = call(stack.api_url + "/auth/v1/admin/generate_link", {"type": "magiclink", "email": found})
+    token = link.get("hashed_token") or link.get("properties", {}).get("hashed_token")
+    session = call(stack.api_url + "/auth/v1/verify", {"type": "magiclink", "token_hash": token})
+    SESSION.write_text(json.dumps(session), encoding="utf-8")
+    value = json.dumps(json.dumps(session))
+    print(f"{found}: session written to {SESSION.relative_to(ROOT)}\n"
+          f"In the browser at http://localhost:5173, run once, then reload:\n"
+          f"localStorage.setItem('{STORAGE_KEY}', {value})")
+    return 0
+
+
 def status(stack: Stack) -> None:
     if not exists(stack):
         print(f"{stack.name} does not exist yet: run `up`")
@@ -301,9 +367,13 @@ def main() -> int:
         stack.app_compose("stop", check=False)
         stack.compose("stop")
     elif cmd == "reset":
+        accounts = keep_accounts(stack)
         stack.app_compose("down", check=False)  # it sits on the Supabase network, which reset deletes
         stack.compose("down", "-v")
         up(stack)
+        restore_accounts(stack, accounts)
+    elif cmd == "login":
+        return login(stack, (sys.argv[2:] or [""])[0])
     elif cmd == "psql":
         return subprocess.call(["docker", "compose", "-p", stack.proj, "-f", str(COMPOSE), *stack.profiles(), "exec", "db",
                                 "psql", "-U", "postgres", "-d", stack.name], env=stack.env())
