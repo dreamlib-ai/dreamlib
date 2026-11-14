@@ -46,3 +46,4 @@ dreamlib-vibe/
 
 # Korpus ham verisi
 corpus-data/
+supabase/local/.session.json
