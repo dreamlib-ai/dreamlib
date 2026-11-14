@@ -49,7 +49,7 @@ class UserLocks:
         if self.store:
             token = await self.store.lock(user_id, LOCK_FOR, no_jobs=queue is not None)
             if not token:
-                raise ApiError(409, "panel işlemi sürüyor")
+                raise ApiError(409, "panel işlemi sürüyor", "job_busy")
             try:
                 yield
             finally:
@@ -59,7 +59,7 @@ class UserLocks:
                     log.warning("lock: release failed, it expires on its own", exc_info=True)
             return
         if user_id in self.busy or (queue and await queue.active(user_id)):
-            raise ApiError(409, "panel işlemi sürüyor")
+            raise ApiError(409, "panel işlemi sürüyor", "job_busy")
         self.busy.add(user_id)
         try:
             yield
@@ -86,7 +86,7 @@ class CallLimits:
             return
         ok = await self.store.take(user_id, kind, n, DAY) if self.store else self._take_here(kind, user_id, n)
         if not ok:
-            raise ApiError(429, self.MESSAGES[kind].format(n=n))
+            raise ApiError(429, self.MESSAGES[kind].format(n=n), "daily_limit")
 
     def _take_here(self, kind: str, user_id: str, n: int) -> bool:
         now = time.monotonic()
@@ -203,10 +203,10 @@ async def current_user(request: Request) -> str:
         set_scope(user_id=user_id)  # usage rows of this request belong to them
         return user_id
     except Unauthorized:
-        raise ApiError(401, "oturum geçersiz")
+        raise ApiError(401, "oturum geçersiz", "auth_invalid")
     except Exception:
         log.exception("auth failed")
-        raise ApiError(401, "oturum geçersiz")
+        raise ApiError(401, "oturum geçersiz", "auth_invalid")
 
 
 def extract_json(text: str) -> dict:

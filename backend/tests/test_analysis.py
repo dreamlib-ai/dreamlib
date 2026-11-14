@@ -94,7 +94,7 @@ def test_text_and_redo_calls_have_a_daily_allowance(api):
     for _ in range(2):
         assert client.post("/api/v1/analyze", json={"text": "x"}, headers=guest).status_code == 200
     res = client.post("/api/v1/clean", json={"text": "x"}, headers=guest)  # clean and analyze share the allowance
-    assert res.status_code == 429 and "2 yorum" in res.json()["error"]
+    assert res.status_code == 429 and "2 yorum" in res.json()["error"] and res.json()["code"] == "daily_limit"
     for _ in range(3):
         assert client.post("/api/v1/analyze", json={"text": "x"}, headers=auth()).status_code == 200
     assert client.post("/api/v1/analyze", json={"text": "x"}, headers=auth()).status_code == 429

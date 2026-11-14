@@ -5,9 +5,14 @@ import type { ProductEvent } from './telemetry';
 import type { AvatarSpec, PresetId } from './avatar';
 
 export type InterpretationType = 'universal' | 'cultural' | 'psychoanalytic';
+/** Machine codes from docs/api.md (S2); the message is for people and may change. */
+export type ErrorCode = 'invalid_request' | 'auth_required' | 'auth_invalid' | 'not_found' | 'conflict' | 'revision_conflict'
+  | 'job_busy' | 'too_large' | 'unsupported_media' | 'unreadable' | 'daily_limit' | 'rate_limited' | 'upstream_failed'
+  | 'service_off' | 'internal';
 export class ApiError extends Error {
   status: number;
-  constructor(status:number,message:string) { super(message); this.status=status; }
+  code: ErrorCode;
+  constructor(status:number,message:string,code:ErrorCode='internal') { super(message); this.status=status; this.code=code; }
 }
 export type AvatarProfile = { id:string; displayName:string; avatar:AvatarSpec|null; presetId:PresetId|null; avatarUrl:string; revision:number };
 export const getSelfProfile = () => request<AvatarProfile>('GET','/api/v1/profile');
@@ -76,7 +81,7 @@ async function request<T>(method: string, path: string, body?: unknown, signal?:
       if (res.ok) throw new Error(tr.genericError);
       return {};
     });
-    if (!res.ok) throw new ApiError(res.status,data.error ?? tr.genericError);
+    if (!res.ok) throw new ApiError(res.status,data.error ?? tr.genericError,data.code ?? 'internal');
     return data as T;
   } catch (cause) {
     if (controller.signal.aborted && !signal?.aborted) throw new Error(tr.recovery.timeout);
@@ -113,7 +118,7 @@ export async function transcribeAudio(audio: Blob, language?: string, signal?: A
   const query = language ? `?lang=${encodeURIComponent(language)}` : '';
   const res = await fetch(`/api/v1/transcribe${query}`, { method: 'POST', headers, body: audio, signal });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? tr.genericError);
+  if (!res.ok) throw new ApiError(res.status, data.error ?? tr.genericError, data.code ?? 'internal');
   return data.text;
 }
 

@@ -1,6 +1,6 @@
 # API
 
-Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`. Hata her yerde `{"error": "Türkçe mesaj"}` ve uygun durum kodu. Uçlar `/api/v1` altında; eski sürümsüz `/api/...` yolları aynı yanıtı verir, `Deprecation: true` ve yeni yolu gösteren `Link` başlığı taşır, ileride kalkar. Giriş gereken uçlar `Authorization: Bearer <Supabase access token>` ister Jeton backend'de projenin açık anahtarlarıyla (JWKS, ES256) doğrulanır; çıkış yapılmış jeton süresi dolana kadar (1 saat) geçerli kalır (yerelde `DREAMLIB_DEV_AUTH=1` ile `dev-` ile başlayan 12+ karakterli herhangi bir jeton).
+Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`. Hata her yerde `{"error": "Türkçe mesaj", "code": "makine_kodu"}` ve uygun durum kodu; istemci mesaja değil koda bakar (kodlar aşağıda). Uçlar `/api/v1` altında; eski sürümsüz `/api/...` yolları aynı yanıtı verir, `Deprecation: true` ve yeni yolu gösteren `Link` başlığı taşır, ileride kalkar. Giriş gereken uçlar `Authorization: Bearer <Supabase access token>` ister Jeton backend'de projenin açık anahtarlarıyla (JWKS, ES256) doğrulanır; çıkış yapılmış jeton süresi dolana kadar (1 saat) geçerli kalır (yerelde `DREAMLIB_DEV_AUTH=1` ile `dev-` ile başlayan 12+ karakterli herhangi bir jeton).
 
 | Uç | Giriş | Ne yapar |
 | --- | --- | --- |
@@ -44,3 +44,25 @@ Notlar
 
 - Analiz ve kayıt JSON'unda `features`: sürüm, `genres` (daily/fantasy/scifi/romance/adventure/suspense), `perspective` (first-person/observer/mixed/unknown), people/places/events ve `experiences:[{kind,quote}]`. kind lucid/recurring/nightmare; açık beyanın anlatımdaki alıntısı doğrulanır. Modelin eşanlamlı `type` anahtarı kind'a normalize edilir. Eski kayıtlar version=0 kalır; yeniden yorumla güncellenir.
 - Journal PATCH ek alanları: `classification:{genres?,perspective?,experiences?,tags?}` ve `recall` (boş/clear/fragmentary/faint). Düzeltmeler model verisini silmez; [] bilinçli boş seçimdir, null modele döner. Yeniden yorum düzeltmeleri korur. Yeni kolon: `supabase/migrations/20261102113817_dream_features.sql`. Kişisel yorum geçmişte kullanıcı tarafından düzeltilen temaları kullanır.
+
+## Hata kodları
+
+Kayıt `backend/app/errors.py` (`CODES`); kodu verilmeyen hata durumdan türer. Yeni kod önce oraya ve bu tabloya eklenir.
+
+| Kod | Durum | Anlamı |
+| --- | --- | --- |
+| `invalid_request` | 400 | İstek eksik ya da geçersiz |
+| `auth_required` | 401 | Giriş gerekli |
+| `auth_invalid` | 401, 403 | Oturum geçersiz ya da süresi dolmuş |
+| `not_found` | 404 | Kayıt ya da yol yok (başkasının kaydı da) |
+| `conflict` | 409 | İstek mevcut durumla çelişiyor |
+| `revision_conflict` | 409 | Kayıt başka yerde değişti; güncelini açıp yeniden dene |
+| `job_busy` | 409, 429 | Önceki çizim işi sürüyor |
+| `too_large` | 413 | Gövde çok büyük |
+| `unsupported_media` | 415 | Ses biçimi desteklenmiyor |
+| `unreadable` | 422 | Kayıtta konuşma anlaşılamadı |
+| `daily_limit` | 429 | Bugünkü hak doldu |
+| `rate_limited` | 429 | Çok sık istek; biraz bekle |
+| `upstream_failed` | 502 | Sağlayıcı ya da veritabanı yanıt vermedi; tekrar denenebilir |
+| `service_off` | 503 | Bu servis kurulu değil |
+| `internal` | 500 | Beklenmeyen hata |
