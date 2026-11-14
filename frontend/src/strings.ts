@@ -128,6 +128,14 @@ export const tr = {
     onlyMe: { label: 'Sadece ben', detail: 'Rüyaların özel kalır' },
     everyone: { label: 'Herkese açık', detail: 'Kullanıcı adınla görünür' },
     start: 'Başla',
+    next: 'Devam',
+    themesTitle: 'Bunlardan hangilerini gördün?',
+    themesText: 'İstersen seç; sonra değiştirebilirsin.',
+    themes: {
+      chased: 'Kovalanmak', falling: 'Düşmek', flying: 'Uçmak', school: 'Okul ve sınav', late: 'Geç kalmak', lost: 'Kaybolmak',
+      teeth: 'Dişlerin dökülmesi', water: 'Su ve deniz', house_rooms: 'Evde yeni odalar', deceased_visit: 'Ölmüş birini görmek',
+      animals: 'Hayvanlar', naked_public: 'Herkesin önünde çıplak olmak',
+    },
   },
   auth: {
     loading: 'Oturum açılıyor',

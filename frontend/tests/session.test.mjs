@@ -107,6 +107,14 @@ test('untrusted preference metadata defaults to private and cannot represent aut
   }
 });
 
+test('typical themes keep only known keys, once each, and are left out when none are chosen', async () => {
+  const { profile } = await harness();
+  const read = metadata => data(profile.profileFromMetadata({ dreamlib: { onboarded: true, visibility: 'private', ...metadata } }));
+  assert.deepEqual(read({ seenThemes: ['falling', 'admin', 'falling', 'teeth', 7] }), { onboarded: true, visibility: 'private', seenThemes: ['falling', 'teeth'] });
+  assert.deepEqual(read({ seenThemes: 'falling' }), { onboarded: true, visibility: 'private' });
+  assert.deepEqual(read({ seenThemes: [] }), { onboarded: true, visibility: 'private' });
+});
+
 test('token refresh failures are propagated and sign-out only clears this browser', async () => {
   const { api, calls } = await harness({ overrides: { getSession: async () => ({ data: { session: null }, error: new Error('refresh failed') }) } });
   await assert.rejects(api.getToken(), /refresh failed/);
