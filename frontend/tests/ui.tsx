@@ -33,8 +33,8 @@ globalThis.fetch = async (input, init) => {
   const payload = typeof init?.body === 'string' ? JSON.parse(init.body) : {};
   calls.push({ path, method: init?.method ?? 'GET', text: payload.text ?? payload.originalText, personal: payload.personal, excludeId: payload.excludeId, useAvatar:payload.useAvatar,avatarRevision:payload.avatarRevision,perspective:payload.perspective, bytes: init?.body instanceof Blob ? init.body.size : undefined }); trace();
   const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
-  if (path === '/api/events') return new Response(null, { status: 204 });
-  if(path==='/api/profile') {
+  if (path === '/api/v1/events') return new Response(null, { status: 204 });
+  if(path==='/api/v1/profile') {
     if(init?.method==='PATCH') {
       if(payload.revision!==fake.profile.revision)return json({error:'Profile changed'},409);
       if(payload.displayName!==undefined)fake.profile.displayName=payload.displayName;
@@ -45,27 +45,27 @@ globalThis.fetch = async (input, init) => {
     }
     return json(fake.profile);
   }
-  if(path==='/api/avatar') {
+  if(path==='/api/v1/avatar') {
     if(!fake.jobs[payload.requestId]) {
       fake.jobs[payload.requestId]={kind:'avatar',spec:payload.spec,ready:Date.now()+(params.has('delayAvatar')?8000:0)};persist();
       if(params.has('lostAvatar'))throw new TypeError('Lost avatar response');
     }
     return json({id:payload.requestId});
   }
-  if (path === '/api/transcribe') {
+  if (path === '/api/v1/transcribe') {
     if (params.has('slow')) return new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Test abort', 'AbortError'))));
     if (params.has('retry') && ++transcripts === 1) return json({ error: 'test retry' }, 502);
     return json({ text: dream.originalText });
   }
-  if (path === '/api/analyze') return json(dream);
-  if (path === '/api/dreams' && init?.method === 'POST') { const saved = { ...dream, ...payload }; rows.push(saved); return json(saved); }
-  if (path.startsWith('/api/dreams/') && init?.method === 'PUT') {
+  if (path === '/api/v1/analyze') return json(dream);
+  if (path === '/api/v1/dreams' && init?.method === 'POST') { const saved = { ...dream, ...payload }; rows.push(saved); return json(saved); }
+  if (path.startsWith('/api/v1/dreams/') && init?.method === 'PUT') {
     const saved = { ...dream, ...payload, id: path.split('/').pop(), panels: (payload.panels ?? []).map((p: object) => ({ ...p, url:'/favicon.png' })) };
     const index = rows.findIndex(row => row.id === saved.id);
     if (index < 0) rows.push(saved); else rows[index] = saved;
     persist(); return json(saved);
   }
-  if (path === '/api/dreams') return json({ dreams: rows });
+  if (path === '/api/v1/dreams') return json({ dreams: rows });
   if (path.endsWith('/journal') && init?.method === 'PATCH') {
     const row = rows.find(d => d.id === path.split('/')[3]);
     if (!row) return json({error:'not found'},404);
@@ -81,7 +81,7 @@ globalThis.fetch = async (input, init) => {
     if (payload.refresh) row.journal.analysisStale=false;
     row.revision = (row.revision ?? 0) + 1; persist(); return json(row);
   }
-  if (path === '/api/manga') {
+  if (path === '/api/v1/manga') {
     const id = payload.requestId;
     if (!fake.jobs[id]) {
       fake.jobs[id] = { ready: Date.now() + (params.has('recovery') ? 12000 : 0) }; persist();
@@ -89,14 +89,14 @@ globalThis.fetch = async (input, init) => {
     }
     return json({ id });
   }
-  if (path.startsWith('/api/jobs/')) {
+  if (path.startsWith('/api/v1/jobs/')) {
     const id = path.split('/').pop();
     const pending = Date.now() < (fake.jobs[id]?.ready ?? 0);
     if(fake.jobs[id]?.kind==='avatar')return json({id,status:pending?'running':'done',total:1,done:pending?0:1,panels:pending?[]:[{path:'test/avatar',url:'/avatars/ink.webp',caption:''}],error:''});
     return json({ id, status: pending ? 'running' : 'done', total:4, done:pending ? 1 : 4,
       panels: pending ? [] : [0,1,2,3].map(n => ({ path:`test/panel-${n}`, caption:`Sahne ${n}`, url:'/favicon.png' })), error:'' });
   }
-  if (path === '/api/jobs/test-booklet') return json({ id: 'test-booklet', status: 'done', total: 4, done: 4, panels: [], error: '' });
+  if (path === '/api/v1/jobs/test-booklet') return json({ id: 'test-booklet', status: 'done', total: 4, done: 4, panels: [], error: '' });
   throw new Error(`Network request blocked in test harness: ${path}`);
 };
 // Oscillator feeds a MediaStream destination only; nothing is played through speakers.

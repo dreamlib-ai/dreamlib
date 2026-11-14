@@ -93,7 +93,7 @@ def auth(token=TOKEN):
 def wait_job(client, job_id, headers=None, seconds=10):
     deadline = time.time() + seconds
     while time.time() < deadline:
-        job = client.get(f"/api/jobs/{job_id}", headers=headers or auth()).json()
+        job = client.get(f"/api/v1/jobs/{job_id}", headers=headers or auth()).json()
         if job["status"] not in ("queued", "running"):
             return job
         time.sleep(0.02)

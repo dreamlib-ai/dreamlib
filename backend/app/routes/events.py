@@ -23,7 +23,7 @@ class EventIn(BaseModel):
     eventId: UUID
     platform: Literal["ios", "android", "desktop", "other"] = "other"
 
-@router.post("/api/events", status_code=204)
+@router.post("/events", status_code=204)
 async def event(body: EventIn, user_id: str = Depends(current_user)):
     now = time.monotonic()
     actor = hashlib.sha256(("dreamlib-events:" + user_id).encode()).hexdigest()[:20]

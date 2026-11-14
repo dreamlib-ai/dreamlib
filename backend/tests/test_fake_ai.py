@@ -44,22 +44,22 @@ def test_placeholder_is_a_stable_svg_data_uri():
 
 def test_whole_flow_runs_without_keys():
     with TestClient(create_app(build_services(fake_settings()))) as client:
-        r = client.post("/api/analyze", json={"text": "Dün gece denizin kıyısında yürüyordum, gökyüzünde iki ay vardı."}, headers=AUTH)
+        r = client.post("/api/v1/analyze", json={"text": "Dün gece denizin kıyısında yürüyordum, gökyüzünde iki ay vardı."}, headers=AUTH)
         assert r.status_code == 200, r.text
         analysis = r.json()
         assert analysis["title"] and analysis["tags"]
 
-        r = client.post("/api/manga", json={"title": analysis["title"], "text": analysis["cleanText"], "style": "manga", "panels": 4, "consistent": True}, headers=AUTH)
+        r = client.post("/api/v1/manga", json={"title": analysis["title"], "text": analysis["cleanText"], "style": "manga", "panels": 4, "consistent": True}, headers=AUTH)
         assert r.status_code == 202, r.text
         job_id = r.json()["id"]
         for _ in range(100):
-            job = client.get(f"/api/jobs/{job_id}", headers=AUTH).json()
+            job = client.get(f"/api/v1/jobs/{job_id}", headers=AUTH).json()
             if job["status"] != "running":
                 break
             time.sleep(0.05)
         assert job["status"] == "done", job
         assert len(job["panels"]) == 4
 
-        r = client.post("/api/dreams", json={"title": analysis["title"], "originalText": analysis["cleanText"], "jobId": job_id}, headers=AUTH)
+        r = client.post("/api/v1/dreams", json={"title": analysis["title"], "originalText": analysis["cleanText"], "jobId": job_id}, headers=AUTH)
         assert r.status_code in (200, 201), r.text
-        assert client.get("/api/dreams", headers=AUTH).json()
+        assert client.get("/api/v1/dreams", headers=AUTH).json()

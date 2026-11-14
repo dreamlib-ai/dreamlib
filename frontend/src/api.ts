@@ -10,9 +10,9 @@ export class ApiError extends Error {
   constructor(status:number,message:string) { super(message); this.status=status; }
 }
 export type AvatarProfile = { id:string; displayName:string; avatar:AvatarSpec|null; presetId:PresetId|null; avatarUrl:string; revision:number };
-export const getSelfProfile = () => request<AvatarProfile>('GET','/api/profile');
-export const updateSelfProfile = (revision:number,changes:{displayName?:string;presetId?:PresetId;avatarJobId?:string;clearAvatar?:boolean}) => request<AvatarProfile>('PATCH','/api/profile',{revision,...changes});
-export const createAvatar = (requestId:string,spec:AvatarSpec,baseRevision:number) => request<{id:string}>('POST','/api/avatar',{requestId,spec,baseRevision});
+export const getSelfProfile = () => request<AvatarProfile>('GET','/api/v1/profile');
+export const updateSelfProfile = (revision:number,changes:{displayName?:string;presetId?:PresetId;avatarJobId?:string;clearAvatar?:boolean}) => request<AvatarProfile>('PATCH','/api/v1/profile',{revision,...changes});
+export const createAvatar = (requestId:string,spec:AvatarSpec,baseRevision:number) => request<{id:string}>('POST','/api/v1/avatar',{requestId,spec,baseRevision});
 export type ArtStyle = 'manga' | 'illustration' | 'collage' | 'photographic';
 
 export type DreamObject = { label: string; meaning: string };
@@ -55,7 +55,7 @@ export type JournalPatch = { title?: string; originalText?: string; dreamedOn?: 
   reflection?: string; addition?: { id: string; text: string }; refresh?: boolean; personal?: boolean;
   classification?: ClassificationOverride | null; recall?: '' | 'clear' | 'fragmentary' | 'faint' };
 export const editJournal = (dream: Dream, changes: JournalPatch) =>
-  request<Dream>('PATCH', `/api/dreams/${dream.id}/journal`, { revision: dream.revision ?? 0, ...changes });
+  request<Dream>('PATCH', `/api/v1/dreams/${dream.id}/journal`, { revision: dream.revision ?? 0, ...changes });
 
 async function request<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const headers: Record<string, string> = {};
@@ -85,44 +85,44 @@ async function request<T>(method: string, path: string, body?: unknown, signal?:
 }
 
 export const analyzeDream = (text: string, type: InterpretationType, context?: { mood?: string; sleep?: string; personal?: boolean; excludeId?: string }) =>
-  request<Analysis>('POST', '/api/analyze', { ...context, text, type });
+  request<Analysis>('POST', '/api/v1/analyze', { ...context, text, type });
 
 export const cleanText = (text: string) =>
-  request<{ cleanText: string; language: string }>('POST', '/api/clean', { text });
+  request<{ cleanText: string; language: string }>('POST', '/api/v1/clean', { text });
 
 export const startManga = (title: string, text: string, style: ArtStyle, panels: number, consistent = true, requestId?: string, signal?: AbortSignal, character?:{useAvatar:boolean;avatarRevision:number;perspective:Perspective}) =>
-  request<{ id: string }>('POST', '/api/manga', { ...character, title, text, style, panels, consistent, requestId }, signal);
+  request<{ id: string }>('POST', '/api/v1/manga', { ...character, title, text, style, panels, consistent, requestId }, signal);
 
-export const getJob = (id: string, signal?: AbortSignal) => request<Job>('GET', `/api/jobs/${id}`, undefined, signal);
+export const getJob = (id: string, signal?: AbortSignal) => request<Job>('GET', `/api/v1/jobs/${id}`, undefined, signal);
 
-export const getDream = (id: string, signal?: AbortSignal) => request<Dream>('GET', `/api/dreams/${id}`, undefined, signal);
+export const getDream = (id: string, signal?: AbortSignal) => request<Dream>('GET', `/api/v1/dreams/${id}`, undefined, signal);
 
 export const saveDream = (originalText: string, type: InterpretationType, analysis: Analysis, style: ArtStyle, panels: Panel[], jobId?: string, visibility: 'private' | 'public' = 'private', id?: string, existing = false) =>
-  request<Dream>(id ? 'PUT' : 'POST', id ? `/api/dreams/${id}?existing=${existing}` : '/api/dreams', { ...analysis, originalText, type, style, jobId, visibility, panels: panels.map(({ caption, path }) => ({ caption, path })) });
+  request<Dream>(id ? 'PUT' : 'POST', id ? `/api/v1/dreams/${id}?existing=${existing}` : '/api/v1/dreams', { ...analysis, originalText, type, style, jobId, visibility, panels: panels.map(({ caption, path }) => ({ caption, path })) });
 
 export const redoJobPanel = (id: string, panel: number) =>
-  request<Panel>('POST', `/api/jobs/${id}/panels/${panel}/redo`);
+  request<Panel>('POST', `/api/v1/jobs/${id}/panels/${panel}/redo`);
 
 export const redoSavedPanel = (id: string, panel: number) =>
-  request<Panel>('POST', `/api/dreams/${id}/panels/${panel}/redo`);
+  request<Panel>('POST', `/api/v1/dreams/${id}/panels/${panel}/redo`);
 
 export async function transcribeAudio(audio: Blob, language?: string, signal?: AbortSignal): Promise<string> {
   const token = await getToken();
   const headers: Record<string, string> = { 'Content-Type': audio.type || 'audio/webm' };
   if (token) headers.Authorization = `Bearer ${token}`;
   const query = language ? `?lang=${encodeURIComponent(language)}` : '';
-  const res = await fetch(`/api/transcribe${query}`, { method: 'POST', headers, body: audio, signal });
+  const res = await fetch(`/api/v1/transcribe${query}`, { method: 'POST', headers, body: audio, signal });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? tr.genericError);
   return data.text;
 }
 
-export const listDreams = () => request<{ dreams: Dream[] }>('GET', '/api/dreams').then((r) => r.dreams);
+export const listDreams = () => request<{ dreams: Dream[] }>('GET', '/api/v1/dreams').then((r) => r.dreams);
 
-export const deleteDream = (id: string) => request<void>('DELETE', `/api/dreams/${id}`);
+export const deleteDream = (id: string) => request<void>('DELETE', `/api/v1/dreams/${id}`);
 
 export const trackEvent = (name: ProductEvent, eventId: string, platform: string) =>
-  request<void>('POST', '/api/events', { name, eventId, platform });
+  request<void>('POST', '/api/v1/events', { name, eventId, platform });
 
 export async function checkGoogleProvider(): Promise<void> {
   const { url, key } = publicAuthConfig();

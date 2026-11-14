@@ -36,7 +36,7 @@ class JournalPatch(BaseModel):
     recall: str | None = Field(default=None, pattern='^(|clear|fragmentary|faint)$')
 
 
-@router.patch("/api/dreams/{dream_id}/journal")
+@router.patch("/dreams/{dream_id}/journal")
 async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends(current_user), s: Services = Depends(services)):
     async with s.locks.hold(user_id, s.queue):
         d = await _load(s, user_id, dream_id)
