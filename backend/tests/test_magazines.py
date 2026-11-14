@@ -179,3 +179,26 @@ def test_shared_pictures_come_from_our_address_and_never_name_the_owner(mag_api)
     assert client.get("/api/v1/m/abcDEF123_-x/p/9").status_code == 404
     s.magazines.rows["d1"]["visibility"] = "private"
     assert client.get(panel["url"]).status_code == 404
+
+
+def test_a_year_ago_tonight_brings_that_nights_magazine(mag_api):
+    from datetime import datetime, timezone
+    client, s = mag_api
+    s.llm.reply = storyboard(4)
+    job = wait_job(client, client.post("/api/v1/manga", headers=auth(), json={"title": "Uçan orman", "text": "Uçuyordum.",
+                                                                              "panels": 4}).json()["id"])
+    saved = client.post("/api/v1/dreams", headers=auth(), json={**DREAM, "jobId": job["id"], "style": "manga"}).json()
+    wait_laid_out(s, saved["id"])
+    today = datetime.now(timezone.utc).date()
+    a_year_on = today.replace(year=today.year + 1).isoformat() if not (today.month == 2 and today.day == 29) else None
+    if a_year_on:  # saved tonight, with no journal date: found by the night it was saved
+        res = client.get("/api/v1/magazines/anniversary", headers=auth(), params={"on": a_year_on})
+        assert res.status_code == 200 and res.json()["dreamId"] == saved["id"]
+        assert client.get("/api/v1/magazines/anniversary", headers=auth(OTHER), params={"on": a_year_on}).status_code == 404
+    edited = client.patch(f"/api/v1/dreams/{saved['id']}/journal", headers=auth(),
+                          json={"revision": saved["revision"], "dreamedOn": "2025-11-15"}).json()
+    assert edited["journal"]["dreamedOn"] == "2025-11-15"
+    res = client.get("/api/v1/magazines/anniversary", headers=auth(), params={"on": "2026-11-15"})
+    assert res.status_code == 200 and res.json()["dreamId"] == saved["id"]
+    assert client.get("/api/v1/magazines/anniversary", headers=auth(), params={"on": "2026-11-16"}).status_code == 404
+    assert client.get("/api/v1/magazines/anniversary", headers=auth(), params={"on": "2026-11-15", "tz": 9999}).status_code == 400

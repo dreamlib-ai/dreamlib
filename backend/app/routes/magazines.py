@@ -1,7 +1,7 @@
 """G4: a dream's magazine, laid out by the `magazine` job from its saved panels; the reader (G5) draws it.
 G6: its owner may open it to anyone with the link; /m/{slug} is then readable without signing in."""
 import logging
-from datetime import datetime
+from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import RedirectResponse
@@ -51,6 +51,28 @@ async def magazine(dream_id: str, user_id: str = Depends(current_user), s: Servi
     if not row:
         raise ApiError(404, "bu rüyanın dergisi yok")
     return await _answer(s, row)
+
+
+@router.get("/magazines/anniversary", **answers(MagazineOut, 200))
+async def anniversary(on: date, tz: int = 0, user_id: str = Depends(current_user), s: Services = Depends(services)):
+    """F2: the magazine of a dream from this night a year ago. `on` is the dreamer's own today and `tz` their offset
+    from UTC in minutes, so a dream saved after midnight their time counts for the right night. 404 when none."""
+    _on(s)
+    if not -14 * 60 <= tz <= 14 * 60:
+        raise ApiError(400, "saat dilimi geçersiz")
+    try:
+        then = on.replace(year=on.year - 1)
+    except ValueError:  # 29 February: its night a year ago is the 28th
+        then = on.replace(year=on.year - 1, day=28)
+    start = datetime.combine(then, time(), timezone.utc) - timedelta(minutes=tz)
+    try:
+        for dream_id in await s.store.dream_ids_on(user_id, then.isoformat(), start, start + timedelta(days=1)):
+            if row := await s.magazines.for_dream(user_id, dream_id):
+                return await _answer(s, row)
+    except Exception:
+        log.exception("magazine: anniversary failed")
+        raise ApiError(502, "dergi açılamadı")
+    raise ApiError(404, "bir yıl önceki bu gecenin dergisi yok")
 
 
 @router.put("/dreams/{dream_id}/magazine/visibility", **answers(MagazineOut, 200))

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { getMagazine, getSharedMagazine, shareMagazine, sharedPath, type Magazine as MagazineData, type MagazinePage, type Panel, type SharedMagazine } from './api';
+import { getAnniversary, getMagazine, getSharedMagazine, shareMagazine, sharedPath, type Magazine as MagazineData, type MagazinePage, type Panel, type SharedMagazine } from './api';
 import Icon from './Icon';
 import Picture from './Picture';
 import { tr } from './strings';
@@ -152,4 +152,24 @@ export function SharedMagazinePage({ slug }: { slug: string }) {
   return <main className="shared-page">{failed
     ? <><h1>{text.gone}</h1><a className="go" href="/">{text.toApp}</a></>
     : <p role="status">{tr.library.loading}</p>}</main>;
+}
+
+/** F2: a dream from this night a year ago sits above the library; it opens straight into its magazine. */
+export function Anniversary() {
+  const [magazine, setMagazine] = useState<MagazineData | null>(null);
+  const [reading, setReading] = useState(false);
+  useEffect(() => {
+    const stop = new AbortController();
+    getAnniversary(stop.signal).then(setMagazine).catch(() => { /* none tonight */ });
+    return () => stop.abort();
+  }, []);
+  if (!magazine) return null;
+  const cover = magazine.panels[magazine.spec.cover.panel];
+  return <>
+    <button className="anniversary" onClick={() => setReading(true)}>
+      {cover && <Picture panel={cover} className="anniversary-cover" thumb />}
+      <span><small>{text.anniversary}</small><b>{magazine.spec.cover.title}</b></span>
+    </button>
+    {reading && <Magazine magazine={magazine} onClose={() => setReading(false)} />}
+  </>;
 }

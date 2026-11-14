@@ -42,3 +42,15 @@ def test_a_shared_magazine_is_found_by_its_slug_only_while_shared(sb, user):
     assert run(mags.by_slug(slug)) is None and run(mags.share(user, saved.id, "link"))["share_slug"] == slug
     sql(f"update magazines set status = 'withdrawn' where id = '{row['id']}'")
     assert run(mags.by_slug(slug)) is None and run(mags.by_slug("../x")) is None
+
+
+def test_the_dreams_of_one_night_by_journal_date_or_by_when_they_were_saved(sb, user):
+    from datetime import datetime, timedelta, timezone
+    dated = run(sb.save_dream(user, dream()))
+    sql(f"update dreams set journal = jsonb_set(journal, '{{dreamedOn}}', '\"2025-11-15\"') where id = '{dated.id}'")
+    saved = run(sb.save_dream(user, dream()))
+    sql(f"update dreams set created_at = '2025-11-14T22:30:00+00:00' where id = '{saved.id}'")  # 01:30 the 15th in Istanbul
+    start = datetime(2025, 11, 15, tzinfo=timezone.utc) - timedelta(minutes=180)
+    assert run(sb.dream_ids_on(user, "2025-11-15", start, start + timedelta(days=1))) == [dated.id, saved.id]
+    utc = datetime(2025, 11, 15, tzinfo=timezone.utc)
+    assert run(sb.dream_ids_on(user, "2025-11-15", utc, utc + timedelta(days=1))) == [dated.id]

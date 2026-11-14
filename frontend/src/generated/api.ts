@@ -221,6 +221,10 @@ export const editBrain = (body: BrainEdit, signal?: AbortSignal) =>
 export const magazine = (dreamId: string, signal?: AbortSignal) =>
   request<MagazineOut>('GET', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}/magazine`, undefined, signal);
 
+/** GET /api/v1/magazines/anniversary */
+export const anniversary = (query: { on?: string; tz?: number } = {}, signal?: AbortSignal) =>
+  request<MagazineOut>('GET', `/api/v1/magazines/anniversary${search(query)}`, undefined, signal);
+
 /** PUT /api/v1/dreams/{dream_id}/magazine/visibility */
 export const shareMagazine = (dreamId: string, body: MagazineShare, signal?: AbortSignal) =>
   request<MagazineOut>('PUT', `/api/v1/dreams/${encodeURIComponent(String(dreamId))}/magazine/visibility`, body, signal);

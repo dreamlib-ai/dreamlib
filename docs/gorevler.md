@@ -69,11 +69,11 @@ Yapıldı: `/api/v1` ve yerinde eski yollar (S1); makine hata kodları (S2); şe
 
 ### Fikirlerden (süzme: [fikirler](fikirler.md))
 
+Yapıldı: uygulama doğrudan anlatma ekranıyla açılır, önünde bildirim, rozet ya da ara ekran yok (F3); kütüphanenin üstünde "Bir yıl önce bu gece" kartı o gecenin dergisini açar, gece kişinin saat dilimine göre (F2).
+
 | No | Görev | Önce |
 | --- | --- | --- |
 | F1 | Sembol kartı: gelenekler arası anlam, kaynak, kişide görülme sayısı; ikonu çizenin adı | M6, G1 |
-| F2 | Yıl dönümü: bir yıl önceki dergi sabah kütüphanenin üstünde | G4 |
-| F3 | Açılışta doğrudan kayıt; kayıttan önce bildirim, rozet ya da ekran yok | — |
 | F4 | Kâbus sonrası "sonunu yeniden yaz"; ilk anlatım korunur | R3 |
 | F5 | Onboarding'de isteğe bağlı "hangilerini gördün" tipik tema seçimi | G1 |
 | F6 | `features` sürüm 2: karakter rolü, etkileşim, sonuç, mekân tanıdıklığı, eylemlilik | L2 |

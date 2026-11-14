@@ -207,6 +207,14 @@ class Supabase:
             params["or"] = f'(created_at.lt."{at}",and(created_at.eq."{at}",id.lt.{last}))'
         return [self._from_row(r) for r in await self._rest("GET", params)]
 
+    async def dream_ids_on(self, user_id: str, day: str, start: datetime, end: datetime) -> list[str]:
+        """F2: the dreams of one night: dreamt on `day` by the journal, or saved between start and end (UTC)."""
+        params = {"user_id": f"eq.{user_id}", "select": "id,journal,created_at", "order": "created_at.asc", "limit": "20",
+                  "or": f'(journal->>dreamedOn.eq.{day},and(created_at.gte."{start.isoformat()}",created_at.lt."{end.isoformat()}"))'}
+        rows = await self._rest("GET", params)
+        dated = [r["id"] for r in rows if (r.get("journal") or {}).get("dreamedOn") == day]
+        return dated + [r["id"] for r in rows if r["id"] not in dated and not (r.get("journal") or {}).get("dreamedOn")]
+
     # --- the account as a whole (R2) ------------------------------------
 
     async def rows_of(self, user_id: str, table: str, select: str = "*", limit: int = 5000) -> list[dict]:

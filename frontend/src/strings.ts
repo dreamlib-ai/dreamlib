@@ -148,6 +148,7 @@ export const tr = {
     share: 'Linkle paylaş', shareNote: 'Linki bilen kişi başlığı, çizimleri ve yorumdan bir cümleyi görür; anlattığın metin görünmez.',
     sharedNote: 'Linki bilen herkes bu dergiyi giriş yapmadan okuyabilir.', link: 'Dergi linki',
     copy: 'Linki kopyala', copied: 'Kopyalandı', copyFailed: 'Link kopyalanamadı; kutudan seçip kopyalayabilirsin.',
+    anniversary: 'Bir yıl önce bu gece',
     unshare: 'Paylaşımı kapat', gone: 'Bu dergi artık paylaşılmıyor.', toApp: "Dreamlib'e git",
   },
   account: {

@@ -109,6 +109,12 @@ export type SharedMagazine = g.SharedMagazineOut;
 /** G6: a shared magazine, read without signing in. */
 export const getSharedMagazine = (slug: string, signal?: AbortSignal) => g.sharedMagazine(slug, signal);
 export const sharedPath = (slug: string) => `/m/${slug}`;
+/** F2: the magazine of a dream from this night a year ago, by the dreamer's own date and time zone. */
+export function getAnniversary(signal?: AbortSignal) {
+  const now = new Date();
+  const on = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return g.anniversary({ on, tz: -now.getTimezoneOffset() }, signal);
+}
 
 export type Brain = g.BrainOut;
 export type BrainDream = g.BrainDream;
