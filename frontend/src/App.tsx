@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getSelfProfile, type AvatarProfile, type InterpretationType } from './api';
 import AvatarPage from './AvatarPage';
 import { clearAvatarDraft } from './avatar';
+import Brain from './Brain';
 import Library from './Library';
 import Onboarding from './Onboarding';
 import type { Profile } from './profile';
@@ -12,7 +13,7 @@ import Icon, { type IconName } from './Icon';
 import { clearDraft, readDraft } from './draft';
 import { sessionEvent } from './telemetry';
 
-type View = 'tell' | 'library' | 'profile';
+type View = 'tell' | 'library' | 'brain' | 'profile';
 
 export function Nav({ account, view, onView, onSignOut, avatarUrl }: { account: Account; view: View; onView: (view: View) => void; onSignOut: () => void; avatarUrl?:string }) {
   const [avatarFailed,setAvatarFailed]=useState(false);
@@ -20,6 +21,7 @@ export function Nav({ account, view, onView, onSignOut, avatarUrl }: { account: 
   const items: { view: View; label: string; icon: IconName }[] = [
     { view: 'tell', label: tr.app.tell, icon: 'mic' },
     { view: 'library', label: tr.cards.library.title, icon: 'book' },
+    { view: 'brain', label: tr.brain.nav, icon: 'spark' },
   ];
   return <header className="nav"><div className="nav-in">
     <button className="brand" onClick={() => onView('tell')}><span>{tr.brand}</span></button>
@@ -41,6 +43,7 @@ export function Workspace({ account, onSignOut }: { account: Account; onSignOut:
     <Nav account={account} view={view} onView={setView} onSignOut={onSignOut} avatarUrl={selfProfile?.avatarUrl} />
     <main className="page">
       <div hidden={view !== 'tell'}><Tell key={draft} owner={account.id} active={view === 'tell'} type={type} visibility={account.profile.visibility} onType={setType} onLibrary={() => setView('library')} onProfile={()=>setView('profile')} /></div>
+      {view === 'brain' && <Brain onTell={() => { clearDraft(account.id); setDraft(current => current + 1); setView('tell'); }} />}
       {view==='profile'&&<AvatarPage owner={account.id} onUpdated={setSelfProfile} />}
       {view === 'library' && <div className="library-view"><Library onRemoved={(id) => {
         if (readDraft(account.id)?.id === id) { clearDraft(account.id); setDraft(current => current + 1); }

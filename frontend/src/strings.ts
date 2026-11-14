@@ -1,5 +1,13 @@
 // All UI text lives here so English can be added later.
 export const tr = {
+  brain: {
+    nav: 'Beyin', label: 'Rüyalarının haritası', loading: 'Yükleniyor', filter: 'Bağ türleri',
+    empty: 'Rüyaların burada birbirine bağlanır.', tell: 'Rüyanı anlat', untitled: 'Adsız rüya', close: 'Kapat',
+    floating: 'Henüz başka bir rüyaya bağlanmadı.',
+    relations: { shares_content: 'Ortak içerik', shares_concept: 'Ortak kavram', shares_emotion: 'Ortak duygu', near_in_time: 'Yakın zaman' },
+    daysApart: (n: number) => n === 0 ? 'aynı gün' : `${n} gün arayla`,
+    linkCount: (n: number) => n === 0 ? 'bağsız' : `${n} bağ`,
+  },
   avatar: {
     heading:'Avatarın', profile:'Profilim', active:'Seçili avatarın', preview:'Önizleme', oldPreview:'Önizleme önceki seçimlerine ait',
     pick:'Bir karakter seç', generating:'Avatarın çiziliyor', presets:'Hazır karakterler', variant:(n:number)=>`Avatar varyantı ${n}`,

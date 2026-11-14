@@ -89,12 +89,11 @@ Yapıldı: fal model kaydı (TOML), sürümlü görsel prompt revizyonları, ö�
 
 Her kullanıcının rüyaları bir uzay kanvasında düğüm; ilişkiler türüne göre renkli bağlar. Zayıf ilişki tutulmaz, bağı olmayan rüya uzayda süzülür (Cenker, 2026-11-14). İlk sürüm LLM'siz, M4 ve M8'in düğümlerinden; vektör benzerliği (M10) gelince ayrı bir bağ türü olarak eklenir.
 
-Yapıldı: dört ilişki türü (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), IDF ağırlıklı puanlayıcılar `backend/app/engine/relations.py`'de; eşiğin altı yazılmaz, tür başına en güçlü birkaç bağ kalır; `index` işi yeni rüyanın bağlarını yazar ve eskilerini siler, `brain_links` kişinin derlemini tek sorguda verir, mevcut rüyalar bir kez yeniden dizinlenir (BG1); `GET /api/v1/brain` bütün rüyaları (tarih, duygular, küçük resim, bağ sayısı) ve bağları kanıtıyla tek yanıtta verir (BG2).
+Yapıldı: dört ilişki türü (`shares_content`, `shares_concept`, `shares_emotion`, `near_in_time`), IDF ağırlıklı puanlayıcılar `backend/app/engine/relations.py`'de; eşiğin altı yazılmaz, tür başına en güçlü birkaç bağ kalır; `index` işi yeni rüyanın bağlarını yazar ve eskilerini siler, `brain_links` kişinin derlemini tek sorguda verir, mevcut rüyalar bir kez yeniden dizinlenir (BG1); `GET /api/v1/brain` bütün rüyaları (tarih, duygular, küçük resim, bağ sayısı) ve bağları kanıtıyla tek yanıtta verir (BG2); "Beyin" sekmesi: gece göğünde kuvvet yerleşimli grafik (bağımlılıksız canvas), dört renkli bağ (yakın zaman kesikli), duygu halkalı düğümler, bağsız rüyalar dış halkada süzülür; sürükle, kaydır, yakınlaştır, tür filtresi, dokununca kanıtlı bağ kartı ve komşu vurgusu, azaltılmış harekette durağan, ekran okuyucu için rüya listesi (BG3).
 
 | No | Görev | Önce |
 | --- | --- | --- |
-| BG4 | Grafikte etkileşim: iki rüyayı elle bağla ya da bir bağı gizle (`series`, kaynak `user`), bağın neden kurulduğunu gösteren kanıt kartı | BG3 |
-
+| BG4 | Grafikte etkileşim: iki rüyayı elle bağla ya da bir bağı gizle (`series`, kaynak `user`), bağın neden kurulduğunu gösteren kanıt kartı 
 ## Sonraki major (betadan sonra)
 
 Beta, anlat → yorum → dergi → kütüphane akışına odaklanır; benzerlik ve lab'ın gerçek veri işi buraya alındı (Cenker, 2026-11-14).
