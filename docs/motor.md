@@ -24,7 +24,7 @@ Motor, rüyaları düğümlere (sembol, tema, duygu…) bağlar ve düğümler i
 İlişki türleri koda gömülü sabit bir liste değildir.
 
 1. `relation_types` tablosuna satır: `key`, uç türleri, simetri.
-2. `backend/app/engine/relations/` altında bir puanlayıcı: iki ucu alır, ağırlık ve kanıt döndürür.
+2. `backend/app/engine/relations.py` içinde bir puanlayıcı: iki ucu alır, ağırlık ve kanıt döndürür.
 3. Puanlayıcı kayda adıyla bağlanır; `index` işi kayıtlı tüm puanlayıcıları çalıştırır.
 
 Şema değişmez, mevcut kenarlar bozulmaz. Puanlayıcı değişirse `algo_version` artar; eski kenarlar yeni sürüm yazılana kadar okunur, sonra süpürülür.
@@ -38,6 +38,8 @@ Başlangıç türleri:
 | `series` | rüya → rüya | Kullanıcının kendi kurduğu bağ |
 | `co_occurs` | düğüm ↔ düğüm | Birlikte görülme (PMI) |
 | `is_a`, `same_as` | düğüm → düğüm | Sözlük hiyerarşisi ve birleştirme |
+| `shares_content`, `shares_concept`, `shares_emotion` | rüya ↔ rüya | Ortak içerik (sembol, karakter, yer, eylem), kavram (tema, tür, deneyim) ve duygu düğümleri; IDF ağırlıklı, eşikli (BG1) |
+| `near_in_time` | rüya ↔ rüya | Birkaç gün arayla görülmüş (BG1) |
 | `rem` | kişi ↔ kişi | Önbelleklenmiş eşleşme |
 | `evokes_motif` | rüya → motif | Masal ve mit motifi eşleşmesi; alıntıyla doğrulanır ([kart](arastirma/notlar/kultur-motif-dizini.md)) |
 | `day_residue` | rüya → gündüz olayı | Uyanık hayattan iz; kullanıcı bağlar ya da model önerir ([kart](arastirma/notlar/bilim-sureklilik.md)) |
