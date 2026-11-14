@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ValidationError
 
 from ..errors import ApiError
+from ..lexicon import context as lexicon_context
 from ..models import Analysis, CleanOut
 from ..prompts import VERSIONS, ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HINTS
 from ..services import MAX_DREAM, Services, current_user, extract_json, one_line, services
@@ -136,6 +137,9 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
         system += "\n\n" + block
     if body.personal and (block := await history_block(s, user_id, str(body.excludeId) if body.excludeId else "")):
         system += "\n\n" + block
+    lexicon_block, used = await lexicon_context(s, text)  # M7: the lexicon's meanings and the collective totals
+    if lexicon_block:
+        system += "\n\n" + lexicon_block
     await s.take("text", user_id)
 
     try:
@@ -155,7 +159,7 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
     out = result.model_dump()
     if s.analyses:  # M3: every interpretation is a row; the dream picks it up by analysisId when saved
         try:
-            out["analysisId"] = await s.analyses.add(user_id, "interpret", result.model_dump(mode="json"),
+            out["analysisId"] = await s.analyses.add(user_id, "interpret", {**result.model_dump(mode="json"), "context": used},
                                                      prompt=VERSIONS["interpret"], model=_model(s.llm), input_text=text)
         except Exception:
             log.warning("analyses: could not record an interpretation", exc_info=True)

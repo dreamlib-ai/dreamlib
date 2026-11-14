@@ -21,6 +21,7 @@ from .providers.openrouter import OpenRouter
 from .store.analyses import MemoryAnalyses, SupabaseAnalyses
 from .store.devstore import DevStore
 from .store.entities import MemoryEntities, SupabaseEntities
+from .store.lexicon import SupabaseLexicon
 from .store.magazines import MemoryMagazines, SupabaseMagazines
 from .store.graph import MemoryGraph, SupabaseGraph
 from .store.jobstore import MemoryJobs, SupabaseJobs
@@ -125,6 +126,7 @@ class Services:
     entities: object | None = None  # nodes and a dream's links to them (M4); comes with accounts
     graph: object | None = None  # dream ↔ dream relations for the brain graph (BG1); comes with accounts
     magazines: object | None = None  # one laid-out magazine per booklet (G4); comes with accounts
+    lexicon: object | None = None  # A-tier meanings and collective totals for the interpret task (M7)
     locks: UserLocks = field(default_factory=UserLocks)
     limits: CallLimits = field(default_factory=CallLimits)
 
@@ -156,7 +158,7 @@ def build_services(cfg: Settings) -> Services:
         s.meter = Meter(SupabaseUsage(sb))
         s.eta = Estimator(SupabaseTimings(sb))
         s.analyses, s.entities, s.graph = SupabaseAnalyses(sb), SupabaseEntities(sb), SupabaseGraph(sb)
-        s.magazines = SupabaseMagazines(sb)
+        s.magazines, s.lexicon = SupabaseMagazines(sb), SupabaseLexicon(sb)
         quota = SupabaseQuota(sb)
         s.limits.store, s.locks = quota, UserLocks(quota)
     elif cfg.dev_auth:
