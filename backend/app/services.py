@@ -18,7 +18,9 @@ from .eta import Estimator, MemoryTimings, SupabaseTimings
 from .providers.fal import Fal
 from .providers.image_models import resolve
 from .providers.openrouter import OpenRouter
+from .store.analyses import MemoryAnalyses, SupabaseAnalyses
 from .store.devstore import DevStore
+from .store.entities import MemoryEntities, SupabaseEntities
 from .store.jobstore import MemoryJobs, SupabaseJobs
 from .store.quota import SupabaseQuota
 from .store.supabase import Supabase, Unauthorized
@@ -117,6 +119,8 @@ class Services:
     worker: object | None = None  # the running Worker, set when the app starts
     meter: Meter | None = None  # writes a usage row per paid provider call; comes with accounts
     eta: Estimator | None = None  # learns how long fal requests take; comes with accounts
+    analyses: object | None = None  # one row per interpretation and indexing pass (M3); comes with accounts
+    entities: object | None = None  # nodes and a dream's links to them (M4); comes with accounts
     locks: UserLocks = field(default_factory=UserLocks)
     limits: CallLimits = field(default_factory=CallLimits)
 
@@ -147,6 +151,7 @@ def build_services(cfg: Settings) -> Services:
         s.auth, s.store, s.blobs, s.queue = sb, sb, sb, SupabaseJobs(sb)
         s.meter = Meter(SupabaseUsage(sb))
         s.eta = Estimator(SupabaseTimings(sb))
+        s.analyses, s.entities = SupabaseAnalyses(sb), SupabaseEntities(sb)
         quota = SupabaseQuota(sb)
         s.limits.store, s.locks = quota, UserLocks(quota)
     elif cfg.dev_auth:
@@ -154,6 +159,7 @@ def build_services(cfg: Settings) -> Services:
         s.queue = MemoryJobs()
         s.meter = Meter(MemoryUsage())
         s.eta = Estimator(MemoryTimings())
+        s.analyses, s.entities = MemoryAnalyses(), MemoryEntities()
         log.warning("DREAMLIB_DEV_AUTH=1: in-memory accounts, any 'dev-' token is accepted. Local use only.")
     else:
         log.warning("SUPABASE_URL or SUPABASE_SERVICE_KEY missing: saving dreams is off")

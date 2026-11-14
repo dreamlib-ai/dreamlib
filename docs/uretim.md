@@ -7,9 +7,9 @@ Uzun süren her şey (indeksleme, ikon, dergi, video) Postgres `jobs` kuyruğund
 | Değişiklik | Bugün | Hedef |
 | --- | --- | --- |
 | İş türü | Yapıldı (B1): türler `pipelines/registry.py` içindeki `KINDS` kaydında; sütunda yalnız biçim check'i | Yeni tür bir kayıt satırıdır |
-| Eşzamanlılık | Yapıldı (B3): tek aktif iş kuralı yalnız `exclusive` türlerde (`manga`, `image`) | `index` ve `glyph` kayda `exclusive=False` ile girer |
+| Eşzamanlılık | Yapıldı (B3): tek aktif iş kuralı yalnız `exclusive` türlerde (`manga`, `image`). `index` `exclusive=False`: kayıt ve günlük kilidini (`lock_user`) tutmaz, günlük çizim hakkından düşmez (M4) | `glyph` da `exclusive=False` |
 | Bekleme | Yapıldı (B2): geçici hatada `run_after` ile 5, 20, 80 sn (±%25) bekleme; kalıcı hatada tekrar yok | — |
-| Zincir | Sütunlar var (B3): `dream_id`, `parent_id` | Biten iş sonrakini kuyruğa yazar (`index` işiyle, M4) |
+| Zincir | Sütunlar var (B3): `dream_id`, `parent_id`. Rüya kaydedilince ya da metni değişince `index` kuyruğa girer (M4, `app/indexing.py`; tekrar koruması rüya ve sürüm) | Biten iş sonrakini kuyruğa yazar (`glyph`) |
 | Tekrar koruması | Yapıldı (B3): kullanıcı, tür ve `dedupe_key` tekil; ikinci istek mevcut işi döner. Manga `requestId` ile sürüyor | — |
 | Öncelik | Yapıldı (B3): `priority` kayıttan; çizim 10, arka plan 0 | — |
 

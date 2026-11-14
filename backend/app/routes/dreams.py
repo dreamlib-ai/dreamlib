@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Response
 from .analysis import MAX_CONTEXT
 from .jobs import job_or_404
 from ..errors import ApiError, Conflict, NotFound
+from ..indexing import after_save
 from ..pipelines.manga import REDO_TIMEOUT, panels_of, refresh_reference, render
 from ..models import Dream, DreamIn, MangaMeta, Panel
 from ..prompts import INTERPRETATION_HINTS, STYLE_HINTS
@@ -119,6 +120,7 @@ async def save_record(body: DreamIn, user_id: str, s: Services, dream_id: str = 
             except Exception:
                 log.warning("dreams: could not mark job %s saved", job.id, exc_info=True)
         # Do not delete replaced image paths here: legacy records may share them.
+        await after_save(s, user_id, saved.id, saved.revision, body.analysisId)
     await sign_panels(s, [saved.panels])
     return saved.public()
 

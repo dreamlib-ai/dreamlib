@@ -11,6 +11,7 @@ from ..errors import ApiError, Conflict, NotFound
 from ..models import Analysis, JournalEntry
 from ..classification import ClassificationOverride
 from ..services import Services, current_user, services, sign_panels
+from ..indexing import after_save
 
 router = APIRouter()
 
@@ -39,6 +40,7 @@ class JournalPatch(BaseModel):
 async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends(current_user), s: Services = Depends(services)):
     async with s.locks.hold(user_id, s.queue):
         d = await _load(s, user_id, dream_id)
+        text_before, entries_before, analysis_id = d.originalText, len(d.journal.entries), ""
         if d.revision != body.revision:
             raise ApiError(409, "kayıt başka bir yerde değişti; yeniden açıp dene")
         if body.title is not None:
@@ -80,7 +82,9 @@ async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends
                 if len(narrative) + len(extra) > 4000:
                     raise ApiError(400, "yorum için rüya ve ayrıntılarını 4000 karakterin altına indir")
                 narrative += extra
-            result = Analysis.model_validate(await analyze(AnalyzeIn(text=narrative, type=d.type, personal=body.personal, excludeId=UUID(d.id) if len(d.id) == 36 else None), user_id, s))
+            analysis = await analyze(AnalyzeIn(text=narrative, type=d.type, personal=body.personal, excludeId=UUID(d.id) if len(d.id) == 36 else None), user_id, s)
+            result = Analysis.model_validate(analysis)
+            analysis_id = analysis.get("analysisId", "")
             for field in ("cleanText", "interpretation", "tags", "objects", "emotions", "features"):
                 setattr(d, field, getattr(result, field))
             d.journal.analysisStale = False
@@ -90,5 +94,7 @@ async def edit_journal(dream_id: str, body: JournalPatch, user_id: str = Depends
             raise ApiError(409, "kayıt değişti; yeniden açıp dene")
         except NotFound:
             raise ApiError(404, "rüya bulunamadı")
+        if analysis_id or saved.originalText != text_before or len(saved.journal.entries) != entries_before:
+            await after_save(s, user_id, saved.id, saved.revision, analysis_id)
     await sign_panels(s, [saved.panels])
     return saved.public()

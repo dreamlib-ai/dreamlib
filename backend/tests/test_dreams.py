@@ -186,4 +186,4 @@ def test_saving_marks_the_job_and_the_sweep_keeps_saved_pictures(api):
 
     assert asyncio.run(sweep(s)) == 2
     assert s.blobs.removed == ["u/a.png", "u/b.png"]  # the saved booklet's pictures stay with the dream
-    assert set(s.queue.jobs) == {"new"}
+    assert {k for k, j in s.queue.jobs.items() if j.kind != "index"} == {"new"}  # saving also queued a fresh index job
