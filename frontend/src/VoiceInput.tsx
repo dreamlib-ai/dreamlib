@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { track } from './telemetry';
-import { VoiceBeam, getAudioContext } from 'voice-glow';
 import { transcribeAudio } from './api';
 import { DreamRecorder } from './recorder';
 import Icon from './Icon';
+import Orb from './Orb';
 import { tr } from './strings';
 
 export default function VoiceInput({ active, disabled, onText, onError, onBusy }: { active: boolean; disabled: boolean; onText: (text: string) => void; onError: (error: string) => void; onBusy: (busy: boolean) => void }) {
@@ -81,17 +81,39 @@ export default function VoiceInput({ active, disabled, onText, onError, onBusy }
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [state]);
+  // The orb breathes with the voice: the microphone's loudness becomes --level (0..1) on the orb.
+  const orb = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const node = orb.current;
+    if (!stream || reducedMotion || !node) { node?.style.setProperty('--level', '0'); return; }
+    const context = new AudioContext(); void context.resume();
+    const analyser = context.createAnalyser(); analyser.fftSize = 512;
+    context.createMediaStreamSource(stream).connect(analyser);
+    const samples = new Uint8Array(analyser.fftSize);
+    let level = 0, frame = 0;
+    const tick = () => {
+      analyser.getByteTimeDomainData(samples);
+      let sum = 0; for (const s of samples) sum += ((s - 128) / 128) ** 2;
+      level = level * 0.82 + Math.min(1, Math.sqrt(sum / samples.length) * 5) * 0.18;
+      node.style.setProperty('--level', level.toFixed(3));
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => { cancelAnimationFrame(frame); node.style.setProperty('--level', '0'); void context.close(); };
+  }, [stream, reducedMotion]);
   const processing = state === 'requesting' || state === 'transcribing';
   const label = state === 'recording' ? tr.app.stop : state === 'requesting' ? tr.capture.permission : state === 'transcribing' ? tr.app.transcribing : tr.app.voice;
   const cancel = () => { ++request.current; pending.current?.abort(); recorder.cancel(); setRetryAudio(null); callbacks.current.onError(''); };
   return <div className="voice-capture" aria-busy={processing}>
-    <VoiceBeam className="voice-beam" type="pill" theme="dark" colorVariant="gold" strength={0.65} idle={0} stream={stream} motion={processing ? { gather: 1, heldLevel: 0.15 } : null} active={active && !reducedMotion && state !== 'idle'} paused={!active || reducedMotion}>
-      <button className={`record-button ${state === 'recording' ? 'recording' : ''}`} aria-label={label} title={label} disabled={disabled || processing} onClick={() => {
-        if (state === 'recording') { recorder.finish(); return; }
-        setRetryAudio(null); callbacks.current.onError(''); getAudioContext(); void recorder.start();
-      }}><Icon name={state === 'recording' ? 'stop' : processing ? 'loader' : 'mic'} /></button>
-    </VoiceBeam>
-    <div className="capture-status" role={state === 'recording' ? 'timer' : 'status'} aria-live={state === 'recording' ? 'off' : 'polite'}>{state === 'recording' ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : state === 'transcribing' ? tr.app.transcribing : state === 'requesting' ? tr.capture.permission : retryAudio ? '' : tr.app.voice}</div>
+    <button ref={orb} className={`orb orb-${state}`} aria-label={label} title={label} disabled={disabled || processing} onClick={() => {
+      if (state === 'recording') { recorder.finish(); return; }
+      setRetryAudio(null); callbacks.current.onError(''); void recorder.start();
+    }}>
+      <span className="orb-sky" aria-hidden="true"><i /><i /></span>
+      <Orb />
+      {state !== 'idle' && <span className="orb-icon"><Icon name={state === 'recording' ? 'stop' : 'loader'} /></span>}
+    </button>
+    <div className="capture-status" role={state === 'recording' ? 'timer' : 'status'} aria-live={state === 'recording' ? 'off' : 'polite'}>{state === 'recording' ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : state === 'transcribing' ? tr.app.transcribing : state === 'requesting' ? tr.capture.permission : ''}</div>
     {state !== 'idle' && <button className="text-action capture-cancel" onClick={cancel}>{tr.library.cancel}</button>}
     {retryAudio && state === 'idle' && <div className="capture-retry"><button className="text-action" onClick={() => void transcribe(retryAudio)}>{tr.app.retry}</button><button className="text-action" onClick={cancel}>{tr.library.cancel}</button></div>}
   </div>;

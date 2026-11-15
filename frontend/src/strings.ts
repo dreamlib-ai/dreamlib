@@ -40,21 +40,7 @@ export const tr = {
     stale: 'Rüyana yeni ayrıntılar eklendi. Mevcut yorum önceki anlatımına ait.', refresh: 'Yorumu yenile',
     artStale: 'Çizimler önceki anlatımına ait.', dateRange: 'Tarih aralığı', from: 'Başlangıç', until: 'Bitiş', clear: 'Temizle',
   },
-  intro: {
-    skip: 'Geç', next: 'Devam', start: 'Başlayalım', planned: 'Geliştiriyoruz', replay: 'Dreamlib’i tanı',
-    navigation: 'Tanıtım sahneleri', source: 'REM uykusu hakkında',
-    slides: [
-      { id: 'welcome', art: 'curious', planned: false, title: 'Gece gördüğün, sabah kaybolmasın.', body: 'Rüyanı anlat. Aklında kaldığı kadar.' },
-      { id: 'tell', art: 'curious', planned: false, title: 'Bir sahne. Bir his. Belki hepsi.', body: 'Sesinle anlat, yazıyla tamamla. Rüyan yorumlansın, geçmişindeki temalarla bağ kursun.' },
-      { id: 'book', art: 'curious', planned: false, title: 'Gözlerini kapatınca gördüklerin.', body: 'Sahnelere, sonra bir kitapçığa dönüşsün. Rüyan ve çizimleri kendi kütüphanende kalsın.' },
-      { id: 'avatar', art: 'curious', planned: true, title: 'Bu hikâyede sen de varsın.', body: 'Kendi karakterinle, rüyayı gördüğün yerden yeniden bak. Sonradan hatırladıklarını ve düşüncelerini de ekle.' },
-      { id: 'patterns', art: 'sleep', planned: true, title: 'Bazı düşler birbirini tanır.', body: 'Türler, duygular, tekrar eden yerler. Haftalık özetlerle rüyalarının zaman içinde nasıl değiştiğini gör.' },
-      { id: 'rem', art: 'sleep', planned: false, title: 'REM.', body: 'Hızlı göz hareketleri. Canlı rüyaları en çok gördüğümüz uyku evresi.' },
-      { id: 'match', art: 'rem', planned: true, title: 'Bizim için bir anlamı daha var.', body: 'Rüya Eşleşme Metriği. İki kişinin rüyaları arasındaki ortak temaları, duyguları ve hikâyeleri bir araya getiren bağ.' },
-      { id: 'world', art: 'rem', planned: true, title: 'Ayrı zihinler. Birbirine değen düşler.', body: 'İzin verdiğin rüyalarla, ortak bir hayal dünyasında buluşmak için. Dreamlib’e hoş geldin.' },
-      { id: 'night', art: 'sleep', planned: false, title: 'İyi uykular.', body: 'Sabah anlatırsın.' },
-    ],
-  },
+  intro: { replay: 'Dreamlib’i tanı' },
   personal: { label: 'Geçmiş rüyalarımla ilişkilendir', hint: 'Varsa son 15 kaydının kısa metinleri ve temaları yorum için kullanılır.', themes: 'Tekrar eden temalar', count: (n: number) => `${n} rüyada` },
   recovery: {
     resume: 'Çizime devam et',
@@ -119,6 +105,10 @@ export const tr = {
   },
   writePlaceholder: 'Hatırladığın yerden başla…',
   onboarding: {
+    progress: (step: number, total: number) => `Adım ${step} / ${total}`,
+    hello: { title: 'Gece gördüğün, sabah kaybolmasın.', body: 'Rüyanı anlat. Dreamlib dinler, yorumlar ve senin için saklar.', action: 'Başlayalım' },
+    how: { title: 'Sesinle anlat, yeter.', body: 'Aklında kalan kadarı yeterli. Rüyan yorumlanır, istersen çizilir ve kütüphanende kalır.' },
+    signin: { title: 'Rüyaların sana ait.', body: 'Google hesabınla gir. Rüyaların yalnız kendi hesabında durur.' },
     welcomeTitle: 'Rüyalarını kitapçığa çevir',
     google: 'Google ile devam et',
     redirecting: 'Yönlendiriliyor',

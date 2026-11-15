@@ -17,7 +17,7 @@ import {
 } from './api';
 import Icon from './Icon';
 import VoiceInput from './VoiceInput';
-import Mascot from './Mascot';
+import Worn from './Worn';
 import type { Visibility } from './profile';
 import Result from './Result';
 import { tr } from './strings';
@@ -142,20 +142,25 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     if (dream && alive.current) { change({ recorded: true, saved: true, panels: dream.panels }); track('dream_saved', id); }
   }
 
+  const modeSwitch = busy === null && <div className="mode-switch" role="radiogroup" aria-label={tr.app.tell}>
+    <button role="radio" aria-checked={mode === 'voice'} aria-label={tr.app.voice} title={tr.app.voice} className={mode === 'voice' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); setVoiceBusy(false); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
+    <button role="radio" aria-checked={mode === 'text'} aria-label={tr.capture.write} title={tr.capture.write} className={mode === 'text' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="text" /></button>
+  </div>;
+
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {!analysis ? <>
-      <header className="page-heading writer-heading"><h1>{tr.app.writingTitle}</h1>{mode === 'voice' && busy === null && <p>{tr.app.writingHint}</p>}</header>
-      {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><Mascot theme="sleep" /><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
-        <Mascot theme="curious" interactive className="listening-koala" />
+      <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1></header>
+      {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
-        <button className="input-switch" disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="pen" />{tr.capture.write}</button>
+        {modeSwitch}
         {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
       </section> : <section className="writing-sheet">
+        {modeSwitch}
         <textarea autoFocus aria-label={tr.headline} aria-invalid={text.length > 4000} aria-describedby={text.length > 4000 ? 'dream-length' : undefined} value={text} onChange={(event) => change({ text: event.target.value, saved: false })} placeholder={tr.writePlaceholder} rows={8} />
         {text.length > 4000 && <p id="dream-length" className="error">{tr.capture.tooLong}</p>}
         <div className="personal-setting"><label><input type="checkbox" checked={personal} onChange={event => change({ personal: event.target.checked })} aria-describedby={personal ? "personal-hint" : undefined} /><span>{tr.personal.label}</span></label>
           {personal && <p id="personal-hint">{tr.personal.hint}</p>}</div>
-        <div className="composer-tools"><button className="text-action" onClick={() => { setError(''); setVoiceBusy(false); change({ mode: 'voice' }); }}><Icon name="mic" />{tr.app.voice}</button>
+        <div className="composer-tools"><span />
           <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button></div>
       </section>}
     </> : <>
@@ -197,10 +202,10 @@ function RecentDreams({ active, onLibrary }: { active: boolean; onLibrary: () =>
     return () => controller.abort();
   }, [active]);
   if (!dreams.length) return null;
-  return <section className="recent-dreams" aria-labelledby="recent-title">
-    <header><h2 id="recent-title">{tr.app.recent}</h2><button className="text-action" onClick={onLibrary}>{tr.app.all}</button></header>
+  return <section className="recent" aria-labelledby="recent-title">
+    <header><h2 id="recent-title">{tr.app.recent}</h2><button className="quiet-link" onClick={onLibrary}>{tr.app.all}</button></header>
     <ul>{dreams.map(dream => <li key={dream.id}><button onClick={onLibrary}>
-      <span><small>{dayOf(dream)}</small><b>{dream.title}</b></span><Icon name="chevron" />
+      <time>{dayOf(dream)}</time><span>{dream.title}</span>
     </button></li>)}</ul>
   </section>;
 }

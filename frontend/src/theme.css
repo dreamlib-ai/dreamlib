@@ -1,21 +1,36 @@
-/* Cobalt dreamscape with warm light and tactile controls. */
+/* Night water (2026-11-15, fourth pass, from Cenker's references): deep navy ink, ultramarine, cyan light,
+   ice and mint highlights, a rare violet fringe. Texture and motion come from the sky shader. */
 :root {
-  --cobalt: #2457c5;
-  --night: #102343;
-  --night-soft: #18345b;
-  --cobalt-strong: #2457c5;
-  --cobalt-deep: #183d83;
+  --night: #050816;
+  --night-2: #0b1d4f;
+  --night-soft: #13265e;
+  --plum: #0b1d4f;
+  --paper: #eef6ff;
+  --ink: #eef6ff;
+  --soft: #cfdcf2;
+  --muted: #8fa0c4;
+  --line: #eef6ff1a;
+  --pink: #ff8fc4;
+  --lilac: #8b9bff;
+  --sky: #8fd8ff;
+  --cyan: #38d6e8;
+  --ice: #d9f1ff;
+  --mint: #c9f7e4;
+  --peach: #ffd2b8;
+  --honey: #d9f1ff;
+  --rose: #ff4f9a;
+  --accent: #8fd8ff;
+  --danger: #ffb3c1;
+  --cobalt: #2b3cff;
+  --cobalt-strong: #8fd8ff;
+  --cobalt-deep: #cfdcf2;
   --white: #ffffff;
-  --paper: #f6f1e6;
-  --ink: #171c2e;
-  --muted: #70788d;
-  --soft: #4f596f;
-  --line: #dfe4f0;
-  --accent: #f3c84b;
-  --danger: #b93758;
-  --font: 'Unbounded', system-ui, sans-serif;
-  --gutter: clamp(24px, 4vw, 64px);
+  --dream: linear-gradient(120deg, #e6f6ff 0%, #8fd8ff 50%, #8b9bff 100%);
+  --font: 'Funnel Sans', system-ui, sans-serif;
+  --font-ui: 'Funnel Display', 'Funnel Sans', system-ui, sans-serif;
+  --font-head: 'Fraunces', Georgia, serif;
+  --gutter: clamp(20px, 4vw, 48px);
   --radius-panel: 28px;
-  --radius-card: 20px;
-  --radius-small: 14px;
+  --radius-card: 22px;
+  --radius-small: 16px;
 }
