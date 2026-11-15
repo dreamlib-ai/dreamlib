@@ -1,27 +1,31 @@
-/* Night ink with risograph light (2026-11-15, third pass): cobalt and violet smoke, pink and sky highlights, grain. */
+/* Night water (2026-11-15, fourth pass, from Cenker's references): deep navy ink, ultramarine, cyan light,
+   ice and mint highlights, a rare violet fringe. Texture and motion come from the sky shader. */
 :root {
-  --night: #07081a;
-  --night-2: #0d1033;
-  --night-soft: #161a4a;
-  --plum: #1c1650;
-  --paper: #f5f3ff;
-  --ink: #f5f3ff;
-  --soft: #dcdcf2;
-  --muted: #a7a9c9;
-  --line: #f5f3ff1a;
-  --pink: #ffb3e0;
-  --lilac: #b9a6ff;
-  --sky: #8fb0ff;
+  --night: #050816;
+  --night-2: #0b1d4f;
+  --night-soft: #13265e;
+  --plum: #0b1d4f;
+  --paper: #eef6ff;
+  --ink: #eef6ff;
+  --soft: #cfdcf2;
+  --muted: #8fa0c4;
+  --line: #eef6ff1a;
+  --pink: #ff8fc4;
+  --lilac: #8b9bff;
+  --sky: #8fd8ff;
+  --cyan: #38d6e8;
+  --ice: #d9f1ff;
+  --mint: #c9f7e4;
   --peach: #ffd2b8;
-  --honey: #ffd2b8;
-  --rose: #ff8fcf;
-  --accent: #b9a6ff;
+  --honey: #d9f1ff;
+  --rose: #ff4f9a;
+  --accent: #8fd8ff;
   --danger: #ffb3c1;
-  --cobalt: #2a3cf0;
-  --cobalt-strong: #b9a6ff;
-  --cobalt-deep: #dcdcf2;
+  --cobalt: #2b3cff;
+  --cobalt-strong: #8fd8ff;
+  --cobalt-deep: #cfdcf2;
   --white: #ffffff;
-  --dream: linear-gradient(120deg, #ffc6e6 0%, #b9a6ff 50%, #8fb0ff 100%);
+  --dream: linear-gradient(120deg, #e6f6ff 0%, #8fd8ff 50%, #8b9bff 100%);
   --font: 'Funnel Sans', system-ui, sans-serif;
   --font-ui: 'Funnel Display', 'Funnel Sans', system-ui, sans-serif;
   --font-head: 'Fraunces', Georgia, serif;
