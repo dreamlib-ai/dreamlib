@@ -1,53 +1,46 @@
 import { useEffect, useRef } from 'react';
+import { NOISE, VERTEX } from './glsl';
 
-/** The living background: a slow lava lamp of pink, lilac and peach light over a deep indigo-to-plum dusk,
- * drawn by one three.js shader on a fixed canvas. three.js loads after the first paint; until then (and when
- * WebGL is missing) the CSS gradient on body shows. Reduced motion draws a single still frame. */
+/** The living background, after the risograph posters on Cenker's Pinterest: a grainy cobalt-to-violet smoke
+ * rising from the bottom of a night-ink page, a faint pink spray from the top corner, all seen through fluted
+ * glass (thin vertical ribs). One three.js shader on a fixed canvas; three.js loads after the first paint and
+ * the CSS gradient on body stands in until then or without WebGL. Reduced motion draws one still frame. */
 const FRAGMENT = `
 precision highp float;
 uniform float time;
 uniform vec2 size;
 varying vec2 vUv;
-
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-
+${NOISE}
 void main() {
   vec2 uv = vUv;
+  float rib = sin(uv.x * size.x / 18.0 * 6.2831);
+  vec2 g = uv + vec2(rib * 0.005, 0.0);
   float aspect = size.x / size.y;
-  vec2 p = vec2(uv.x * aspect, uv.y);
-  vec3 top = vec3(0.075, 0.051, 0.188);
-  vec3 bottom = vec3(0.196, 0.078, 0.259);
-  vec3 col = mix(bottom, top, smoothstep(0.0, 1.0, uv.y));
+  vec2 q = vec2(g.x * aspect, g.y);
+  float t = time * 0.035;
+  float warp = fbm(q * 1.6 + vec2(0.0, -t * 2.0));
+  float smoke = fbm(vec2(q.x * 1.8 + warp * 0.9, q.y * 1.3 - t * 3.0));
+  float sway = 0.5 + 0.12 * sin(time * 0.04);
+  float column = 1.0 - smoothstep(0.0, 0.62, abs(g.x - sway) * 1.25);
+  float rise = smoothstep(0.92, -0.05, g.y + (smoke - 0.5) * 0.55);
+  float plume = clamp(rise * (0.45 + 0.75 * column) * (0.55 + smoke * 0.9), 0.0, 1.0);
+  float spray = smoothstep(0.75, 0.0, length((g - vec2(0.95, 1.02)) * vec2(aspect * 0.8, 1.0))) * (0.5 + 0.6 * fbm(q * 2.4 + t));
 
-  vec3 tint[5];
-  tint[0] = vec3(0.95, 0.56, 0.76);
-  tint[1] = vec3(0.70, 0.60, 0.96);
-  tint[2] = vec3(0.98, 0.76, 0.58);
-  tint[3] = vec3(0.89, 0.45, 0.66);
-  tint[4] = vec3(0.52, 0.50, 0.93);
-  float field = 0.0;
-  vec3 glow = vec3(0.0);
-  for (int i = 0; i < 5; i++) {
-    float f = float(i);
-    float t = time * (0.045 + f * 0.009);
-    vec2 c = vec2(aspect * (0.5 + 0.42 * sin(t * 1.3 + f * 1.9)), 0.5 + 0.44 * cos(t + f * 2.6));
-    float r = 0.16 + 0.05 * sin(t * 2.0 + f);
-    float d = length(p - c);
-    float w = (r * r) / (d * d + 0.002);
-    field += w;
-    glow += tint[i] * w;
-  }
-  vec3 blob = glow / max(field, 0.0001);
-  float lava = smoothstep(0.75, 1.8, field);
-  float halo = smoothstep(0.12, 0.9, field);
-  col = mix(col, blob * 0.62, lava * 0.8);
-  col += blob * halo * 0.12;
-  vec2 v = uv - 0.5;
-  col *= 1.0 - dot(v, v) * 0.55;
-  col += (hash(gl_FragCoord.xy + fract(time)) - 0.5) * 0.035;
+  vec3 ink = vec3(0.027, 0.031, 0.094);
+  vec3 cobalt = vec3(0.13, 0.22, 0.92);
+  vec3 violet = vec3(0.47, 0.34, 0.98);
+  vec3 pink = vec3(1.0, 0.64, 0.86);
+  vec3 col = ink;
+  col = mix(col, cobalt, plume * 0.95);
+  col = mix(col, violet, smoothstep(0.38, 0.85, plume) * 0.75);
+  col = mix(col, pink, smoothstep(0.72, 1.0, plume) * 0.5);
+  col = mix(col, pink * 0.75, spray * 0.32);
+  col += rib * 0.012 * (0.4 + plume);
+  float grain = hash(gl_FragCoord.xy * 0.93 + fract(time * 0.37) * 91.0);
+  col *= 0.86 + 0.28 * grain;
+  col += (grain - 0.5) * 0.04;
   gl_FragColor = vec4(col, 1.0);
 }`;
-const VERTEX = 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 
 export default function Sky() {
   const host = useRef<HTMLDivElement>(null);
@@ -59,11 +52,11 @@ export default function Sky() {
       if (cancelled || !node) return;
       let renderer: InstanceType<typeof THREE.WebGLRenderer>;
       try { renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' }); } catch { return; }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       node.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-      const uniforms = { time: { value: 40 }, size: { value: new THREE.Vector2(1, 1) } };
+      const uniforms = { time: { value: 60 }, size: { value: new THREE.Vector2(1, 1) } };
       const material = new THREE.ShaderMaterial({ uniforms, vertexShader: VERTEX, fragmentShader: FRAGMENT, depthWrite: false });
       const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
       scene.add(plane);
@@ -73,10 +66,13 @@ export default function Sky() {
       node.classList.add('on');
       const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const started = performance.now();
-      let frame = 0;
+      let frame = 0, last = 0;
       const tick = (now: number) => {
-        if (!document.hidden) { uniforms.time.value = 40 + (now - started) / 1000; renderer.render(scene, camera); }
         frame = requestAnimationFrame(tick);
+        if (document.hidden || now - last < 33) return;  // ~30 fps is plenty for slow smoke
+        last = now;
+        uniforms.time.value = 60 + (now - started) / 1000;
+        renderer.render(scene, camera);
       };
       if (!still) frame = requestAnimationFrame(tick);
       stop = () => { cancelAnimationFrame(frame); window.removeEventListener('resize', fit); plane.geometry.dispose(); material.dispose(); renderer.dispose(); renderer.domElement.remove(); };

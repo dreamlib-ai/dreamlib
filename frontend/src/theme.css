@@ -1,26 +1,27 @@
-/* Dream dusk: indigo-to-plum night, pink / lilac / peach clouds as light. Every surface is a gradient or a soft tint. */
+/* Night ink with risograph light (2026-11-15, third pass): cobalt and violet smoke, pink and sky highlights, grain. */
 :root {
-  --night: #130d30;
-  --night-2: #241245;
-  --night-soft: #2f1a52;
-  --plum: #321443;
-  --paper: #fbf0f4;
-  --ink: #fbf0f4;
-  --soft: #e7d7ec;
-  --muted: #b6a3c8;
-  --line: #fbf0f41a;
-  --pink: #f4a9cb;
-  --lilac: #bba5f3;
-  --peach: #f8c8a2;
-  --honey: #f8c8a2;
-  --rose: #e889b0;
-  --accent: #f4a9cb;
+  --night: #07081a;
+  --night-2: #0d1033;
+  --night-soft: #161a4a;
+  --plum: #1c1650;
+  --paper: #f5f3ff;
+  --ink: #f5f3ff;
+  --soft: #dcdcf2;
+  --muted: #a7a9c9;
+  --line: #f5f3ff1a;
+  --pink: #ffb3e0;
+  --lilac: #b9a6ff;
+  --sky: #8fb0ff;
+  --peach: #ffd2b8;
+  --honey: #ffd2b8;
+  --rose: #ff8fcf;
+  --accent: #b9a6ff;
   --danger: #ffb3c1;
-  --cobalt: #8f7be6;
-  --cobalt-strong: #f4a9cb;
-  --cobalt-deep: #e7d7ec;
+  --cobalt: #2a3cf0;
+  --cobalt-strong: #b9a6ff;
+  --cobalt-deep: #dcdcf2;
   --white: #ffffff;
-  --dream: linear-gradient(120deg, #f6b3d2 0%, #c9b1f7 52%, #fbd0a8 100%);
+  --dream: linear-gradient(120deg, #ffc6e6 0%, #b9a6ff 50%, #8fb0ff 100%);
   --font: 'Funnel Sans', system-ui, sans-serif;
   --font-ui: 'Funnel Display', 'Funnel Sans', system-ui, sans-serif;
   --font-head: 'Fraunces', Georgia, serif;
