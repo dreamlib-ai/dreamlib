@@ -1,7 +1,4 @@
-/* BG3: the brain graph. A night-sky surface inside the app; three tabs in the navigation now. */
-.app-shell .nav-selection { width: calc((100% - 10px) / 3); }
-.app-shell .links[data-view='library'] .nav-selection { transform: translateX(100%); }
-.app-shell .links[data-view='brain'] .nav-selection { transform: translateX(200%); }
+/* BG3: the brain graph. A night-sky surface inside the app (its tab is the navigation's third, editorial.css). */
 
 .brain {
   position: relative; height: min(76vh, 820px); min-height: 460px; border-radius: var(--radius-panel); overflow: hidden;
