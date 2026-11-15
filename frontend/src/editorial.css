@@ -74,7 +74,19 @@
 .app-shell .writing .caret { display:inline-block; width:.5em; height:1em; margin-left:2px; vertical-align:-.12em; border-bottom:2px solid #f3c84b; animation:caret 1s steps(2) infinite; }
 @keyframes caret { 50% { opacity:0; } }
 @media (prefers-reduced-motion: reduce) { .app-shell .writing .caret { animation:none; } }
-.app-shell .symbol-mention { white-space:nowrap; color:#f6f1e6; }
+.app-shell .symbol-mention { white-space:nowrap; padding:0; border:0; background:none; color:#f6f1e6; font:inherit; letter-spacing:inherit; text-decoration:underline dotted #f3c84b80; text-underline-offset:.3em; cursor:pointer; }
+.symbol-card-backdrop { position:fixed; inset:0; z-index:50; display:grid; place-items:end center; background:#0b1630b3; }
+.symbol-card { position:relative; width:min(100%,560px); max-height:85svh; overflow:auto; padding:28px 24px 32px; border-radius:24px 24px 0 0; background:#102343; color:#f6f1e6; outline:none; }
+.symbol-card header { display:grid; justify-items:center; gap:8px; text-align:center; }
+.symbol-card header img { width:112px; height:112px; border-radius:24px; }
+.symbol-card h2 { margin:4px 0 0; font-size:26px; }
+.symbol-card header p { margin:0; color:#efdbab; font-size:13px; }
+.symbol-card-close { position:absolute; top:14px; left:14px; color:#d0dcee; transform:rotate(-90deg); }
+.symbol-meanings { display:grid; gap:18px; margin:26px 0 0; padding:0; list-style:none; }
+.symbol-meanings p { margin:0; font-size:14px; line-height:1.9; color:#d3dbea; }
+.symbol-meanings small { display:block; margin-top:6px; color:#aebbd2; font-size:12px; }
+.symbol-others { margin:24px 0 0; color:#efdbab; font-size:13px; line-height:1.8; }
+@media (min-width:641px) { .symbol-card-backdrop { place-items:center; } .symbol-card { border-radius:24px; } }
 .app-shell .symbol-mention img { width:1.5em; height:1.5em; margin-right:.25em; border-radius:50%; vertical-align:-.4em; }
 .app-shell .tag { color:#e8cf94; font-size:11px; }
 .app-shell :is(.result-details,.original-dream,.drawing-options) { border-color:var(--line); }

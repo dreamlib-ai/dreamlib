@@ -35,6 +35,36 @@ class Segment(BaseModel):
     glyph: str = ""
 
 
+class Meaning(BaseModel):
+    """F1: what one tradition's source says about a symbol."""
+    model_config = OUT
+    tradition: str
+    text: str
+    source: str
+    locator: str = ""
+    author: str = ""
+    license: str = ""
+
+
+class Others(BaseModel):
+    """F1: the feeling most often met with the symbol in consented dreams (at least five people)."""
+    model_config = OUT
+    emotion: str
+    dreams: int
+    people: int
+
+
+class EntityOut(BaseModel):
+    """F1: a symbol card."""
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("others"))
+    id: str
+    label: str
+    glyph: str = ""
+    meanings: list[Meaning] = []
+    mine: int = 0  # in how many of the reader's dreams it appears
+    others: Others | None = None
+
+
 class AnalysisOut(Analysis):
     model_config = ConfigDict(**OUT, json_schema_extra=sometimes("analysisId", "segments"))
     analysisId: str = ""  # only when the interpretation was recorded (M3)

@@ -1,11 +1,13 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Analysis } from './api';
 import { tr } from './strings';
 import { effectiveFeatures } from './features';
+import SymbolCard from './SymbolCard';
 
 // The interpretation of one dream; used right after telling it and when opening it from the library.
 export default function Result({ analysis, children }: { analysis: Analysis; children?: ReactNode }) {
   const features = effectiveFeatures(analysis);
+  const [open, setOpen] = useState<string | null>(null);  // F1: the symbol whose card is open
   return (
     <section className="result rise">
       <h2>{analysis.title}</h2>
@@ -17,8 +19,9 @@ export default function Result({ analysis, children }: { analysis: Analysis; chi
         ))}
       </div>
       <p className="lead">{analysis.segments?.length ? analysis.segments.map((part, i) => part.entity
-        ? <span key={i} className="symbol-mention">{part.glyph && <img src={part.glyph} alt="" />}{part.text}</span>
+        ? <button key={i} type="button" className="symbol-mention" aria-label={tr.symbolCard.open(part.text)} onClick={() => setOpen(part.entity!)}>{part.glyph && <img src={part.glyph} alt="" />}{part.text}</button>
         : <span key={i}>{part.text}</span>) : analysis.interpretation}</p>
+      {open && <SymbolCard id={open} onClose={() => setOpen(null)} />}
       {(features.genres.length > 0 || features.experiences.length > 0 || features.perspective !== 'unknown') && <details className="result-details"><summary>{tr.classification.heading}</summary>
         {features.genres.length > 0 && <p className="classification-line"><span>{tr.classification.genreLabels[features.genres[0]]}{features.genres.slice(1).map(key => `, ${tr.classification.genreLabels[key]}`).join('')}</span><small>{features.genreSource === 'user' ? tr.classification.user : tr.classification.model}</small></p>}
         {features.perspective !== 'unknown' && <p className="classification-line"><span>{tr.classification.perspectiveLabels[features.perspective]}</span><small>{features.perspectiveSource === 'user' ? tr.classification.user : tr.classification.model}</small></p>}
