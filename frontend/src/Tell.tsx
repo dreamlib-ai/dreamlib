@@ -147,16 +147,19 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     {!analysis ? <>
       {mode === 'voice' && busy === null && <Mascot pose={voiceBusy ? 'listen' : 'curious'} className="tell-koala" />}
       <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1>{mode === 'voice' && busy === null && <p>{tr.app.writingHint}</p>}</header>
+      {busy === null && <div className="mode-switch" role="radiogroup" aria-label={tr.app.tell}>
+        <button role="radio" aria-checked={mode === 'voice'} aria-label={tr.app.voice} title={tr.app.voice} className={mode === 'voice' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); setVoiceBusy(false); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
+        <button role="radio" aria-checked={mode === 'text'} aria-label={tr.capture.write} title={tr.capture.write} className={mode === 'text' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="text" /></button>
+      </div>}
       {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><Mascot pose="think" className="tell-koala" /><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
-        <button className="quiet-switch" disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}>{tr.capture.write}</button>
         {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
       </section> : <section className="writing-sheet">
         <textarea autoFocus aria-label={tr.headline} aria-invalid={text.length > 4000} aria-describedby={text.length > 4000 ? 'dream-length' : undefined} value={text} onChange={(event) => change({ text: event.target.value, saved: false })} placeholder={tr.writePlaceholder} rows={8} />
         {text.length > 4000 && <p id="dream-length" className="error">{tr.capture.tooLong}</p>}
         <div className="personal-setting"><label><input type="checkbox" checked={personal} onChange={event => change({ personal: event.target.checked })} aria-describedby={personal ? "personal-hint" : undefined} /><span>{tr.personal.label}</span></label>
           {personal && <p id="personal-hint">{tr.personal.hint}</p>}</div>
-        <div className="composer-tools"><button className="text-action" onClick={() => { setError(''); setVoiceBusy(false); change({ mode: 'voice' }); }}><Icon name="mic" />{tr.app.voice}</button>
+        <div className="composer-tools"><span />
           <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button></div>
       </section>}
     </> : <>

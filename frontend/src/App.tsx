@@ -10,8 +10,16 @@ import type { Profile } from './profile';
 import { authMessage, initializeSession, saveProfile, signOut, watchAccount, type Account } from './session';
 import { tr } from './strings';
 import Tell from './Tell';
-import Icon from './Icon';
-import head from './assets/koala/head.webp';
+import Icon, { type IconName } from './Icon';
+
+/** Temporary mark until the real logo: a soft four-point dream sparkle. */
+function Mark() {
+  return <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+    <defs><linearGradient id="mark-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffd6ec" /><stop offset=".55" stopColor="#b9a6ff" /><stop offset="1" stopColor="#5b7bff" /></linearGradient></defs>
+    <path d="M16 2c.9 7.4 6.6 13.1 14 14-7.4.9-13.1 6.6-14 14-.9-7.4-6.6-13.1-14-14C9.4 15.1 15.1 9.4 16 2Z" fill="url(#mark-fill)" />
+    <circle cx="25" cy="7" r="1.6" fill="#ffd6ec" />
+  </svg>;
+}
 import { clearDraft, readDraft } from './draft';
 import { sessionEvent } from './telemetry';
 
@@ -21,15 +29,14 @@ type View = 'tell' | 'library' | 'brain' | 'profile';
 export function Nav({ view, onView, avatarUrl }: { view: View; onView: (view: View) => void; avatarUrl?:string }) {
   const [avatarFailed,setAvatarFailed]=useState(false);
   useEffect(()=>setAvatarFailed(false),[avatarUrl]);
-  const items: { view: View; label: string }[] = [
-    { view: 'tell', label: tr.app.tell },
-    { view: 'library', label: tr.cards.library.title },
-    { view: 'brain', label: tr.brain.nav },
+  const items: { view: View; label: string; icon: IconName }[] = [
+    { view: 'library', label: tr.cards.library.title, icon: 'book' },
+    { view: 'brain', label: tr.brain.nav, icon: 'brain' },
   ];
   return <header className="topbar"><div className="glass">
-    <button className="wordmark" onClick={() => onView('tell')}><img src={head} alt="" /><span>{tr.brand}</span></button>
+    <button className={view === 'tell' ? 'mark on' : 'mark'} onClick={() => onView('tell')} aria-label={`${tr.brand} · ${tr.app.tell}`} aria-current={view === 'tell' ? 'page' : undefined}><Mark /></button>
     <nav className="tabs" aria-label={tr.nav.label}>
-      {items.map((item) => <button key={item.view} className={view === item.view ? 'tab on' : 'tab'} aria-current={view === item.view ? 'page' : undefined} onClick={() => onView(item.view)}>{item.label}</button>)}
+      {items.map((item) => <button key={item.view} className={view === item.view ? 'tab on' : 'tab'} aria-label={item.label} title={item.label} aria-current={view === item.view ? 'page' : undefined} onClick={() => onView(item.view)}><Icon name={item.icon} /></button>)}
     </nav>
     <button className={view === 'profile' ? 'me on' : 'me'} onClick={()=>onView('profile')} aria-label={tr.avatar.profile} aria-current={view==='profile'?'page':undefined}>{avatarUrl&&!avatarFailed?<img src={avatarUrl} alt="" onError={()=>setAvatarFailed(true)} />:<Icon name="person" />}</button>
   </div></header>;

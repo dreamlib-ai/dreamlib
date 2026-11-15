@@ -1,39 +1,40 @@
-/* Dream dusk (2026-11-15, second pass): a living three.js lava sky, soft dust intro, cloud-filled buttons,
-   Fraunces headings with typewriter wear, Funnel text, soft bubbles instead of frames. Loaded last. */
+/* Night ink with risograph light (2026-11-15, third pass, after Cenker's Pinterest): grainy cobalt-violet smoke
+   behind fluted glass (Sky.tsx), a flowing cloud sphere for the microphone (Orb.tsx), sparkle-only opening,
+   cloud-filled buttons, Fraunces headings with typewriter wear, Funnel text, icon-only glass bar. Loaded last. */
 :root {
   --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   --clouds: url('./assets/clouds.webp');
   --ease: cubic-bezier(.3, .8, .3, 1);
   --bubble: linear-gradient(160deg, #ffffff14, #ffffff07);
+  --glass: linear-gradient(180deg, #1b1f55b3, #10123ab3);
   color-scheme: dark;
 }
 html, body { background: var(--night); }
 body {
   margin: 0; color: var(--ink); font-family: var(--font); letter-spacing: 0;
-  background: radial-gradient(ellipse 80% 50% at 20% 85%, #e889b02e 0, transparent 70%),
-    radial-gradient(ellipse 70% 45% at 85% 20%, #8f7be62e 0, transparent 70%),
-    linear-gradient(180deg, #130d30 0%, #241245 60%, #321443 100%) fixed;
+  background: radial-gradient(ellipse 90% 55% at 50% 110%, #2a3cf0b0 0, #7857fa40 45%, transparent 75%),
+    radial-gradient(ellipse 60% 35% at 100% 0%, #ffb3e026 0, transparent 70%), var(--night) fixed;
 }
 body::before { display: none; }
-body::after { content: ''; position: fixed; inset: 0; z-index: 100; pointer-events: none; background: var(--grain); opacity: .06; mix-blend-mode: overlay; }
+body::after { content: ''; position: fixed; inset: 0; z-index: 100; pointer-events: none; background: var(--grain); opacity: .05; mix-blend-mode: overlay; }
 .sky { position: fixed; inset: 0; z-index: 0; opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
 .sky.on { opacity: 1; }
 .sky canvas { display: block; width: 100%; height: 100%; }
 #root > :not(.sky):not(.intro-layer) { position: relative; z-index: 1; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* Opening: dust gathers into the koala, then the page settles in, one piece after another. */
-.intro-layer { position: fixed; inset: 0; z-index: 200; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, #2a1650, #130d30 75%); }
+/* Opening: sparkles gather into the koala's outline and lift away, then the page settles in piece by piece. */
+.intro-layer { position: fixed; inset: 0; z-index: 200; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, #121650, #07081a 75%); }
 html.intro .topbar, html.intro .page, html.intro .steps { opacity: 0; }
-html.arriving :is(.topbar, .tell-koala, .tell-heading, .voice-stage, .steps-top, .steps-body, .steps-foot) { animation: arrive 1.1s var(--ease) both; }
+html.arriving :is(.topbar, .tell-koala, .tell-heading, .mode-switch, .voice-stage, .steps-top, .steps-body, .steps-foot) { animation: arrive 1.1s var(--ease) both; }
 html.arriving .topbar, html.arriving .steps-top { animation-delay: .05s; }
 html.arriving :is(.tell-koala, .steps-body) { animation-delay: .15s; }
-html.arriving .tell-heading { animation-delay: .25s; }
+html.arriving :is(.tell-heading, .mode-switch) { animation-delay: .25s; }
 html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 @keyframes arrive { from { opacity: 0; filter: blur(12px); transform: translateY(14px); } }
 
 /* Type: headings carry the character, text stays quiet. */
-.app-shell, .steps { --ink: #fbf0f4; --soft: #e7d7ec; --muted: #b6a3c8; --line: #fbf0f41a; --accent: #f4a9cb; --cobalt-strong: #f4a9cb; --cobalt-deep: #e7d7ec; font-family: var(--font); letter-spacing: 0; }
+.app-shell, .steps { --ink: #f5f3ff; --soft: #dcdcf2; --muted: #a7a9c9; --line: #f5f3ff1a; --accent: #b9a6ff; --cobalt-strong: #b9a6ff; --cobalt-deep: #dcdcf2; font-family: var(--font); letter-spacing: 0; }
 .app-shell :is(h1, h2, h3), .steps h1, .worn {
   font-family: var(--font-head); font-weight: 500; letter-spacing: -.015em;
   font-variation-settings: 'SOFT' 100, 'WONK' 1, 'opsz' 96;
@@ -42,34 +43,27 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .worn-word { display: inline-block; white-space: nowrap; }
 .worn-word > span { display: inline-block; }
 
-/* Top bar: one soft glass pill. */
-.topbar { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top)); left: 50%; translate: -50% 0; width: min(720px, calc(100% - 20px)); }
+/* Top bar: one glass pill, the mark on the left (home = tell), icons on the right. */
+.topbar { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top)); left: 50%; translate: -50% 0; width: min(560px, calc(100% - 20px)); }
 .topbar .glass {
-  position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px; height: 56px; padding: 0 8px 0 8px; border-radius: 28px;
-  background: linear-gradient(180deg, #3a2160aa, #2a1548aa); -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
-  box-shadow: inset 0 1px 0 #ffffff26, inset 0 0 18px #ffffff0a, 0 10px 30px #0a051c66;
+  position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; height: 56px; padding: 0 8px; border-radius: 28px;
+  background: var(--glass); -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow: inset 0 1px 0 #ffffff29, inset 0 0 18px #ffffff0a, 0 10px 30px #03041466;
 }
-.wordmark { display: flex; align-items: center; gap: 8px; border: 0; padding: 0 6px 0 0; background: none; cursor: pointer; }
-.wordmark img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: 50% 30%; background: radial-gradient(circle at 50% 35%, #fbd0a8, #f4a9cb 60%, #bba5f3); box-shadow: 0 0 0 2px #ffffff1f; }
-.wordmark span { font: 700 21px/1 var(--font-head); font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 48; letter-spacing: -.02em; background: var(--dream); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.tabs { display: flex; justify-content: center; gap: 2px; }
-.tab { border: 0; padding: 9px 14px; border-radius: 20px; background: none; color: var(--muted); cursor: pointer; font: 500 14.5px/1 var(--font-ui); transition: color .3s, background .3s; }
-.tab:hover { color: var(--ink); }
-.tab.on { color: #3a1b4f; background: var(--dream); box-shadow: 0 4px 14px #f4a9cb40; }
-.me { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; overflow: hidden; border: 0; border-radius: 50%; background: #ffffff14; color: var(--soft); cursor: pointer; }
-.me.on { box-shadow: 0 0 0 2px var(--pink); }
+.mark { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; transition: background .3s, transform .3s var(--ease); }
+.mark svg { filter: drop-shadow(0 0 8px #b9a6ff80); transition: transform .5s var(--ease); }
+.mark:hover svg, .mark.on svg { transform: rotate(45deg) scale(1.05); }
+.mark.on { background: #ffffff12; }
+.tabs { display: flex; justify-content: flex-end; gap: 4px; }
+.tab, .me { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; transition: color .3s, background .3s; }
+.tab svg, .me svg { width: 21px; height: 21px; }
+.tab:hover, .me:hover { color: var(--ink); }
+.tab.on, .me.on { color: #fff; background: #ffffff1c; box-shadow: inset 0 1px 0 #ffffff26; }
+.me { overflow: hidden; background: #ffffff10; }
 .me img { width: 100%; height: 100%; object-fit: cover; }
-.me svg { width: 18px; height: 18px; }
 .app-shell .page { max-width: 620px; margin: 0 auto; padding: calc(96px + env(safe-area-inset-top)) var(--gutter) calc(48px + env(safe-area-inset-bottom)); }
 .account-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; color: var(--muted); font-size: 14px; }
 .account-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 480px) {
-  .topbar .glass { height: 52px; gap: 0; }
-  .wordmark span { display: none; }
-  .wordmark img { width: 36px; height: 36px; }
-  .tab { padding: 9px 11px; font-size: 14px; }
-  .me { width: 36px; height: 36px; }
-}
 
 /* The koala: every pose stacked, the current one fades in; it breathes slowly. */
 .koala { position: relative; display: block; aspect-ratio: 1; animation: koala-breathe 7s ease-in-out infinite; transform-origin: 50% 90%; filter: drop-shadow(0 10px 24px #f4a9cb26); }
@@ -174,3 +168,27 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
   .koala, .cloud-fill i, .orb-sky i, .orb::before, .orb-transcribing .orb-sky, .steps-body, .steps-clouds .now svg { animation: none; }
   .orb { transform: none; }
 }
+
+/* Third pass overrides: the WebGL sphere sits on the painted clouds, which stay as the fallback. */
+.orb::before { inset: -34px; background: radial-gradient(circle, #8fb0ff55, #b9a6ff26 45%, transparent 68%); }
+.orb-gl { position: absolute; inset: 0; border-radius: 50%; opacity: 0; transition: opacity .8s ease; }
+.orb-gl.on { opacity: 1; }
+.orb-gl canvas { display: block; width: 100%; height: 100%; }
+.orb-gl.on ~ .orb-icon { color: #16205e; }
+.orb-gl.on ~ .orb-icon svg { filter: drop-shadow(0 0 10px #ffffffcc); }
+.orb-icon { z-index: 1; }
+
+/* Voice or text: two icons side by side, the chosen one lit. */
+.app-shell .mode-switch { display: flex; justify-content: center; gap: 4px; width: fit-content; margin: 22px auto 0; padding: 4px; border-radius: 99px; background: var(--glass); box-shadow: inset 0 1px 0 #ffffff1f; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.mode-switch button { display: grid; place-items: center; width: 52px; height: 40px; padding: 0; border: 0; border-radius: 99px; background: none; color: var(--muted); cursor: pointer; transition: background .3s, color .3s; }
+.mode-switch button svg { width: 20px; height: 20px; }
+.mode-switch button.on { background: var(--dream); color: #1a1650; box-shadow: 0 4px 16px #b9a6ff4d; }
+.mode-switch button:disabled { opacity: .5; cursor: default; }
+.app-shell .voice-stage { margin-top: 26px; }
+
+/* Cloud buttons: a dim veil over the clouds and a heavier label so the words read on any part of the sky. */
+.cloud-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #1a12464d, #1a124673); }
+.cta-label { font-weight: 800; font-size: 18px; text-shadow: 0 1px 2px #1a1246, 0 0 14px #1a1246d9; }
+.steps .opt.on, .steps .choice.selected { color: #1a1650; }
+.steps .opt.on small { color: #3b3778; }
+.steps-info a { color: var(--soft); text-shadow: 0 1px 8px #07081a; }

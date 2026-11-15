@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import wave from './assets/koala/wave.webp';
 
 /** Opening, after tokonomy's: soft dream dust drifts in from every side and gathers into the koala's outline,
- * the koala itself fades in over it, then the overlay clears and the page settles in (html.arriving).
+ * holds for a beat and lifts away, sparkles only (no picture), then the overlay clears and the page settles in (html.arriving).
  * Once per session; a tap, key or scroll skips it; reduced motion skips it entirely. */
 const KEY = 'dreamlib:intro-seen';
-const COLORS = ['#f6b3d2', '#c4adf6', '#fbd0a8', '#ffe9f2'];
+const COLORS = ['#ffd0ea', '#b9a6ff', '#8fb0ff', '#ffffff'];
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const ease = (k: number) => 1 - Math.pow(1 - k, 3);
 const settle = (k: number) => 1 + 2.1 * Math.pow(k - 1, 3) + 1.1 * Math.pow(k - 1, 2);
@@ -52,7 +52,7 @@ export default function Intro() {
       } catch { /* image unreadable: the overlay just fades */ }
       const far = Math.hypot(W, H) * .62;
       for (const d of dots) { const t = Math.random() * Math.PI * 2, r = far * (.7 + Math.random() * .5); d.sx = W / 2 + Math.cos(t) * r; d.sy = H / 2 + Math.sin(t) * r; }
-      const GATHER = 1.5, SHOW = 1.55, CLEAR = 2.45, END = 3.1;
+      const GATHER = 1.5, SHOW = 1.9, CLEAR = 2.6, END = 3.3;
       let start = performance.now();
       const skip = () => { start = Math.min(start, performance.now() - CLEAR * 1000); };
       window.addEventListener('pointerdown', skip, { once: true });
@@ -69,18 +69,18 @@ export default function Intro() {
           const k = clamp((t - d.delay) / (GATHER - .5), 0, 1);
           if (k <= 0) continue;
           const m = settle(k), wob = 1.6;
-          const x = d.sx + (d.tx - d.sx) * m + Math.sin(t * 1.6 + d.seed) * wob;
-          const y = d.sy + (d.ty - d.sy) * m + Math.cos(t * 1.2 + d.seed * 1.7) * wob;
-          const twinkle = .65 + .35 * Math.sin(t * 5 + d.seed * 3);
-          const dim = 1 - clamp((t - SHOW) / .7, 0, 1) * .75;
-          ink.globalAlpha = Math.min(1, k * 2.5) * twinkle * dim;
+          // Once the koala has formed it holds for a beat, then the sparkles lift away like breath.
+          const lift = Math.pow(clamp((t - SHOW) / (END - SHOW), 0, 1), 1.6);
+          const x = d.sx + (d.tx - d.sx) * m + Math.sin(t * 1.6 + d.seed) * wob + Math.sin(d.seed * 3) * lift * 40;
+          const y = d.sy + (d.ty - d.sy) * m + Math.cos(t * 1.2 + d.seed * 1.7) * wob - lift * (60 + d.seed * 22);
+          const twinkle = .6 + .4 * Math.sin(t * 5 + d.seed * 3);
+          const glow = t > GATHER - .2 && t < SHOW + .5 ? 1.25 : 1;
+          ink.globalAlpha = Math.min(1, Math.min(1, k * 2.5) * twinkle * glow * (1 - lift * .6));
           ink.fillStyle = d.c;
           ink.beginPath(); ink.arc(x, y, d.r, 0, Math.PI * 2); ink.fill();
           ink.globalAlpha *= .22; ink.beginPath(); ink.arc(x, y, d.r * 2.4, 0, Math.PI * 2); ink.fill();
         }
         ink.globalCompositeOperation = 'source-over';
-        const shown = ease(clamp((t - SHOW) / .55, 0, 1));
-        if (shown > 0) { ink.globalAlpha = shown; ink.drawImage(art, ox, oy + (1 - shown) * 8, side, side); ink.globalAlpha = 1; }
         if (t < END) frame = requestAnimationFrame(draw);
       };
       frame = requestAnimationFrame(draw);
