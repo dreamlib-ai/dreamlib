@@ -28,3 +28,5 @@ Cenker bir hatayı düzelttiğinde düzeltmenin kalıbı buraya tek satır yazı
 - 2026-11-02: Yalnız kozmetik sadeleştirme ürünü zayıf bıraktı → anket sonucunu gerçek veriden oku: Kobalta/Pastel; aynı koalanın işlevli varyantlarını giriş/kayıt/boş durumda kullan. Unbounded ve kumlu doku korunur. Ses kaydı ana eylem, yazı ikincil; ses dosyası yükleme ve “Tabir et” gönder düğmesi yok. Tek görev, tutarlı tema ve hata/iptal/yeniden deneme durumları birlikte tasarlanır.
 
 - 2026-11-02: Lacivert zeminli koala görselini oval CSS maskesiyle iç ekranlara koymak koyu leke/gölge bıraktı → bağımsız maskotlarda gerçek alfa kanallı kesit kullan; sahne görselleri yalnız tam ekran onboarding için.
+
+- 2026-11-15: Beyin sekmesi eklenince telefondaki alt menü iki sütunda kaldı, Beyin alta taştı; Anlat ekranı tek düğmeyle boş ve kullanışsız bulundu → gezinme yalnız `editorial.css`'te; ekran ya da sekme değişince telefon boyutunda ekran görüntüsüyle bak. Telefonda alt menü kenara oturan üç eşit sekme, açık olanın ikonu sarı hapta; Anlat'ta kayıt düğmesinin etiketi, gerçek "Yazarak anlat" düğmesi ve son rüyalar.

@@ -8,9 +8,10 @@
 .app-shell .account>span { display:none; }
 .app-shell .sign-out { width:44px; height:44px; color:#a8b7ce; }
 .app-shell .sign-out .icon { width:20px; height:20px; stroke-width:1.5; }
-.app-shell .links { position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:286px; padding:5px; margin:0 auto; gap:0; border:1px solid #f6f1e627; border-radius:40px; background:#f6f1e607; box-shadow:inset 0 1px 0 #ffffff0a; }
-.app-shell .nav-selection { position:absolute; inset:5px auto 5px 5px; width:calc((100% - 10px)/2); border:1px solid #f6f1e62a; border-radius:32px; background:linear-gradient(160deg,#f6f1e625,#f6f1e60b); box-shadow:inset 0 1px 0 #ffffff15,0 2px 8px #00000012; pointer-events:none; transition:transform .4s cubic-bezier(.2,.75,.25,1); }
+.app-shell .links { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:420px; padding:5px; margin:0 auto; gap:0; border:1px solid #f6f1e627; border-radius:40px; background:#f6f1e607; box-shadow:inset 0 1px 0 #ffffff0a; }
+.app-shell .nav-selection { position:absolute; inset:5px auto 5px 5px; width:calc((100% - 10px)/3); border:1px solid #f6f1e62a; border-radius:32px; background:linear-gradient(160deg,#f6f1e625,#f6f1e60b); box-shadow:inset 0 1px 0 #ffffff15,0 2px 8px #00000012; pointer-events:none; transition:transform .4s cubic-bezier(.2,.75,.25,1); }
 .app-shell .links[data-view='library'] .nav-selection { transform:translateX(100%); }
+.app-shell .links[data-view='brain'] .nav-selection { transform:translateX(200%); }
 .app-shell .link { position:relative; z-index:1; width:100%; min-height:44px; justify-content:center; gap:9px; padding:10px; border:0; border-radius:30px; color:#b5c3d9; background:transparent; font-size:11px; font-weight:400; }
 .app-shell .link.on, .app-shell .link:hover { color:#f6f1e6; background:transparent; }
 .app-shell .link.on .icon { color:#f3c84b; }
@@ -40,7 +41,26 @@
 .app-shell .text-action .icon { width:17px; height:17px; stroke-width:1.5; }
 .app-shell .text-action:hover:not(:disabled) { color:#ffe8a4; }
 .app-shell .text-action:disabled { opacity:.4; cursor:default; }
-.app-shell .input-switch { margin-top:12px; }
+.app-shell .writer-heading { flex-direction:column; align-items:center; gap:10px; }
+.app-shell .writer-heading p { max-width:30ch; margin:0; color:#c3cee0; font-size:12px; line-height:1.7; letter-spacing:-.01em; }
+.app-shell .capture-status { color:#efe4c4; font-size:12px; }
+.app-shell .input-switch { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; margin-top:18px; padding:12px 24px; border:1px solid #f6f1e63a; border-radius:28px; background:#f6f1e608; color:#f6f1e6; font-size:12px; transition:background .2s,border-color .2s; }
+.app-shell .input-switch .icon { width:18px; height:18px; stroke-width:1.5; }
+.app-shell .input-switch:hover:not(:disabled) { border-color:#f3c84b88; background:#f6f1e610; }
+.app-shell .input-switch:disabled { opacity:.4; }
+/* the last few dreams under the record button */
+.app-shell .recent-dreams { width:min(100%,520px); margin:40px auto 0; }
+.app-shell .recent-dreams header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; }
+.app-shell .recent-dreams h2 { margin:0; font-size:15px; letter-spacing:-.03em; }
+.app-shell .recent-dreams header .text-action { min-height:36px; color:#f3c84b; font-size:12px; }
+.app-shell .recent-dreams ul { margin:0; padding:0; list-style:none; border-top:1px solid #f6f1e61c; }
+.app-shell .recent-dreams li { border-bottom:1px solid #f6f1e61c; }
+.app-shell .recent-dreams li button { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:64px; padding:12px 2px; border:0; background:transparent; color:#f6f1e6; text-align:left; }
+.app-shell .recent-dreams li span { display:grid; gap:4px; min-width:0; }
+.app-shell .recent-dreams small { color:#a8b7ce; font-size:11px; }
+.app-shell .recent-dreams b { overflow:hidden; font-size:13px; font-weight:500; letter-spacing:-.02em; text-overflow:ellipsis; white-space:nowrap; }
+.app-shell .recent-dreams li .icon { flex:none; width:16px; height:16px; color:#a8b7ce; transform:rotate(180deg); }
+.app-shell .recent-dreams li button:hover b { color:#ffe8a4; }
 .app-shell .writing-sheet { margin:42px auto 0; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
 .app-shell .writing-sheet:focus-within { border:0; outline:0; box-shadow:none; }
 .app-shell .writing-sheet textarea { display:block; width:100%; min-height:250px; height:32svh; max-height:620px; padding:6px 0 24px; border:0; border-radius:0; outline:none; background:transparent; color:#f6f1e6; font-family:var(--font); font-size:16px; line-height:2; resize:vertical; }
@@ -147,20 +167,27 @@
 @media (max-width:700px) {
  .app-shell .nav-in { height:76px; padding:18px 24px; }
  .app-shell .brand { font-size:23px; }
- .app-shell .links { position:fixed; inset:auto auto calc(14px + env(safe-area-inset-bottom)) 50%; transform:translateX(-50%); z-index:20; width:min(calc(100vw - 80px),290px); margin:0; padding:5px; border:1px solid #f6f1e62e; border-radius:40px; background:#183356bd; backdrop-filter:blur(26px) saturate(130%); -webkit-backdrop-filter:blur(26px) saturate(130%); box-shadow:inset 0 1px 0 #ffffff0c,0 10px 40px #07162e55; }
- .app-shell .link { min-height:52px; padding:6px 4px; flex-direction:column; gap:4px; font-size:10px; }
- .app-shell .link .icon { width:22px; height:22px; }
- .app-shell .page { padding:24px 26px calc(112px + env(safe-area-inset-bottom)); }
+ /* a tab bar that sits on the bottom edge: three equal tabs, the open one's icon in a filled pill */
+ .app-shell .links { position:fixed; inset:auto 0 0 0; transform:none; z-index:20; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:auto; margin:0; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); border:0; border-top:1px solid #f6f1e61c; border-radius:0; background:#0d1d38f0; backdrop-filter:blur(20px) saturate(130%); -webkit-backdrop-filter:blur(20px) saturate(130%); box-shadow:0 -8px 30px #07162e40; }
+ .app-shell .nav-selection { display:none; }
+ .app-shell .link { min-height:58px; padding:4px 2px; flex-direction:column; gap:5px; border-radius:16px; color:#a8b7ce; font-size:10.5px; letter-spacing:-.01em; }
+ .app-shell .link .icon { box-sizing:content-box; width:22px; height:22px; padding:5px 20px; border-radius:18px; transition:background .25s,color .25s; }
+ .app-shell .link.on { color:#f6f1e6; }
+ .app-shell .link.on .icon { color:#102343; background:#f3c84b; }
+ .app-shell .link:active .icon { background:#f6f1e614; }
+ .app-shell .link.on:active .icon { background:#ffe49a; }
+ .app-shell .page { padding:20px 24px calc(104px + env(safe-area-inset-bottom)); }
  .app-shell .page-heading { margin-bottom:26px; }
  .app-shell .page-heading h1 { font-size:30px; }
  .app-shell .writer-heading { margin:12px 0 0; }
  .app-shell .writer-heading h1 { max-width:12ch; font-size:clamp(28px,8vw,36px); }
  .app-shell .voice-stage { min-height:0; }
- .app-shell .listening-koala { height:clamp(215px,32svh,300px); margin-top:0; margin-bottom:14px; }
+ .app-shell .listening-koala { height:clamp(150px,22svh,200px); margin-top:6px; margin-bottom:10px; }
+ .app-shell .recent-dreams { margin-top:32px; }
  .app-shell .record-button { width:84px; height:84px; padding:22px; }
  .app-shell .voice-beam { width:84px; }
  .app-shell .record-button .icon { width:29px; height:29px; }
- .app-shell .input-switch { margin-top:4px; }
+ .app-shell .input-switch { margin-top:14px; }
  .app-shell .writing-sheet { margin-top:34px; }
  .app-shell .writing-sheet textarea { min-height:230px; height:34svh; font-size:15px; }
  .app-shell .dream-processing .mascot { height:300px; }
@@ -191,11 +218,11 @@
 @media (max-width:360px) {
  .app-shell .page { padding-inline:22px; }
  .app-shell .writer-heading h1 { font-size:28px; }
- .app-shell .listening-koala { height:220px; }
+ .app-shell .listening-koala { height:150px; }
  .app-shell .empty-copy h2 { font-size:20px; }
 }
 @media (max-height:720px) and (max-width:700px) {
- .app-shell .listening-koala { height:calc(160px - env(safe-area-inset-bottom)); }
+ .app-shell .listening-koala { height:calc(130px - env(safe-area-inset-bottom)); }
  .app-shell .writer-heading { margin-top:0; }
  .app-shell .writer-heading h1 { font-size:28px; }
  .app-shell .record-button { width:76px; height:76px; }

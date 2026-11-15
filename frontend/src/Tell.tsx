@@ -7,7 +7,9 @@ import {
   type StreamProgress,
   getSelfProfile,
   getJob,
+  listDreamPage,
   saveDream,
+  type Dream,
   startManga,
   type ArtStyle,
   type InterpretationType,
@@ -142,11 +144,12 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
 
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {!analysis ? <>
-      <header className="page-heading writer-heading"><h1>{tr.app.writingTitle}</h1></header>
+      <header className="page-heading writer-heading"><h1>{tr.app.writingTitle}</h1>{mode === 'voice' && busy === null && <p>{tr.app.writingHint}</p>}</header>
       {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><Mascot theme="sleep" /><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <Mascot theme="curious" interactive className="listening-koala" />
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
-        <button className="text-action input-switch" disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="pen" />{tr.capture.write}</button>
+        <button className="input-switch" disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="pen" />{tr.capture.write}</button>
+        {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
       </section> : <section className="writing-sheet">
         <textarea autoFocus aria-label={tr.headline} aria-invalid={text.length > 4000} aria-describedby={text.length > 4000 ? 'dream-length' : undefined} value={text} onChange={(event) => change({ text: event.target.value, saved: false })} placeholder={tr.writePlaceholder} rows={8} />
         {text.length > 4000 && <p id="dream-length" className="error">{tr.capture.tooLong}</p>}
@@ -181,6 +184,27 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
 }
 
 // G8: the interpretation as it is written; the symbols the dream names sit above it with their icons.
+const dayOf = (dream: Dream) => new Date(dream.journal?.dreamedOn ? dream.journal.dreamedOn + 'T12:00:00' : dream.createdAt)
+  .toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+
+/** The last few dreams under the record button, so the first screen also leads back to what was told before. */
+function RecentDreams({ active, onLibrary }: { active: boolean; onLibrary: () => void }) {
+  const [dreams, setDreams] = useState<Dream[]>([]);
+  useEffect(() => {
+    if (!active) return;
+    const controller = new AbortController();
+    listDreamPage(undefined, 3, controller.signal).then(page => setDreams(page.dreams)).catch(() => {});
+    return () => controller.abort();
+  }, [active]);
+  if (!dreams.length) return null;
+  return <section className="recent-dreams" aria-labelledby="recent-title">
+    <header><h2 id="recent-title">{tr.app.recent}</h2><button className="text-action" onClick={onLibrary}>{tr.app.all}</button></header>
+    <ul>{dreams.map(dream => <li key={dream.id}><button onClick={onLibrary}>
+      <span><small>{dayOf(dream)}</small><b>{dream.title}</b></span><Icon name="chevron" />
+    </button></li>)}</ul>
+  </section>;
+}
+
 function Writing({ progress }: { progress: StreamProgress }) {
   return <section className="result writing" aria-busy="true" aria-live="polite">
     {progress.symbols.length > 0 && <SymbolRow symbols={progress.symbols} />}

@@ -91,7 +91,7 @@ export default function VoiceInput({ active, disabled, onText, onError, onBusy }
         setRetryAudio(null); callbacks.current.onError(''); getAudioContext(); void recorder.start();
       }}><Icon name={state === 'recording' ? 'stop' : processing ? 'loader' : 'mic'} /></button>
     </VoiceBeam>
-    <div className="capture-status" role={state === 'recording' ? 'timer' : 'status'} aria-live={state === 'recording' ? 'off' : 'polite'}>{state === 'recording' ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : state === 'transcribing' ? tr.app.transcribing : state === 'requesting' ? tr.capture.permission : ''}</div>
+    <div className="capture-status" role={state === 'recording' ? 'timer' : 'status'} aria-live={state === 'recording' ? 'off' : 'polite'}>{state === 'recording' ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : state === 'transcribing' ? tr.app.transcribing : state === 'requesting' ? tr.capture.permission : retryAudio ? '' : tr.app.voice}</div>
     {state !== 'idle' && <button className="text-action capture-cancel" onClick={cancel}>{tr.library.cancel}</button>}
     {retryAudio && state === 'idle' && <div className="capture-retry"><button className="text-action" onClick={() => void transcribe(retryAudio)}>{tr.app.retry}</button><button className="text-action" onClick={cancel}>{tr.library.cancel}</button></div>}
   </div>;
