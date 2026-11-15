@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { checkGoogleProvider } from './api';
-import Mascot from './Mascot';
+import Mascot, { type Pose } from './Mascot';
 import Icon from './Icon';
-import DreamIntro from './DreamIntro';
+import Worn from './Worn';
 import { defaultProfile, typicalThemes, type Profile, type TypicalTheme, type Visibility } from './profile';
 import { authMessage, signInGoogle, type Account } from './session';
 import { tr } from './strings';
@@ -39,15 +39,20 @@ function Themes({ value, onToggle, disabled }: { value: TypicalTheme[]; onToggle
   </div>;
 }
 
+/** Duolingo-like steps: one thing per screen, a progress bar on top, one big button at the bottom,
+ * and the koala in a pose that fits the step. Signed-out visitors start at hello; after Google they land on privacy. */
+const STEPS = ['hello', 'how', 'signin', 'privacy', 'themes'] as const;
+type Step = typeof STEPS[number];
+const POSE: Record<Step, Pose> = { hello: 'wave', how: 'listen', signin: 'hold', privacy: 'curious', themes: 'think' };
+
 export default function Onboarding({ account, replay, initialError, onDone }: {
   account: Account | null; replay: boolean; initialError: string; onDone: (profile: Profile) => Promise<void>;
 }) {
-  const [step, setStep] = useState<'welcome' | 'privacy' | 'themes'>(account && !replay ? 'privacy' : 'welcome');
+  const [step, setStep] = useState<Step>(account && !replay ? 'privacy' : 'hello');
   const [seen, setSeen] = useState<TypicalTheme[]>(account?.profile.seenThemes ?? []);
   const [visibility, setVisibility] = useState<Visibility>(account?.profile.visibility ?? defaultProfile.visibility);
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
-  const [intro, setIntro] = useState(!account || replay);
 
   useEffect(() => {
     if (account) {
@@ -61,35 +66,36 @@ export default function Onboarding({ account, replay, initialError, onDone }: {
     setBusy(true); setError('');
     try { await action(); } catch (cause) { setError(authMessage(cause)); } finally { setBusy(false); }
   }
-  function enter() {
-    if (account) { setStep('privacy'); return; }
-    void run(async () => { await checkGoogleProvider(); await signInGoogle(); });
+  const index = STEPS.indexOf(step);
+  const first = index === 0 || (step === 'privacy' && !!account && !replay);
+  function forward() {
+    if (step === 'signin' && !account) { void run(async () => { await checkGoogleProvider(); await signInGoogle(); }); return; }
+    if (step === 'themes') { void run(() => onDone({ onboarded: true, visibility, ...(seen.length ? { seenThemes: seen } : {}) })); return; }
+    setError(''); setStep(STEPS[index + 1]);
   }
+  const copy = step === 'hello' ? text.hello : step === 'how' ? text.how : step === 'signin' ? text.signin
+    : step === 'privacy' ? { title: text.privacyTitle, body: text.privacyText } : { title: text.themesTitle, body: text.themesText };
+  const action = busy ? (step === 'signin' ? text.redirecting : tr.saving) : step === 'hello' ? text.hello.action
+    : step === 'signin' && !account ? text.google : step === 'themes' ? text.start : text.next;
 
-  if (intro) return <DreamIntro onDone={() => setIntro(false)} />;
-  return <main className={`onb onb-${step}`}>
-    <aside className="onb-art" aria-hidden="true"><Mascot scene theme={step === 'welcome' ? 'cloud' : 'curious'} /></aside>
-    <section className="onb-main">
-      <div className="onb-top">
-        {step !== 'welcome' ? <button className="back" disabled={busy} onClick={() => { setStep(step === 'themes' ? 'privacy' : 'welcome'); setError(''); }} aria-label={tr.back}><Icon name="chevron" /></button> : <span className="onb-wordmark">{tr.brand}</span>}
+  return <main className={`steps steps-${step}`}>
+    <header className="steps-top">
+      <button className="steps-back" disabled={busy || first} onClick={() => { setError(''); setStep(STEPS[index - 1]); }} aria-label={tr.back}><Icon name="chevron" /></button>
+      <div className="steps-bar" role="progressbar" aria-label={text.progress(index + 1, STEPS.length)} aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={index + 1}>
+        <span style={{ width: `${((index + 1) / STEPS.length) * 100}%` }} />
       </div>
-      <div key={step} className="onb-body" aria-busy={busy}>
-        <h1 className="onb-title">{step === 'welcome' ? text.welcomeTitle : step === 'themes' ? text.themesTitle : text.privacyTitle}</h1>
-        {step === 'welcome' ? <div className="onb-actions"><button className="go" disabled={busy} onClick={enter}>
-          {!account && <GoogleMark />}{busy ? text.redirecting : account ? text.continue : text.google}
-        </button></div> : step === 'privacy' ? <>
-          <p className="onb-text">{text.privacyText}</p>
-          <Privacy value={visibility} onChange={setVisibility} disabled={busy} />
-          <div className="onb-actions"><button className="go" disabled={busy} onClick={() => setStep('themes')}>{text.next}</button></div>
-        </> : <>
-          <p className="onb-text">{text.themesText}</p>
-          <Themes value={seen} onToggle={key => setSeen(now => now.includes(key) ? now.filter(k => k !== key) : [...now, key])} disabled={busy} />
-          <div className="onb-actions"><button className="go" disabled={busy} onClick={() => void run(() => onDone({ onboarded: true, visibility, ...(seen.length ? { seenThemes: seen } : {}) }))}>{busy ? tr.saving : text.start}</button></div>
-        </>}
-        {error && <p className="error auth-error" role="alert">{error}</p>}
-        <nav className="onb-info" aria-label="Uygulama bilgileri"><a href="/about.html">Dreamlib hakkında</a><a href="/privacy.html">Gizlilik</a></nav>
-        <button className="intro-replay" onClick={() => setIntro(true)}>{tr.intro.replay}</button>
-      </div>
-    </section>
+    </header>
+    <div key={step} className="steps-body" aria-busy={busy}>
+      <Mascot pose={POSE[step]} className="steps-koala" />
+      <h1><Worn text={copy.title} /></h1>
+      <p className="steps-text">{copy.body}</p>
+      {step === 'privacy' && <Privacy value={visibility} onChange={setVisibility} disabled={busy} />}
+      {step === 'themes' && <Themes value={seen} onToggle={key => setSeen(now => now.includes(key) ? now.filter(k => k !== key) : [...now, key])} disabled={busy} />}
+    </div>
+    <footer className="steps-foot">
+      {error && <p className="error auth-error" role="alert">{error}</p>}
+      <button className="cta" disabled={busy} onClick={forward}>{step === 'signin' && !account && <GoogleMark />}{action}</button>
+      {step === 'hello' && <nav className="steps-info" aria-label="Uygulama bilgileri"><a href="/about.html">Dreamlib hakkında</a><a href="/privacy.html">Gizlilik</a></nav>}
+    </footer>
   </main>;
 }
