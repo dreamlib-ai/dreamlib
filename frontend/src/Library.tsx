@@ -4,6 +4,7 @@ import Picture from './Picture';
 import Magazine, { Anniversary, ShareMagazine, useMagazine } from './Magazine';
 import { placeCards, wallColumns } from './wall';
 import Result from './Result';
+import LibraryIsland from './LibraryIsland';
 import Icon from './Icon';
 import Mascot from './Mascot';
 import JournalEditor from './JournalEditor';
@@ -126,6 +127,7 @@ type Paging = { hasMore?: boolean; loadingMore?: boolean; moreFailed?: boolean; 
 
 export function LibraryShelf({ dreams, error = '', onTell, onOpen, hasMore = false, loadingMore = false, moreFailed = false, onMore }: { dreams: Dream[] | null; error?: string; onTell: () => void; onOpen: (dream: Dream) => void } & Paging) {
   const [query, setQuery] = useState('');
+  const [flat, setFlat] = useState(() => !canDraw3d());  // the island needs WebGL; without it the plain wall
   const [filter, setFilter] = useState<'all' | 'books' | 'text' | 'favorites'>('all');
   const [from, setFrom] = useState('');
   const [until, setUntil] = useState('');
@@ -168,7 +170,7 @@ export function LibraryShelf({ dreams, error = '', onTell, onOpen, hasMore = fal
     {!error && dreams === null && <p className="small" role="status">{text.loading}</p>}
     {dreams?.length === 0 && <EmptyLibrary onTell={onTell} />}
     {dreams && dreams.length > 0 && filtered?.length === 0 && <p className="no-results">{tr.app.noResults}</p>}
-    {filtered && filtered.length > 0 && <DreamWall dreams={filtered} onOpen={onOpen} />}
+    {filtered && filtered.length > 0 && (flat ? <DreamWall dreams={filtered} onOpen={onOpen} /> : <LibraryIsland dreams={filtered} onOpen={onOpen} onFail={() => setFlat(true)} />)}
     {hasMore && <MoreSentinel onMore={onMore} />}
     {loadingMore && <p className="small wall-status" role="status">{text.loading}</p>}
     {moreFailed && <p className="wall-status"><span className="error">{text.moreFailed}</span> <button className="text-action" onClick={onMore}>{text.retry}</button></p>}
@@ -227,4 +229,8 @@ function DreamWall({ dreams, onOpen }: { dreams: Dream[]; onOpen: (dream: Dream)
 
 export function EmptyLibrary({ onTell }: { onTell: () => void }) {
   return <section className="library-empty"><Mascot pose="sleep" className="sleeping-koala" /><div className="empty-copy"><h2>{text.empty}</h2><button className="go" onClick={onTell}>{text.emptyAction}</button></div></section>;
+}
+
+function canDraw3d() {
+  try { const gl = document.createElement('canvas').getContext('webgl'); gl?.getExtension('WEBGL_lose_context')?.loseContext(); return Boolean(gl); } catch { return false; }
 }
