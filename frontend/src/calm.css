@@ -251,3 +251,64 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .mark svg { display: block; }
 .composer textarea:focus, .composer textarea:focus-visible { outline: none; box-shadow: none; }
 .composer:focus-within { box-shadow: 0 0 0 1px #f2c4cf66, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
+
+/* Reading (2026-11-15): an airy page. Fraunces title, Funnel text at 18px with room between lines and paragraphs. */
+.topbar-back svg { width: 20px; height: 20px; }
+.reading-koala { width: 92px; margin: 0 auto 2px; }
+.app-shell .result-sheet { max-width: 34em; margin: 0 auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.app-shell .result.reading, .app-shell .result.writing { display: block; max-width: 34em; margin: 0 auto; }
+.app-shell .reading h2, .app-shell .writing h2 { margin: 6px 0 26px; font-size: clamp(30px, 7.6vw, 40px); line-height: 1.12; text-align: center; text-wrap: balance; }
+.app-shell .reading-text p, .app-shell .writing .lead { margin: 0 0 1.15em; color: var(--ink); font: 400 18px/1.75 var(--font); letter-spacing: 0; white-space: pre-line; }
+.app-shell .writing .lead { color: var(--soft); }
+.app-shell .writing .caret { border-bottom-color: var(--pink); }
+.app-shell .symbol-mention { display: inline; padding: 0; border: 0; background: none; color: #fff; font: inherit; white-space: nowrap; cursor: pointer;
+  text-decoration: underline 1.5px; text-decoration-color: #f2c4cfb3; text-underline-offset: .28em; transition: text-decoration-color .3s, color .3s; }
+.app-shell .symbol-mention:hover, .app-shell .symbol-mention:focus-visible { color: #ffe3ec; text-decoration-color: #f2c4cf; outline: 0; }
+.app-shell .symbol-mention img { width: 1.05em; height: 1.05em; margin: 0 0 0 .22em; border-radius: 50%; vertical-align: -.14em; object-fit: cover; }
+.app-shell .symbol-row { justify-content: center; margin: 0 0 18px; }
+.app-shell .symbol-row li { border: 0; background: var(--bubble); color: var(--soft); font: 500 14px var(--font-ui); }
+.app-shell .symbol-row svg { padding: 6px; box-sizing: border-box; }
+.app-shell .dream-processing p { color: var(--soft); font: 400 17px var(--font); }
+.app-shell .result-feedback { gap: 4px 14px; margin: 4px 0 30px; color: var(--soft); font: 400 14px var(--font); }
+.app-shell .result-feedback .text-action { min-height: 36px; padding: 0 2px; color: var(--soft); font: 500 14px var(--font-ui); }
+.app-shell .result-feedback .text-action[aria-pressed="true"] { color: #fff; text-decoration-color: var(--pink); }
+.cloud-button.visualize { display: block; width: 100%; max-width: 360px; margin: 6px auto 34px; }
+.reading-more { margin-top: 8px; }
+.app-shell .reading-more .tags { justify-content: center; gap: 8px; margin: 0 0 14px; }
+.app-shell .reading-more .tag { padding: 6px 12px; border-radius: 99px; background: var(--bubble); color: var(--soft); font: 500 13px var(--font-ui); }
+.app-shell .reading-more .result-details { border-top: 1px solid var(--line); }
+.app-shell .reading-more .result-details summary { min-height: 52px; display: flex; align-items: center; color: var(--soft); font: italic 500 18px var(--font-head); }
+.app-shell .reading-more :is(.obj p, .classification-line, .small) { font-size: 16px; line-height: 1.65; color: var(--soft); }
+
+/* Drawing: dust drifts onto a sheet, gathers in a cloud band, the panel lines appear as each panel finishes. */
+.drawing { display: grid; justify-items: center; gap: 14px; margin: 4px 0 34px; }
+.drawing p { margin: 0; color: var(--soft); font: 400 15px var(--font); }
+.drawing-paper { position: relative; width: min(78vw, 300px); aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(170deg, #f6eff4, #e8e4f6 60%, #dcdff3); box-shadow: 0 18px 50px #02051488, inset 0 0 0 1px #ffffff66; }
+.drawing-paper::after { content: ''; position: absolute; inset: 0; background: var(--grain); opacity: .35; mix-blend-mode: multiply; pointer-events: none; }
+.drawing-band { position: absolute; left: -10%; right: -10%; top: 40%; height: 22%; filter: blur(10px); opacity: .55; animation: band-breathe 5s ease-in-out infinite; }
+.drawing-band .cloud-fill { border-radius: 50%; background: #c9a7d8; }
+.drawing-band .cloud-fill::after { display: none; }
+@keyframes band-breathe { 50% { opacity: .8; transform: scaleY(1.15); } }
+.drawing-frames { position: absolute; inset: 14px; display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 8px; }
+.drawing-frames .frame { position: relative; border-radius: 6px; }
+.drawing-frames .frame::before { content: ''; position: absolute; inset: 0; border: 1.5px solid #4a3b7a; border-radius: inherit; opacity: 0; clip-path: inset(0 100% 100% 0); transition: opacity .6s, clip-path 1.4s var(--ease); }
+.drawing-frames .frame.now::before { opacity: .35; clip-path: inset(0 0 0 0); animation: frame-pulse 2.2s ease-in-out infinite; }
+.drawing-frames .frame.drawn::before { opacity: .7; clip-path: inset(0 0 0 0); }
+.drawing-frames .frame.drawn { background: linear-gradient(160deg, #b9a6ff2e, #f2c4cf38); transition: background 1s; }
+@keyframes frame-pulse { 50% { opacity: .6; } }
+.drawing-dust { position: absolute; left: 50%; top: 51%; }
+.drawing-dust i { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%; background: #fff; box-shadow: 0 0 8px currentColor; color: #b9a6ff; animation: dust-in 3.2s var(--ease) infinite; }
+.drawing-dust i.tone-1 { background: #ffd0ea; color: #ff8fc4; }
+.drawing-dust i.tone-2 { background: #cfe6ff; color: #8fb0ff; }
+@keyframes dust-in { 0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1.4); } 25% { opacity: 1; } 85% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(var(--x) * .04), calc(var(--y) * .03)) scale(.4); } }
+.app-shell .booklet { margin: 0 0 30px; }
+.app-shell .booklet .shots { margin-top: 0; }
+.sharpen { filter: blur(18px) saturate(.6); opacity: .4; transform: scale(1.02); transition: filter 1.6s var(--ease), opacity 1.2s ease, transform 1.6s var(--ease); }
+.sharpen.in { filter: none; opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .drawing-band, .drawing-dust i, .drawing-frames .frame.now::before { animation: none; }
+  .drawing-dust { display: none; }
+  .sharpen { transition: none; }
+}
+.app-shell .symbol-row li:not(:has(img)) { padding-left: 14px; }

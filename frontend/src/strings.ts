@@ -178,7 +178,7 @@ export const tr = {
   interpreting: 'Yorumlanıyor',
   styles: { manga: 'Manga', illustration: 'İllüstrasyon', collage: 'Kolaj', photographic: 'Fotografik' },
   panelCount: (n: number) => `${n} panel`,
-  visualize: 'Kitapçığa çevir',
+  visualize: 'Görselleştir',
   visualizing: 'Çiziliyor',
   objects: 'Nesneler',
   symbols: { found: 'Rüyandaki semboller' },

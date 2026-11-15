@@ -12,11 +12,11 @@ import {
   saveDream,
   type Dream,
   startManga,
-  type ArtStyle,
   type InterpretationType,
-  type Perspective,
 } from './api';
+import Drawing from './Drawing';
 import Icon from './Icon';
+import Mascot, { type Pose } from './Mascot';
 import VoiceInput from './VoiceInput';
 import Worn from './Worn';
 import type { Visibility } from './profile';
@@ -31,14 +31,13 @@ type Props = {
   visibility: Visibility;
   onType: (t: InterpretationType) => void;
   onLibrary: () => void;
-  onProfile: () => void;
+  /** The way back from the reading to the told dream lives in the top bar; null hides it. */
+  onBack: (back: (() => void) | null) => void;
 };
 
-const styles = Object.keys(tr.styles) as ArtStyle[];
-const panelCounts = [4, 6, 9];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export default function Tell({ active, owner, inspiration, type, visibility, onLibrary, onProfile }: Props) {
+export default function Tell({ active, owner, inspiration, type, visibility, onLibrary, onBack }: Props) {
   const [draft, setDraft] = useState(() => readDraft(owner) ?? newDraft());
   const { id, text, mode, analysis, style, count, panels, jobId, jobStatus, saved, recorded } = draft;  // past dreams are always used when they relate (Cenker, 2026-11-15)
   const change = (patch: Partial<Draft>) => setDraft(current => ({ ...current, ...patch }));
@@ -142,10 +141,30 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
       jobStatus === 'done' ? jobId : undefined, visibility, id, recorded));
     if (dream && alive.current) { change({ recorded: true, saved: true, panels: dream.panels }); track('dream_saved', id); }
   }
+  // The dream keeps itself: once when the reading arrives and once more when its pictures are drawn.
+  const autosaved = useRef('');
+  const saveKey = analysis ? `${analysis.title}:${jobStatus}:${panels.length}` : '';
+  useEffect(() => {
+    if (!active || !analysis || saved || busy !== null || jobStatus === 'pending' || autosaved.current === saveKey) return;
+    autosaved.current = saveKey;
+    void save();
+  }, [active, saveKey, saved, busy]);
+  useEffect(() => {
+    if (!active) return;
+    onBack(analysis && busy === null && jobStatus !== 'pending' ? () => { setError(''); change({ analysis: null }); } : null);
+    return () => onBack(null);
+  }, [active, !!analysis, busy, jobStatus]);
+  const [justDone, setJustDone] = useState(false);  // the koala cheers when the reading lands, then settles
+  useEffect(() => {
+    if (busy !== 'analyze') return;
+    return () => { setJustDone(true); setTimeout(() => alive.current && setJustDone(false), 4000); };
+  }, [busy]);
+  const pose: Pose = busy === 'analyze' ? 'think' : busy === 'image' ? 'hold' : justDone || jobStatus === 'done' ? 'joy' : 'curious';
 
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
+    {(busy === 'analyze' || analysis) && <Mascot pose={pose} className="reading-koala" />}
     {!analysis ? <>
-      <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1></header>
+      {busy !== 'analyze' && <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1></header>}
       {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
         {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
@@ -157,23 +176,14 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
           <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button></div>
       </section>, document.body) : null}
     </> : <>
-      <header className="result-heading"><button className="back" disabled={busy !== null || jobStatus === 'pending'} aria-label={tr.app.edit} onClick={() => change({ analysis: null })}><Icon name="chevron" /></button><span>{tr.headline}</span></header>
-      <div className="result-sheet"><Result analysis={analysis} key={analysis.title}>
+      <div className="result-sheet"><Result analysis={analysis} key={analysis.title} after={
         <div className="result-feedback" role="group" aria-label={tr.feedback.question}><span>{tr.feedback.question}</span>
           {(['helpful', 'unhelpful'] as const).map(value => <button key={value} className="text-action" aria-pressed={feedback === value} onClick={() => { setFeedback(value); track(value === 'helpful' ? 'feedback_helpful' : 'feedback_unhelpful', id); }}>{value === 'helpful' ? tr.feedback.yes : tr.feedback.no}</button>)}
-        </div>
-        <section className="booklet-settings"><details className="drawing-options"><summary>{tr.app.settings}</summary>
-          <div className="chips">{styles.map((item) => <button key={item} aria-pressed={style === item} className={style === item ? 'chip on' : 'chip'} disabled={busy !== null || jobStatus === 'pending'} onClick={() => change({ style: item })}>{tr.styles[item]}</button>)}</div>
-          <div className="chips">{panelCounts.map((item) => <button key={item} aria-pressed={count === item} className={count === item ? 'chip on' : 'chip'} disabled={busy !== null || jobStatus === 'pending'} onClick={() => change({ count: item })}>{tr.panelCount(item)}</button>)}</div>
-          <label className="avatar-toggle"><input type="checkbox" checked={draft.useAvatar} disabled={busy!==null||jobStatus==='pending'} onChange={e=>change({useAvatar:e.target.checked})} />{tr.avatar.useInDream}</label>
-          <label className="drawing-camera">{tr.avatar.camera}<select value={draft.perspective} disabled={busy!==null||jobStatus==='pending'} onChange={e=>change({perspective:e.target.value as Perspective})}>{(['unknown','first-person','observer','mixed'] as const).map(value=><option key={value} value={value}>{value==='unknown'?tr.avatar.automatic:tr.classification.perspectiveLabels[value]}</option>)}</select></label>
-          <button className="text-action" disabled={busy!==null||jobStatus==='pending'} onClick={onProfile}>{tr.avatar.create}</button>
-          </details><div className="actions"><button className="go" disabled={busy !== null} onClick={() => jobStatus === 'pending' ? setRetry(n => n + 1) : visualize()}>{busy === 'image' ? tr.app.progress : jobStatus === 'pending' ? tr.recovery.resume : tr.visualize}</button>
-            {saved ? <button className="go quiet" onClick={onLibrary}>{tr.openLibrary}</button> : <button className="go quiet" disabled={busy !== null || jobStatus === 'pending'} onClick={() => void save()}>{busy === 'save' ? tr.saving : tr.save}</button>}
-          </div>
-        </section>
-        {busy === 'image' && <div className="drawing-progress" role="status"><progress max={count} value={progress} /><span>{tr.app.progress}{eta ? ` · ${tr.app.remaining(eta)}` : ''}</span></div>}
-        {panels.length > 0 && <section className="booklet"><h3>{tr.app.artwork}</h3><div className="shots">{panels.map((panel) => <figure key={panel.path}>{panel.url && <img src={panel.url} alt={panel.caption} />}{panel.caption && <figcaption>{panel.caption}</figcaption>}</figure>)}</div></section>}
+        </div>}>
+        {busy === 'image' ? <Drawing count={count} done={progress} eta={eta} />
+          : !(jobStatus === 'done' && panels.length > 0) && <button className="cloud-button visualize" disabled={busy !== null} onClick={() => jobStatus === 'pending' ? setRetry(n => n + 1) : void visualize()}>
+            <span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{jobStatus === 'pending' ? tr.recovery.resume : tr.visualize}</span></button>}
+        {panels.length > 0 && <section className="booklet"><div className="shots">{panels.map((panel) => <figure key={panel.path}>{panel.url && <Sharpen src={panel.url} alt={panel.caption} />}{panel.caption && <figcaption>{panel.caption}</figcaption>}</figure>)}</div></section>}
       </Result></div>
     </>}
     {storageError && <p className="error" role="status">{tr.recovery.storage}</p>}
@@ -203,6 +213,12 @@ function RecentDreams({ active, onLibrary }: { active: boolean; onLibrary: () =>
   </section>;
 }
 
+/** A drawn panel comes into focus: blurred while it loads, then sharpens. */
+function Sharpen({ src, alt }: { src: string; alt: string }) {
+  const [shown, setShown] = useState(false);
+  return <img src={src} alt={alt} className={shown ? 'sharpen in' : 'sharpen'} onLoad={() => setShown(true)} />;
+}
+
 function Writing({ progress }: { progress: StreamProgress }) {
   return <section className="result writing" aria-busy="true" aria-live="polite">
     {progress.symbols.length > 0 && <SymbolRow symbols={progress.symbols} />}
@@ -213,6 +229,6 @@ function Writing({ progress }: { progress: StreamProgress }) {
 
 function SymbolRow({ symbols }: { symbols: StreamProgress['symbols'] }) {
   return <ul className="symbol-row" aria-label={tr.symbols.found}>
-    {symbols.map((s) => <li key={s.id}>{s.glyph ? <img src={s.glyph} alt="" /> : <Icon name="spark" />}<span>{s.text}</span></li>)}
+    {symbols.map((s) => <li key={s.id}>{s.glyph && <img src={s.glyph} alt="" />}<span>{s.text}</span></li>)}
   </ul>;
 }
