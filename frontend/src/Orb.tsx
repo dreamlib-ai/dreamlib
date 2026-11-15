@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { NOISE, VERTEX } from './glsl';
 
-/** The microphone's moving sphere, like a voice assistant's: white clouds flow and fold inside a cobalt-to-sky
- * sphere with a pink blush, lit from the top left. It flows faster and brighter with --level (0..1), which
- * VoiceInput writes on the orb button. The painted cloud layer under it shows until WebGL is ready. */
+/** The microphone's moving sphere, like a voice assistant's: cream clouds flow and fold inside a dusty rose
+ * sphere with a lilac shade, lit from the top left. It flows a little faster with --level (0..1), which
+ * VoiceInput writes on the orb button; the response is eased so speech never makes it jump. The painted cloud layer under it shows until WebGL is ready. */
 const FRAGMENT = `
 precision highp float;
 uniform float time;
@@ -20,17 +20,18 @@ void main() {
   float t = time * (0.16 + level * 0.5);
   float a = fbm(s * 0.9 + vec2(t, -t * 0.6));
   float b = fbm(s * 1.3 + vec2(a * 2.0 - t * 0.7, a * 1.5 + t * 0.4));
-  float clouds = smoothstep(0.34, 0.86, b + level * 0.08);
-  vec3 deep = vec3(0.12, 0.25, 0.95);
-  vec3 sky = vec3(0.47, 0.70, 1.0);
-  vec3 white = vec3(0.98, 0.98, 1.0);
-  vec3 pink = vec3(1.0, 0.70, 0.88);
+  float clouds = smoothstep(0.34, 0.86, b + level * 0.03);
+  // dusty rose sphere with cream clouds and a lilac shade, so it sits softly on the blue night
+  vec3 deep = vec3(0.78, 0.52, 0.62);
+  vec3 sky = vec3(0.95, 0.76, 0.80);
+  vec3 white = vec3(1.0, 0.96, 0.95);
+  vec3 shade = vec3(0.62, 0.55, 0.82);
   vec3 col = mix(deep, sky, smoothstep(-0.9, 0.9, p.y + a * 0.4));
-  col = mix(col, white, clouds * 0.92);
-  col = mix(col, pink, smoothstep(0.1, 1.0, dot(p, vec2(0.55, -0.83))) * 0.5 * (0.4 + clouds));
+  col = mix(col, white, clouds * 0.85);
+  col = mix(col, shade, smoothstep(0.1, 1.0, dot(p, vec2(0.55, -0.83))) * 0.35 * (1.0 - clouds * 0.5));
   vec3 n = vec3(p, z);
-  col += pow(max(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0), 18.0) * 0.35;
-  col *= 0.8 + 0.2 * z;
+  col += pow(max(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0), 18.0) * 0.25;
+  col *= 0.86 + 0.14 * z;
   col += (hash(gl_FragCoord.xy + fract(time) * 50.0) - 0.5) * 0.05;
   gl_FragColor = vec4(col * edge, edge);
 }`;
@@ -64,8 +65,8 @@ export default function Orb() {
         frame = requestAnimationFrame(tick);
         if (document.hidden) { last = now; return; }
         const level = Number(button?.style.getPropertyValue('--level') || 0);
-        uniforms.level.value += (level - uniforms.level.value) * 0.15;
-        clock += Math.min(0.05, (now - last) / 1000) * (1 + uniforms.level.value * 2.5);
+        uniforms.level.value += (level - uniforms.level.value) * 0.05;
+        clock += Math.min(0.05, (now - last) / 1000) * (1 + uniforms.level.value * 0.8);
         last = now;
         uniforms.time.value = clock;
         renderer.render(scene, camera);

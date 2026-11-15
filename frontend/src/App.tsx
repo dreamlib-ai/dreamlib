@@ -12,9 +12,9 @@ import { tr } from './strings';
 import Tell from './Tell';
 import Icon, { type IconName } from './Icon';
 
-/** Temporary mark until the real logo: a tiny copy of the microphone's cloud sphere. */
+/** The koala as a line icon, drawn like the other tab icons, until the real logo. */
 function Mark() {
-  return <span className="mark-orb" aria-hidden="true" />;
+  return <Icon name="koala" />;
 }
 import { clearDraft, readDraft } from './draft';
 import { sessionEvent } from './telemetry';

@@ -94,7 +94,7 @@ export default function VoiceInput({ active, disabled, onText, onError, onBusy }
     const tick = () => {
       analyser.getByteTimeDomainData(samples);
       let sum = 0; for (const s of samples) sum += ((s - 128) / 128) ** 2;
-      level = level * 0.82 + Math.min(1, Math.sqrt(sum / samples.length) * 5) * 0.18;
+      level = level * 0.94 + Math.min(1, Math.sqrt(sum / samples.length) * 2.4) * 0.06;  // slow, soft response
       node.style.setProperty('--level', level.toFixed(3));
       frame = requestAnimationFrame(tick);
     };
