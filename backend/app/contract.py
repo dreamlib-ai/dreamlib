@@ -27,9 +27,18 @@ def sometimes(*names: str):
     return extra
 
 
+class Segment(BaseModel):
+    """G8: a piece of the interpretation; a lexicon symbol's first mention also names the symbol and its icon."""
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("entity", "glyph"))
+    text: str
+    entity: str = ""
+    glyph: str = ""
+
+
 class AnalysisOut(Analysis):
-    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("analysisId"))
+    model_config = ConfigDict(**OUT, json_schema_extra=sometimes("analysisId", "segments"))
     analysisId: str = ""  # only when the interpretation was recorded (M3)
+    segments: list[Segment] = []  # G8: the interpretation with its symbols in place
 
 
 class TranscribeOut(BaseModel):

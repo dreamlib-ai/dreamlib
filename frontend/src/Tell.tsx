@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { newDraft, readDraft, writeDraft, type Draft } from './draft';
 import { track } from './telemetry';
 import {
-  analyzeDream,
   ApiError,
+  streamDream,
+  type StreamProgress,
   getSelfProfile,
   getJob,
   saveDream,
@@ -46,6 +47,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   const [eta, setEta] = useState<number | undefined>();
   const [retry, setRetry] = useState(0);
   const [feedback, setFeedback] = useState<'helpful' | 'unhelpful' | null>(null);
+  const [writing, setWriting] = useState<StreamProgress | null>(null);
   const alive = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => { setStorageError(!writeDraft(owner, draft)); }, [owner, draft]);
@@ -110,7 +112,11 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     finally { if (alive.current) setBusy(null); }
   }
   async function interpret() {
-    const result = await run('analyze', () => analyzeDream(text, type, { personal, excludeId: id }));
+    setWriting(null);
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;  // then the text comes at once
+    const result = await run('analyze', () => streamDream(text, type, { personal, excludeId: id },
+      (progress) => { if (alive.current && !calm) setWriting(progress); }));
+    if (alive.current) setWriting(null);
     if (result && alive.current) {
       change({ analysis: result, panels: [], jobId: undefined, jobStatus: 'none', saved: false });
       setFeedback(null); track('analysis_ready', id);
@@ -137,7 +143,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {!analysis ? <>
       <header className="page-heading writer-heading"><h1>{tr.app.writingTitle}</h1></header>
-      {busy === 'analyze' ? <section className="dream-processing" role="status"><Mascot theme="sleep" /><p>{tr.capture.analyzing}</p></section> : mode === 'voice' ? <section className="voice-stage">
+      {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><Mascot theme="sleep" /><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <Mascot theme="curious" interactive className="listening-koala" />
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
         <button className="text-action input-switch" disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="pen" />{tr.capture.write}</button>
@@ -172,4 +178,19 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     {storageError && <p className="error" role="status">{tr.recovery.storage}</p>}
     {error && <p className="error" role="alert">{error}</p>}
   </div>;
+}
+
+// G8: the interpretation as it is written; the symbols the dream names sit above it with their icons.
+function Writing({ progress }: { progress: StreamProgress }) {
+  return <section className="result writing" aria-busy="true" aria-live="polite">
+    {progress.symbols.length > 0 && <SymbolRow symbols={progress.symbols} />}
+    {progress.title && <h2>{progress.title}</h2>}
+    <p className="lead">{progress.text}<span className="caret" aria-hidden="true" /></p>
+  </section>;
+}
+
+function SymbolRow({ symbols }: { symbols: StreamProgress['symbols'] }) {
+  return <ul className="symbol-row" aria-label={tr.symbols.found}>
+    {symbols.map((s) => <li key={s.id}>{s.glyph ? <img src={s.glyph} alt="" /> : <Icon name="spark" />}<span>{s.text}</span></li>)}
+  </ul>;
 }

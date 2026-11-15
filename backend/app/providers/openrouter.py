@@ -124,12 +124,16 @@ class OpenRouter:
             payload["model"] = models[0]
         return payload, models
 
-    async def stream(self, messages: list[dict], *, task: str) -> AsyncIterator[str]:
+    async def stream(self, messages: list[dict], *, task: str, schema: type[BaseModel] | None = None) -> AsyncIterator[str]:
         """The answer as it is written, in text pieces. A rate limit or server error before the first
         byte gets the same one retry as chat(); once text has flowed, a failure is raised, not retried,
-        because the reader has already seen part of the answer. The task's timeout is per read."""
+        because the reader has already seen part of the answer. The task's timeout is per read. schema asks
+        for JSON in that shape (G8: the interpretation is read out of it as it arrives); a model that refuses
+        schemas (400) gets plain JSON mode once, as in chat()."""
         payload, models = self._chat_payload(messages, task)
         payload["stream"] = True
+        if schema is not None:
+            payload["response_format"] = json_schema(schema)
         headers = {"Authorization": f"Bearer {self.key}", "X-Title": "Dreamlib"}
         started, first, chars = time.monotonic(), None, 0
         for attempt in range(2):
@@ -137,6 +141,11 @@ class OpenRouter:
                 if attempt == 0 and (res.status_code == 429 or res.status_code >= 500):
                     await res.aread()
                     await asyncio.sleep(RETRY_AFTER)
+                    continue
+                if attempt == 0 and res.status_code == 400 and payload.get("response_format", {}).get("type") == "json_schema":
+                    await res.aread()
+                    log.warning("openrouter: %s schema refused, falling back to JSON mode", task)
+                    payload["response_format"] = {"type": "json_object"}
                     continue
                 if res.status_code // 100 != 2:
                     text = (await res.aread()).decode(errors="replace")

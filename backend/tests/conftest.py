@@ -34,6 +34,14 @@ class FakeLLM:
         self.schema = schema
         return self.reply(messages) if callable(self.reply) else self.reply
 
+    async def stream(self, messages, *, task, schema=None):
+        """The same reply in seven-character pieces (G8); `stream_fails_after` raises after that many."""
+        reply = await self.chat(messages, schema is not None, task=task, schema=schema)
+        for n, i in enumerate(range(0, len(reply), 7)):
+            if getattr(self, "stream_fails_after", None) == n:
+                raise RuntimeError("stream broke")
+            yield reply[i:i + 7]
+
 
 class FakeFal:
     """Queues instantly; calls holds ("generate", prompt, n) or ("edit", prompt, image_urls) per submit."""

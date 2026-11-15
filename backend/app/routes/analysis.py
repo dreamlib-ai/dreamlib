@@ -8,7 +8,9 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ValidationError
 
 from ..errors import ApiError
-from ..lexicon import context as lexicon_context
+from ..jsonstream import FieldReader
+from ..lexicon import context as lexicon_context, interpretation_segments, symbols as lexicon_symbols
+from ..sse import sse_response
 from ..models import Analysis, CleanOut
 from ..prompts import VERSIONS, ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HINTS
 from ..services import MAX_DREAM, Services, current_user, extract_json, one_line, services
@@ -123,8 +125,8 @@ async def history_block(s: Services, user_id: str, exclude_id: str = "") -> str:
     return "\n".join(lines)
 
 
-@router.post("/analyze", **answers(AnalysisOut, 200))
-async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
+async def _prepare(body: AnalyzeIn, user_id: str, s: Services) -> tuple[str, list[dict], dict]:
+    """The checked narrative, the messages for the interpret task and what the lexicon added; takes a daily use."""
     if not s.llm:
         raise ApiError(503, "yorum servisi kurulu değil")
     text = dream_text(body.text)
@@ -141,12 +143,11 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
     if lexicon_block:
         system += "\n\n" + lexicon_block
     await s.take("text", user_id)
+    return text, [{"role": "system", "content": system}, {"role": "user", "content": text}], used
 
-    try:
-        reply = await s.llm.chat([{"role": "system", "content": system}, {"role": "user", "content": text}], True, task="interpret", schema=Analysis)
-    except Exception:
-        log.exception("analyze: llm failed")
-        raise ApiError(502, "yorum şu an üretilemedi")
+
+async def _finish(reply: str, text: str, user_id: str, s: Services, used: dict) -> dict:
+    """The model's answer checked, with the interpretation as segments (G8), recorded as an analyses row."""
     try:
         result = Analysis.model_validate(extract_json(reply))
         from ..classification import grounded_features
@@ -157,13 +158,53 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
         log.warning("analyze: invalid model response %s", json.dumps(issues))
         raise ApiError(502, "yorum okunamadı, tekrar dene")
     out = result.model_dump()
+    out["segments"] = await interpretation_segments(s, result.interpretation)
     if s.analyses:  # M3: every interpretation is a row; the dream picks it up by analysisId when saved
         try:
-            out["analysisId"] = await s.analyses.add(user_id, "interpret", {**result.model_dump(mode="json"), "context": used},
-                                                     prompt=VERSIONS["interpret"], model=_model(s.llm), input_text=text)
+            out["analysisId"] = await s.analyses.add(
+                user_id, "interpret", {**result.model_dump(mode="json"), "segments": out["segments"], "context": used},
+                prompt=VERSIONS["interpret"], model=_model(s.llm), input_text=text)
         except Exception:
             log.warning("analyses: could not record an interpretation", exc_info=True)
     return out
+
+
+@router.post("/analyze", **answers(AnalysisOut, 200))
+async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
+    text, messages, used = await _prepare(body, user_id, s)
+    try:
+        reply = await s.llm.chat(messages, True, task="interpret", schema=Analysis)
+    except Exception:
+        log.exception("analyze: llm failed")
+        raise ApiError(502, "yorum şu an üretilemedi")
+    return await _finish(reply, text, user_id, s, used)
+
+
+@router.post("/analyze/stream", openapi_extra={"x-sse": True}, **answers(None, 200))
+async def analyze_stream(body: AnalyzeIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
+    """G8: the same interpretation as `/analyze`, written while the user waits, as server-sent events: `entity` for
+    each lexicon symbol the narrative names (id, words, icon) at once, `title` when it is written, `text` pieces of
+    the interpretation, and `done` with the whole answer (as `/analyze`, with `segments`). A failure after the first
+    byte is an `error` event; the client then asks `/analyze` again. Errors before it are ordinary HTTP errors."""
+    text, messages, used = await _prepare(body, user_id, s)
+    _, found, glyphs = await lexicon_symbols(s, text)
+
+    async def events():
+        yield "section", {"name": "semboller"}
+        for words, entity_id in found:
+            yield "entity", {"id": entity_id, "text": words, "glyph": glyphs.get(entity_id, "")}
+        reader, pieces = FieldReader(("title", "interpretation")), []
+        async for piece in s.llm.stream(messages, task="interpret", schema=Analysis):
+            pieces.append(piece)
+            for field, decoded, closed in reader.feed(piece):
+                if field == "title" and closed:
+                    yield "title", {"text": reader.value("title")}
+                elif field == "interpretation" and decoded:
+                    yield "text", {"text": decoded}
+        out = await _finish("".join(pieces), text, user_id, s, used)
+        yield "done", AnalysisOut.model_validate(out).model_dump(mode="json")
+
+    return sse_response(events())
 
 
 def _model(llm) -> str:

@@ -43,6 +43,7 @@ Tek mikrofon düğmesi, yazı ikincil; mevcut ekran korunur. Yeni özellikler bu
 - Olay türleri: `title`, `entity` (düğüm kimliği, etiket, ikon adresi), `text` (cümle parçası), `emotion`, `section` (rüya, semboller, sende, başkalarında), `done`.
 - Metin parça parça gelir; sembol geçtiği yerde küçük ikonuyla belirir. Yorum düz metin değil parça dizisi olarak saklanır; yeniden açıldığında aynı dizilim animasyonsuz çizilir.
 - Göz yormaması için tek sütun, büyük yazı, bölüm başına kısa metin; azaltılmış hareket tercihinde metin tek seferde gelir.
+- Yapıldı (G8): `POST /api/v1/analyze/stream`; tek şemalı model çağrısı akışlı alınır, `app/jsonstream.py` `title` ve `interpretation` alanlarını yazıldıkça okur. Anlatımdaki sözlük sembolleri ikonlarıyla hemen gelir; sonuç `segments` ile satır içi ikonlu çizilir ve `analyses` kaydında saklanır. Kaydedilmiş rüyada segment yok, yorum düz metin.
 
 ### Dergi okuyucu
 - Girdi `spec` ([üretim](uretim.md)); sayfa düzenleri adlandırılmış bileşenlerdir.
