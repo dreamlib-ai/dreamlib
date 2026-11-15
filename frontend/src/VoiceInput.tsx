@@ -108,7 +108,7 @@ export default function VoiceInput({ active, disabled, onText, onError, onBusy }
       if (state === 'recording') { recorder.finish(); return; }
       setRetryAudio(null); callbacks.current.onError(''); void recorder.start();
     }}>
-      <span className="orb-lava" aria-hidden="true"><i /><i /><i /><i /></span>
+      <span className="orb-sky" aria-hidden="true"><i /><i /></span>
       <span className="orb-icon"><Icon name={state === 'recording' ? 'stop' : processing ? 'loader' : 'mic'} /></span>
     </button>
     <div className="capture-status" role={state === 'recording' ? 'timer' : 'status'} aria-live={state === 'recording' ? 'off' : 'polite'}>{state === 'recording' ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : state === 'transcribing' ? tr.app.transcribing : state === 'requesting' ? tr.capture.permission : retryAudio ? '' : tr.app.voice}</div>

@@ -11,6 +11,7 @@ import { authMessage, initializeSession, saveProfile, signOut, watchAccount, typ
 import { tr } from './strings';
 import Tell from './Tell';
 import Icon from './Icon';
+import head from './assets/koala/head.webp';
 import { clearDraft, readDraft } from './draft';
 import { sessionEvent } from './telemetry';
 
@@ -26,7 +27,7 @@ export function Nav({ view, onView, avatarUrl }: { view: View; onView: (view: Vi
     { view: 'brain', label: tr.brain.nav },
   ];
   return <header className="topbar"><div className="glass">
-    <button className="wordmark" onClick={() => onView('tell')}>{tr.brand}</button>
+    <button className="wordmark" onClick={() => onView('tell')}><img src={head} alt="" /><span>{tr.brand}</span></button>
     <nav className="tabs" aria-label={tr.nav.label}>
       {items.map((item) => <button key={item.view} className={view === item.view ? 'tab on' : 'tab'} aria-current={view === item.view ? 'page' : undefined} onClick={() => onView(item.view)}>{item.label}</button>)}
     </nav>

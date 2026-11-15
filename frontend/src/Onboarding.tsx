@@ -81,9 +81,9 @@ export default function Onboarding({ account, replay, initialError, onDone }: {
   return <main className={`steps steps-${step}`}>
     <header className="steps-top">
       <button className="steps-back" disabled={busy || first} onClick={() => { setError(''); setStep(STEPS[index - 1]); }} aria-label={tr.back}><Icon name="chevron" /></button>
-      <div className="steps-bar" role="progressbar" aria-label={text.progress(index + 1, STEPS.length)} aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={index + 1}>
-        <span style={{ width: `${((index + 1) / STEPS.length) * 100}%` }} />
-      </div>
+      <ol className="steps-clouds" role="progressbar" aria-label={text.progress(index + 1, STEPS.length)} aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={index + 1}>
+        {STEPS.map((key, k) => <li key={key} className={k < index ? 'done' : k === index ? 'now' : ''}><svg viewBox="0 0 40 26" aria-hidden="true"><path d="M11 25a8 8 0 0 1-1.2-15.9A10 10 0 0 1 29 7.6 7.8 7.8 0 0 1 31 25Z" /></svg></li>)}
+      </ol>
     </header>
     <div key={step} className="steps-body" aria-busy={busy}>
       <Mascot pose={POSE[step]} className="steps-koala" />
@@ -94,7 +94,7 @@ export default function Onboarding({ account, replay, initialError, onDone }: {
     </div>
     <footer className="steps-foot">
       {error && <p className="error auth-error" role="alert">{error}</p>}
-      <button className="cta" disabled={busy} onClick={forward}>{step === 'signin' && !account && <GoogleMark />}{action}</button>
+      <button className="cta cloud-button" disabled={busy} onClick={forward}><span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{step === 'signin' && !account && <GoogleMark />}{action}</span></button>
       {step === 'hello' && <nav className="steps-info" aria-label="Uygulama bilgileri"><a href="/about.html">Dreamlib hakkında</a><a href="/privacy.html">Gizlilik</a></nav>}
     </footer>
   </main>;

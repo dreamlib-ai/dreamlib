@@ -1,27 +1,31 @@
-/* Calm night: deep navy paper, warm cream ink, the koala's honey rim light and lilac ear as the only accents. */
+/* Dream dusk: indigo-to-plum night, pink / lilac / peach clouds as light. Every surface is a gradient or a soft tint. */
 :root {
-  --night: #0c1730;
-  --night-2: #13213f;
-  --night-soft: #1a2a4c;
-  --paper: #f1e9da;
-  --ink: #f1e9da;
-  --soft: #c6cbd8;
-  --muted: #8d97ad;
-  --line: #f1e9da1c;
-  --honey: #f0c37a;
-  --lilac: #c7a4d9;
-  --rose: #e8a49c;
-  --accent: #f0c37a;
-  --danger: #f2a7a0;
-  --cobalt: #2457c5;
-  --cobalt-strong: #f0c37a;
-  --cobalt-deep: #c6cbd8;
+  --night: #130d30;
+  --night-2: #241245;
+  --night-soft: #2f1a52;
+  --plum: #321443;
+  --paper: #fbf0f4;
+  --ink: #fbf0f4;
+  --soft: #e7d7ec;
+  --muted: #b6a3c8;
+  --line: #fbf0f41a;
+  --pink: #f4a9cb;
+  --lilac: #bba5f3;
+  --peach: #f8c8a2;
+  --honey: #f8c8a2;
+  --rose: #e889b0;
+  --accent: #f4a9cb;
+  --danger: #ffb3c1;
+  --cobalt: #8f7be6;
+  --cobalt-strong: #f4a9cb;
+  --cobalt-deep: #e7d7ec;
   --white: #ffffff;
+  --dream: linear-gradient(120deg, #f6b3d2 0%, #c9b1f7 52%, #fbd0a8 100%);
   --font: 'Funnel Sans', system-ui, sans-serif;
   --font-ui: 'Funnel Display', 'Funnel Sans', system-ui, sans-serif;
   --font-head: 'Fraunces', Georgia, serif;
   --gutter: clamp(20px, 4vw, 48px);
   --radius-panel: 28px;
-  --radius-card: 20px;
-  --radius-small: 14px;
+  --radius-card: 22px;
+  --radius-small: 16px;
 }
