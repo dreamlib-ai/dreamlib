@@ -28,15 +28,21 @@ def _ink(img: Image.Image, paper: tuple[int, int, int]) -> Image.Image:
 
 
 def _even(img: Image.Image) -> Image.Image:
-    """Paints every light, nearly grey pixel the one paper cream: the model's paper, card and vignette tones differ
-    by a few shades and would otherwise show as a box around the object."""
+    """Paints the light, nearly grey pixels around the object the one paper cream: the model's paper, card and
+    vignette tones differ by a few shades and would otherwise show as a box. Only what the picture's edge reaches
+    is paper; a pale fill inside the object's outline (a loaf, a page) stays."""
     r, g, b = img.split()
     low = ImageChops.darker(ImageChops.darker(r, g), b)
     high = ImageChops.lighter(ImageChops.lighter(r, g), b)
     light = low.point(lambda v: 255 if v >= LIGHT else 0)
     grey = ImageChops.subtract(high, low).point(lambda v: 255 if v <= GREY else 0)
+    paper = ImageChops.multiply(light, grey)
+    w, h = paper.size
+    for corner in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        if paper.getpixel(corner) == 255:
+            ImageDraw.floodfill(paper, corner, 128)
     out = img.copy()
-    out.paste(CREAM, mask=ImageChops.multiply(light, grey))
+    out.paste(CREAM, mask=paper.point(lambda v: 255 if v == 128 else 0))
     return out
 
 
