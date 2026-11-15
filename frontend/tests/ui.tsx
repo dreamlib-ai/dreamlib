@@ -77,6 +77,21 @@ globalThis.fetch = async (input, init) => {
     return json({ text: dream.originalText });
   }
   if (path === '/api/v1/analyze') return json(dream);
+  // The reading arrives as the server streams it: symbols, title, then the text in small pieces (?slowRead stretches it).
+  if (path === '/api/v1/analyze/stream') {
+    const step = params.has('slowRead') ? 260 : 40;
+    const read = { ...dream, segments: [{ text: 'Denizin üstünde uçmak, özgürlük isteğini ve bilinmeyene duyulan merakı çağrıştırabilir. Altındaki ' }, { text: 'deniz', entity: 'sea', glyph: '/favicon.png' },
+      { text: ' keşfetmek istediğin duyguları taşıyor olabilir.\n\nRüyandaki huzur, bu değişime açık olduğunu düşündürüyor. Elindeki ' }, { text: 'ekmek', entity: 'bread' }, { text: ' ise paylaşmaya hazır olduğun bir şeyi anlatabilir.\n\nBu sahnenin senin için anlamını kendi hislerinle birlikte değerlendirebilirsin.' }] };
+    const pieces = read.segments.map(s => s.text).join('').match(/.{1,14}/gs) ?? [];
+    const events = [['entity', { id: 'sea', text: 'deniz', glyph: '/favicon.png' }], ['entity', { id: 'bread', text: 'ekmek', glyph: '' }], ['title', { text: read.title }],
+      ...pieces.map(text => ['text', { text }]), ['done', read]] as const;
+    return new Response(new ReadableStream({ async start(out) {
+      for (const [kind, data] of events) { await new Promise(done => setTimeout(done, step)); out.enqueue(new TextEncoder().encode(`event: ${kind}\ndata: ${JSON.stringify(data)}\n\n`)); }
+      out.close();
+    } }), { headers: { 'Content-Type': 'text/event-stream' } });
+  }
+  if (path.startsWith('/api/v1/entities/')) return json({ id: path.split('/').pop(), label: path.endsWith('bread') ? 'Ekmek' : 'Deniz', glyph: '', mine: 2,
+    meanings: [{ tradition: 'islamic', text: 'Bereket ve rızık olarak yorumlanır.', source: 'Tabirname', locator: 's. 12', author: '', license: '' }], others: { emotion: 'calm', dreams: 14, people: 9 } });
   if (path === '/api/v1/dreams' && init?.method === 'POST') { const saved = { ...dream, ...payload }; rows.push(saved); return json(saved); }
   if (path.endsWith('/magazine/visibility') && init?.method === 'PUT') {
     const row = rows.find(d => d.id === path.split('/')[4]);
@@ -123,7 +138,7 @@ globalThis.fetch = async (input, init) => {
   if (path === '/api/v1/manga') {
     const id = payload.requestId;
     if (!fake.jobs[id]) {
-      fake.jobs[id] = { ready: Date.now() + (params.has('recovery') ? 12000 : 0) }; persist();
+      fake.jobs[id] = { ready: Date.now() + (params.has('recovery') ? 12000 : params.has('slowDraw') ? 9000 : 0), started: Date.now() }; persist();
       if (params.has('lost')) throw new TypeError('Simulated lost response after queue commit');
     }
     return json({ id });
@@ -132,7 +147,7 @@ globalThis.fetch = async (input, init) => {
     const id = path.split('/').pop();
     const pending = Date.now() < (fake.jobs[id]?.ready ?? 0);
     if(fake.jobs[id]?.kind==='avatar')return json({id,status:pending?'running':'done',total:1,done:pending?0:1,panels:pending?[]:[{path:'test/avatar',url:'/avatars/ink.webp',caption:''}],error:''});
-    return json({ id, status: pending ? 'running' : 'done', total:4, done:pending ? 1 : 4,
+    return json({ id, status: pending ? 'running' : 'done', total:4, done:pending ? Math.min(3, Math.floor((Date.now() - (fake.jobs[id].started ?? 0)) / 2500)) : 4,
       panels: pending ? [] : [0,1,2,3].map(n => ({ path:`test/panel-${n}`, caption:`Sahne ${n}`, url:'/favicon.png' })), error:'' });
   }
   if (path === '/api/v1/jobs/test-booklet') return json({ id: 'test-booklet', status: 'done', total: 4, done: 4, panels: [], error: '' });
