@@ -192,6 +192,16 @@ export const tr = {
   visualizing: 'Çiziliyor',
   objects: 'Nesneler',
   symbols: { found: 'Rüyandaki semboller' },
+  symbolCard: {
+    loading: 'Sembol açılıyor',
+    close: 'Kapat',
+    open: (label: string) => `${label} sembolünü aç`,
+    mine: (n: number) => `Rüyalarında ${n} kez geçti`,
+    first: 'Rüyalarında ilk kez',
+    others: (feeling: string, people: number) => `Başkalarının rüyalarında en çok ${feeling} ile birlikte görülüyor (${people} kişi)`,
+    traditions: { 'greko-romen': 'Greko-Romen gelenek' } as Record<string, string>,
+    emotions: { 'hvdc.anger': 'öfke', 'hvdc.apprehension': 'korku ve kaygı', 'hvdc.sadness': 'üzüntü', 'hvdc.confusion': 'şaşkınlık', 'hvdc.happiness': 'mutluluk' } as Record<string, string>,
+  },
   emotions: 'Duygular',
   genericError: 'Bir şey ters gitti, tekrar dene.',
 } as const;

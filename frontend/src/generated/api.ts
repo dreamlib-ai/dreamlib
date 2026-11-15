@@ -62,6 +62,9 @@ export type EmotionInput = { label?: string; pct?: number; note?: string };
 
 export type EmotionOutput = { label: string; pct: number; note: string };
 
+/** F1: a symbol card. */
+export type EntityOut = { id: string; label: string; glyph: string; meanings: Meaning[]; mine: number; others?: Others | null };
+
 export type EventIn = { name: "session_open" | "record_started" | "transcript_ready" | "analysis_ready" | "booklet_ready" | "dream_saved" | "feedback_helpful" | "feedback_unhelpful"; eventId: string; platform?: "ios" | "android" | "desktop" | "other" };
 
 export type ExperienceEvidence = { kind: "lucid" | "recurring" | "nightmare"; quote: string };
@@ -97,6 +100,12 @@ export type MagazineShare = { visibility: "private" | "link" };
 export type MagazineSpecOut = { version: number; cover: MagazineCover; pages: MagazinePage[]; colophon: MagazineColophon };
 
 export type MangaIn = { title?: string; text?: string; style?: string; panels?: number; consistent?: boolean; requestId?: string | null; useAvatar?: boolean; avatarRevision?: number; perspective?: "first-person" | "observer" | "mixed" | "unknown" };
+
+/** F1: what one tradition's source says about a symbol. */
+export type Meaning = { tradition: string; text: string; source: string; locator: string; author: string; license: string };
+
+/** F1: the feeling most often met with the symbol in consented dreams (at least five people). */
+export type Others = { emotion: string; dreams: number; people: number };
 
 /** One picture of a booklet. path is a storage path (or, without storage, the remote image */
 export type PanelInput = { caption?: string; path?: string; url?: string; width?: number; height?: number; blurhash?: string; color?: string; thumb?: string };
@@ -245,3 +254,7 @@ export const sharedPicture = (slug: string, n: number, query: { thumb?: boolean 
 /** GET /api/v1/m/{slug}/cover */
 export const sharedCover = (slug: string, signal?: AbortSignal) =>
   request<void>('GET', `/api/v1/m/${encodeURIComponent(String(slug))}/cover`, undefined, signal);
+
+/** GET /api/v1/entities/{entity_id} */
+export const symbolCard = (entityId: string, signal?: AbortSignal) =>
+  request<EntityOut>('GET', `/api/v1/entities/${encodeURIComponent(String(entityId))}`, undefined, signal);

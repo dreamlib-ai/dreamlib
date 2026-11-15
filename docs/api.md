@@ -8,6 +8,7 @@ Backend FastAPI; çalışırken etkileşimli şema `http://127.0.0.1:8080/docs`.
 | `POST /api/v1/clean` | evet | `{text}` → `{cleanText, language}` yazım düzeltme |
 | `POST /api/v1/analyze` | evet | `{text, type, mood?, sleep?, personal?}` → başlık, etiketler, yorum, nesneler, duygular; `segments`: yorum parçaları, sözlük sembolünün ilk geçtiği yerde `entity` ve `glyph` |
 | `POST /api/v1/analyze/stream` | evet | Aynı istek, SSE (G8): `section`, sözlükteki her sembol için `entity` `{id, text, glyph}`, `title`, yorum parçaları `text`, sonunda `done` (tam yanıt, `/analyze` gibi). Akış başladıktan sonraki hata `error` olayı; istemci o zaman `/analyze`'ı bir kez çağırır |
+| `GET /api/v1/entities/{id}` | evet | Sembol kartı (F1): `{id, label, glyph, meanings:[{tradition, text, source, locator, author, license}], mine, others?}`; `mine` okuyanın kaç rüyasında geçtiği, `others` en az beş kişinin rızalı rüyalarındaki en sık duygu. Onaylı sembol değilse 404 |
 | `POST /api/v1/images` | evet | `{prompt, style, count}` → 202 `{id}` (en çok 4 görsel); sonuç `GET /api/v1/jobs/{id}` panellerinde |
 | `POST /api/v1/transcribe?lang=tr` | evet | Ham ses gövdesi (Content-Type `audio/*`, 8 MB) → `{text}` |
 | `POST /api/v1/manga` | evet | `{title, text, style, panels: 4\|6\|9, consistent}` → 202 `{id}`; kitapçığı worker yapar |

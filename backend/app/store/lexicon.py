@@ -42,6 +42,18 @@ class SupabaseLexicon:
                 out.append(r)
         return out
 
+    async def symbol(self, entity_id: str) -> dict | None:
+        """F1: an approved symbol node (id, labels, glyph_path), or None."""
+        rows = await self._get("/rest/v1/entities", {"id": f"eq.{entity_id}", "kind": "eq.symbol", "status": "eq.approved",
+                                                     "select": "id,labels,glyph_path"})
+        return rows[0] if rows else None
+
+    async def seen(self, user_id: str, entity_id: str) -> int:
+        """F1: in how many of this person's dreams the symbol appears."""
+        rows = await self._get("/rest/v1/dream_entities", {"entity_id": f"eq.{entity_id}", "dreams.user_id": f"eq.{user_id}",
+                                                           "select": "dream_id,dreams!inner(user_id)", "limit": "10000"})
+        return len({r["dream_id"] for r in rows})
+
     async def glyphs(self, entity_ids: list[str]) -> dict[str, str]:
         """G8: symbol id -> icon address, for those that have one."""
         if not entity_ids:
@@ -65,9 +77,17 @@ class MemoryLexicon:
     def __init__(self, aliases: dict[str, str] | None = None, entries: list[dict] | None = None, totals: list[dict] | None = None,
                  icons: dict[str, str] | None = None):
         self.known, self.entries, self.totals, self.icons = aliases or {}, entries or [], totals or [], icons or {}
+        self.counts: dict[tuple[str, str], int] = {}
 
     async def glyphs(self, entity_ids: list[str]) -> dict[str, str]:
         return {i: self.icons[i] for i in entity_ids if self.icons.get(i)}
+
+    async def symbol(self, entity_id: str) -> dict | None:
+        names = [a for a, i in self.known.items() if i == entity_id]
+        return {"id": entity_id, "labels": {"tr": names[0]}, "glyph_path": self.icons.get(entity_id, "")} if names else None
+
+    async def seen(self, user_id: str, entity_id: str) -> int:
+        return self.counts.get((user_id, entity_id), 0)
 
     async def aliases(self) -> dict[str, str]:
         return dict(self.known)

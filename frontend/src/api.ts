@@ -127,6 +127,10 @@ export async function streamDream(text: string, type: InterpretationType, contex
   return analyzeDream(text, type, context);  // the stream broke; its daily use is spent, this one is the retry
 }
 
+export type SymbolCard = g.EntityOut;
+/** F1: a symbol's card: the traditions' meanings with sources, and how often the reader dreamt it. */
+export const getSymbol = (id: string, signal?: AbortSignal) => g.symbolCard(id, signal);
+
 export const listDreams = () => g.listDreams().then((r) => r.dreams.map(asDream));
 
 export type DreamPage = { dreams: Dream[]; next?: string };
