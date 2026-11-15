@@ -13,7 +13,6 @@ h2 { font-size: 24px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .small { color: var(--muted); font-size: 12px; font-weight: 400; }
 .error { color: var(--danger); font-size: 13px; }
-body::after { content: ''; position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .045; mix-blend-mode: multiply; background: url('./assets/koala-cloud-wide.webp') left center / 350% auto; }
 .go, .pill { display: inline-flex; justify-content: center; align-items: center; gap: 10px; min-height: 54px; padding: 15px 25px; border: 0; border-radius: 12px; background: var(--accent); color: var(--night); font-size: 13px; font-weight: 600; transition: background .18s, transform .18s; }
 .go:hover:not(:disabled), .pill:hover:not(:disabled) { background: #d9fa91; transform: translateY(-1px); }
 .go:active:not(:disabled), .pill:active:not(:disabled) { transform: translateY(1px); }
@@ -114,7 +113,6 @@ textarea::placeholder { color: var(--muted); }
 @media (min-width: 701px) and (max-aspect-ratio: 7/5) {
  .onb .onb-art { left: 42%; }
  .onb .onb-art img { object-fit: contain; object-position: right center; width: 200%; max-width: none; margin-left: -100%; mask-image: linear-gradient(to right, transparent 42%, black 52%), linear-gradient(to bottom, transparent, black 16%, black 84%, transparent); mask-composite: intersect; }
- .onb { background: url('./assets/koala-cloud-wide.webp') left center / 300% auto; }
 }
 @media (max-width: 700px) {
  .nav { position: static; width: 100%; background: transparent; } .nav-in { height: auto; padding: 24px; }
@@ -153,7 +151,6 @@ textarea::placeholder { color: var(--muted); }
  .session-error { bottom: 90px; left: 24px; right: 24px; }
 }
 
-.onb-privacy { background: url('./assets/koala-curious-left.webp') right center / 300% auto; }
 .onb-privacy .onb-art img { object-fit: contain; object-position: left center; mask-image: linear-gradient(to right, black 80%, transparent 98%); }
 .onb-privacy .onb-main { margin-left: 54%; width: 46%; padding-left: 0; padding-right: clamp(32px,7vw,112px); }
 .onb-privacy .onb-top { position: absolute; left: clamp(32px,7vw,112px); top: 42px; }
@@ -166,7 +163,6 @@ textarea::placeholder { color: var(--muted); }
 .empty-library-copy .go { margin-top: 32px; }
 .cover img.ph { object-position: left center; }
 @media (min-width: 701px) and (max-aspect-ratio: 7/5) {
- .onb-privacy { background-image: url('./assets/koala-curious-left.webp'); background-position: right center; }
  .onb-privacy .onb-art { left: 0; right: 42%; }
  .onb-privacy .onb-art img { object-position: left center; width: 200%; margin-left: 0; mask-image: linear-gradient(to right, black 48%, transparent 60%), linear-gradient(to bottom, transparent, black 16%, black 84%, transparent); mask-composite: intersect; }
 }

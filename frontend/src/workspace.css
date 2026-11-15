@@ -20,7 +20,6 @@
 .page-heading p { margin: 10px 0 0; color: var(--soft); font-size: 12px; }
 .page-heading time { white-space: nowrap; color: var(--soft); font-size: 11px; }
 .explore-top { display: grid; grid-template-columns: minmax(0,1.65fr) minmax(0,1fr); gap: 22px; }
-.welcome-card { position: relative; display: flex; align-items: center; min-height: 290px; padding: 30px; overflow: hidden; border: 1.5px solid var(--night); border-radius: 22px; background: var(--cobalt) url('./assets/koala-cloud-wide.webp') left center / 400% auto; color: #f6f3eb; }
 .welcome-card > div { position: relative; z-index: 1; width: 57%; }
 .welcome-card h2 { font-size: clamp(24px,2.6vw,34px); line-height: 1.3; margin: 0 0 26px; }
 .welcome-card > img { position: absolute; width: 44%; height: 95%; object-fit: contain; object-position: bottom; right: 8px; bottom: -10px; }

@@ -8,6 +8,7 @@ import '../src/workspace.css';
 import '../src/atmosphere.css';
 import '../src/editorial.css';
 import '../src/magazine.css';
+import '../src/calm.css';
 import { Workspace } from '../src/App';
 import { SharedMagazinePage } from '../src/Magazine';
 import Onboarding from '../src/Onboarding';
