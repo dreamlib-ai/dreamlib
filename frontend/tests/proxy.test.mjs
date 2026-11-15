@@ -61,13 +61,24 @@ test('an unknown or closed share is still the app, with no preview tags', async 
   } finally { globalThis.fetch = original; }
 });
 
-test('shared magazine pictures keep their public cache time; private answers never do', async () => {
+test('shared magazine pictures keep their public cache time and are kept at the edge; private answers never are', async () => {
   const original = globalThis.fetch;
-  globalThis.fetch = async () => new Response('png', { headers: { 'Cache-Control': 'public, max-age=3600' } });
+  const kept = new Map();
+  globalThis.caches = { default: { match: async (r) => kept.get(r.url)?.clone(), put: async (r, res) => { kept.set(r.url, res); } } };
+  const waits = [];
+  const ctx = { waitUntil: (p) => waits.push(p) };
+  let calls = 0;
+  globalThis.fetch = async () => { calls += 1; return new Response('png', { headers: { 'Cache-Control': 'public, max-age=3600' } }); };
   try {
-    const picture = await worker.fetch(new Request('https://dreamlib.cenker.dev/api/v1/m/abcDEF123_-x/p/0'), env);
+    const url = 'https://dreamlib.cenker.dev/api/v1/m/abcDEF123_-x/p/0?thumb=true';
+    const picture = await worker.fetch(new Request(url), env, ctx);
     assert.equal(picture.headers.get('Cache-Control'), 'public, max-age=3600');
-    const mine = await worker.fetch(new Request('https://dreamlib.cenker.dev/api/v1/dreams'), env);
+    await Promise.all(waits);
+    const again = await worker.fetch(new Request(url), env, ctx);
+    assert.equal(await again.text(), 'png');
+    assert.equal(calls, 1);  // the second read never reached the API
+    const mine = await worker.fetch(new Request('https://dreamlib.cenker.dev/api/v1/dreams'), env, ctx);
     assert.equal(mine.headers.get('Cache-Control'), 'no-store');
-  } finally { globalThis.fetch = original; }
+    assert.equal(kept.size, 1);
+  } finally { globalThis.fetch = original; delete globalThis.caches; }
 });
