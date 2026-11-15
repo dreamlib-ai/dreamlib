@@ -12,6 +12,8 @@ import '../src/calm.css';
 import { Workspace } from '../src/App';
 import { SharedMagazinePage } from '../src/Magazine';
 import Onboarding from '../src/Onboarding';
+import Intro from '../src/Intro';
+import Sky from '../src/Sky';
 import type { Dream } from '../src/api';
 import { defaultAvatar } from '../src/avatar';
 
@@ -150,6 +152,6 @@ Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { 
   return destination.stream;
 } } });
 const account = { id: 'test', email: '', provider: '', profile: { onboarded: true, visibility: 'private' as const } };
-createRoot(document.getElementById('root')!).render(<StrictMode>{params.has('shared') ? <SharedMagazinePage slug="abcDEF123_-x" /> : params.has('onboarding') || params.has('privacy')
+createRoot(document.getElementById('root')!).render(<StrictMode><Sky />{params.has('intro') && <Intro />}{params.has('shared') ? <SharedMagazinePage slug="abcDEF123_-x" /> : params.has('onboarding') || params.has('privacy')
   ? <Onboarding account={params.has('privacy') ? account : null} replay={false} initialError="" onDone={async () => {}} />
   : <Workspace account={account} onSignOut={() => {}} />}</StrictMode>);
