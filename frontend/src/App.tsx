@@ -12,13 +12,9 @@ import { tr } from './strings';
 import Tell from './Tell';
 import Icon, { type IconName } from './Icon';
 
-/** Temporary mark until the real logo: a soft four-point dream sparkle. */
+/** Temporary mark until the real logo: a tiny copy of the microphone's cloud sphere. */
 function Mark() {
-  return <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-    <defs><linearGradient id="mark-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffd6ec" /><stop offset=".55" stopColor="#b9a6ff" /><stop offset="1" stopColor="#5b7bff" /></linearGradient></defs>
-    <path d="M16 2c.9 7.4 6.6 13.1 14 14-7.4.9-13.1 6.6-14 14-.9-7.4-6.6-13.1-14-14C9.4 15.1 15.1 9.4 16 2Z" fill="url(#mark-fill)" />
-    <circle cx="25" cy="7" r="1.6" fill="#ffd6ec" />
-  </svg>;
+  return <span className="mark-orb" aria-hidden="true" />;
 }
 import { clearDraft, readDraft } from './draft';
 import { sessionEvent } from './telemetry';

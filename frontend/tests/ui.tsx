@@ -13,7 +13,7 @@ import { Workspace } from '../src/App';
 import { SharedMagazinePage } from '../src/Magazine';
 import Onboarding from '../src/Onboarding';
 import Intro from '../src/Intro';
-import Sky from '../src/Sky';
+import Sky, { BUTTON_SKINS, type ButtonSkin } from '../src/Sky';
 import type { Dream } from '../src/api';
 import { defaultAvatar } from '../src/avatar';
 
@@ -152,6 +152,10 @@ Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { 
   return destination.stream;
 } } });
 const account = { id: 'test', email: '', provider: '', profile: { onboarded: true, visibility: 'private' as const } };
-createRoot(document.getElementById('root')!).render(<StrictMode><Sky />{params.has('intro') && <Intro />}{params.has('shared') ? <SharedMagazinePage slug="abcDEF123_-x" /> : params.has('onboarding') || params.has('privacy')
+const skinNames: Record<ButtonSkin, string> = { cloud: 'Bulut', riso: 'Riso sprey', light: 'Akan ışık', ink: 'Mürekkep cam', ice: 'Buz' };
+const ButtonBoard = () => <main className="steps"><div className="steps-body" style={{ gap: 14, justifyContent: 'center' }}>
+  {BUTTON_SKINS.map(skin => <button key={skin} className="cta cloud-button" data-skin={skin} style={{ width: '100%' }}><span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{skinNames[skin]} · Devam</span></button>)}
+</div></main>;
+createRoot(document.getElementById('root')!).render(<StrictMode><Sky />{params.has('intro') && <Intro />}{params.has('buttons') ? <ButtonBoard /> : params.has('shared') ? <SharedMagazinePage slug="abcDEF123_-x" /> : params.has('onboarding') || params.has('privacy')
   ? <Onboarding account={params.has('privacy') ? account : null} replay={false} initialError="" onDone={async () => {}} />
   : <Workspace account={account} onSignOut={() => {}} />}</StrictMode>);

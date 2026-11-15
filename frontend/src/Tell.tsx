@@ -146,7 +146,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {!analysis ? <>
       {mode === 'voice' && busy === null && <Mascot pose={voiceBusy ? 'listen' : 'curious'} className="tell-koala" />}
-      <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1>{mode === 'voice' && busy === null && <p>{tr.app.writingHint}</p>}</header>
+      <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1></header>
       {busy === null && <div className="mode-switch" role="radiogroup" aria-label={tr.app.tell}>
         <button role="radio" aria-checked={mode === 'voice'} aria-label={tr.app.voice} title={tr.app.voice} className={mode === 'voice' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); setVoiceBusy(false); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
         <button role="radio" aria-checked={mode === 'text'} aria-label={tr.capture.write} title={tr.capture.write} className={mode === 'text' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="text" /></button>

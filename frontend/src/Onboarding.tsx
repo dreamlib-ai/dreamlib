@@ -3,6 +3,7 @@ import { checkGoogleProvider } from './api';
 import Mascot, { type Pose } from './Mascot';
 import Icon from './Icon';
 import Worn from './Worn';
+import { buttonSkin } from './Sky';
 import { defaultProfile, typicalThemes, type Profile, type TypicalTheme, type Visibility } from './profile';
 import { authMessage, signInGoogle, type Account } from './session';
 import { tr } from './strings';
@@ -53,6 +54,7 @@ export default function Onboarding({ account, replay, initialError, onDone }: {
   const [visibility, setVisibility] = useState<Visibility>(account?.profile.visibility ?? defaultProfile.visibility);
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
+  const [skin] = useState(buttonSkin);
 
   useEffect(() => {
     if (account) {
@@ -94,7 +96,7 @@ export default function Onboarding({ account, replay, initialError, onDone }: {
     </div>
     <footer className="steps-foot">
       {error && <p className="error auth-error" role="alert">{error}</p>}
-      <button className="cta cloud-button" disabled={busy} onClick={forward}><span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{step === 'signin' && !account && <GoogleMark />}{action}</span></button>
+      <button className="cta cloud-button" data-skin={skin} disabled={busy} onClick={forward}><span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{step === 'signin' && !account && <GoogleMark />}{action}</span></button>
       {step === 'hello' && <nav className="steps-info" aria-label="Uygulama bilgileri"><a href="/about.html">Dreamlib hakkında</a><a href="/privacy.html">Gizlilik</a></nav>}
     </footer>
   </main>;
