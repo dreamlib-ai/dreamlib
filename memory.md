@@ -34,3 +34,5 @@ Cenker bir hatayı düzelttiğinde düzeltmenin kalıbı buraya tek satır yazı
 - 2026-11-15: Tasarım "berbat" bulundu: gövdede de geniş başlık fontu (Unbounded), iki farklı koala, slayt gibi tanıtım, arka planlı koala sahneleri → sakin gece yönü (`docs/tasarim.md`): karakterli başlık fontu + sade metin fontu, tek pastel koala ve arka plansız poz seti, üstte liquid glass menü, lav lambası mikrofon, Duolingo gibi adımlar. Koalayı arka planlı koyma; font önerirken karakterli seçenekleri görsel örnekle göster.
 
 - 2026-11-15: Sakin gece ilk turu da "AI slop" bulundu: düz renkler yapay, yükleme çubuğu, çerçeveli kartlar, logo; "daha tatlı" istendi → gradyanlı canlı zemin (three.js lav), bulut görselli düğmeler, çerçevesiz baloncuklar, bulutlu ilerleme, tokonomy gibi açılış. Düz zemin ve ince çerçeveli kart dilini varsayılan yapma.
+
+- 2026-11-15: Tasarım yönü için Cenker'in Pinterest'ine (Chrome'da oturumu açık) bak: grenli kobalt/mor sprey, oluklu cam, risograf, liquid glass. Menüde yazı kalabalığı istemiyor; ikon yeter. Görsel üstündeki yazıya mutlaka koyu tül koy.
