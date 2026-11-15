@@ -191,6 +191,7 @@ export const tr = {
   visualize: 'Kitapçığa çevir',
   visualizing: 'Çiziliyor',
   objects: 'Nesneler',
+  symbols: { found: 'Rüyandaki semboller' },
   emotions: 'Duygular',
   genericError: 'Bir şey ters gitti, tekrar dene.',
 } as const;

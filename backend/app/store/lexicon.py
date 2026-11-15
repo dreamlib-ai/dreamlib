@@ -42,6 +42,14 @@ class SupabaseLexicon:
                 out.append(r)
         return out
 
+    async def glyphs(self, entity_ids: list[str]) -> dict[str, str]:
+        """G8: symbol id -> icon address, for those that have one."""
+        if not entity_ids:
+            return {}
+        rows = await self._get("/rest/v1/entities", {"id": f"in.({','.join(entity_ids)})", "glyph_path": "neq.",
+                                                     "select": "id,glyph_path"})
+        return {r["id"]: r["glyph_path"] for r in rows}
+
     async def collective(self, entity_ids: list[str]) -> list[dict]:
         if not entity_ids:
             return []
@@ -54,8 +62,12 @@ class SupabaseLexicon:
 class MemoryLexicon:
     """The same from lists, for DREAMLIB_DEV_AUTH=1 and the tests."""
 
-    def __init__(self, aliases: dict[str, str] | None = None, entries: list[dict] | None = None, totals: list[dict] | None = None):
-        self.known, self.entries, self.totals = aliases or {}, entries or [], totals or []
+    def __init__(self, aliases: dict[str, str] | None = None, entries: list[dict] | None = None, totals: list[dict] | None = None,
+                 icons: dict[str, str] | None = None):
+        self.known, self.entries, self.totals, self.icons = aliases or {}, entries or [], totals or [], icons or {}
+
+    async def glyphs(self, entity_ids: list[str]) -> dict[str, str]:
+        return {i: self.icons[i] for i in entity_ids if self.icons.get(i)}
 
     async def aliases(self) -> dict[str, str]:
         return dict(self.known)

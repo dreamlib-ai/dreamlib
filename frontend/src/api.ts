@@ -82,6 +82,51 @@ export async function transcribeAudio(audio: Blob, language?: string, signal?: A
   return (data as { text: string }).text;  // raw audio upload: outside the generated client
 }
 
+export type Segment = g.Segment;
+export type StreamSymbol = { id: string; text: string; glyph: string };
+export type StreamProgress = { symbols: StreamSymbol[]; title: string; text: string };
+
+/** G8: the interpretation written while the user waits (server-sent events, outside the generated client).
+ * `onProgress` gets what has arrived so far; the promise ends with the whole answer, as `analyzeDream` gives it.
+ * If the stream breaks after it started, the answer is asked for once more the plain way. */
+export async function streamDream(text: string, type: InterpretationType, context: { mood?: string; sleep?: string; personal?: boolean; excludeId?: string },
+  onProgress: (progress: StreamProgress) => void, signal?: AbortSignal): Promise<Analysis> {
+  const token = await getToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'text/event-stream' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch('/api/v1/analyze/stream', { method: 'POST', headers, body: JSON.stringify({ ...context, text, type }), signal });
+  if (!res.ok || !res.body) {
+    const data = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, data.error ?? tr.genericError, data.code ?? 'internal');
+  }
+  const progress: StreamProgress = { symbols: [], title: '', text: '' };
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = '';
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += value;
+      let end: number;
+      while ((end = buffer.indexOf('\n\n')) >= 0) {
+        const block = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+        const kind = /^event: (.*)$/m.exec(block)?.[1];
+        const data = JSON.parse(/^data: (.*)$/m.exec(block)?.[1] ?? '{}');
+        if (kind === 'done') return data as Analysis;
+        if (kind === 'error') throw new Error(data.message ?? tr.genericError);
+        if (kind === 'entity') progress.symbols = [...progress.symbols, data as StreamSymbol];
+        else if (kind === 'title') progress.title = data.text;
+        else if (kind === 'text') progress.text += data.text;
+        else continue;
+        onProgress({ ...progress });
+      }
+    }
+  } catch (cause) {
+    if (signal?.aborted) throw cause;
+  }
+  return analyzeDream(text, type, context);  // the stream broke; its daily use is spent, this one is the retry
+}
+
 export const listDreams = () => g.listDreams().then((r) => r.dreams.map(asDream));
 
 export type DreamPage = { dreams: Dream[]; next?: string };

@@ -16,7 +16,9 @@ export default function Result({ analysis, children }: { analysis: Analysis; chi
           </span>
         ))}
       </div>
-      <p className="lead">{analysis.interpretation}</p>
+      <p className="lead">{analysis.segments?.length ? analysis.segments.map((part, i) => part.entity
+        ? <span key={i} className="symbol-mention">{part.glyph && <img src={part.glyph} alt="" />}{part.text}</span>
+        : <span key={i}>{part.text}</span>) : analysis.interpretation}</p>
       {(features.genres.length > 0 || features.experiences.length > 0 || features.perspective !== 'unknown') && <details className="result-details"><summary>{tr.classification.heading}</summary>
         {features.genres.length > 0 && <p className="classification-line"><span>{tr.classification.genreLabels[features.genres[0]]}{features.genres.slice(1).map(key => `, ${tr.classification.genreLabels[key]}`).join('')}</span><small>{features.genreSource === 'user' ? tr.classification.user : tr.classification.model}</small></p>}
         {features.perspective !== 'unknown' && <p className="classification-line"><span>{tr.classification.perspectiveLabels[features.perspective]}</span><small>{features.perspectiveSource === 'user' ? tr.classification.user : tr.classification.model}</small></p>}

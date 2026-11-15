@@ -6,7 +6,7 @@ export type AccountDelete = { confirm: "delete" };
 
 export type AdditionIn = { id: string; text: string };
 
-export type AnalysisOut = { title: string; cleanText: string; tags: string[]; mood: string; interpretation: string; objects: DreamObjectOutput[]; emotions: EmotionOutput[]; features: FeaturesOutput; analysisId?: string };
+export type AnalysisOut = { title: string; cleanText: string; tags: string[]; mood: string; interpretation: string; objects: DreamObjectOutput[]; emotions: EmotionOutput[]; features: FeaturesOutput; analysisId?: string; segments?: Segment[] };
 
 export type AnalyzeIn = { text?: string; type?: string; mood?: string; sleep?: string; personal?: boolean; excludeId?: string | null };
 
@@ -107,6 +107,9 @@ export type PanelOutput = { caption: string; path: string; url?: string; width?:
 export type ProfileOut = { id: string; displayName: string; avatar: AvatarSpecOutput | null; presetId: "dawn" | "moss" | "copper" | "ink" | null; revision: number; avatarUrl: string };
 
 export type ProfilePatch = { revision: number; displayName?: string | null; presetId?: "dawn" | "moss" | "copper" | "ink" | null; avatarJobId?: string | null; clearAvatar?: boolean };
+
+/** G8: a piece of the interpretation; a lexicon symbol's first mention also names the symbol and its icon. */
+export type Segment = { text: string; entity?: string; glyph?: string };
 
 /** G6: what anyone with the link reads; no owner, no dream id, no raw narration, no storage path. */
 export type SharedMagazineOut = { spec: MagazineSpecOut; panels: SharedPanel[] };

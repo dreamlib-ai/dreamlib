@@ -32,10 +32,13 @@ async def text_events(pieces: AsyncIterable[str]) -> AsyncIterator[tuple[str, di
 
 
 async def encode(events: AsyncIterable[tuple[str, dict]]) -> AsyncIterator[bytes]:
-    """Events as SSE bytes, ending with `done`; an exception ends the stream with `error` instead."""
+    """Events as SSE bytes, ending with `done` (the stream's own, which may carry the result, or an empty one);
+    an exception ends the stream with `error` instead."""
     try:
         async for kind, data in events:
             yield event(kind, data)
+            if kind == "done":
+                return
     except Exception:
         log.exception("sse: stream failed")
         yield event("error", {"message": FAILED})

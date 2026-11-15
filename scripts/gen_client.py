@@ -5,7 +5,7 @@
 
 Every /api/v1 operation becomes one function named after its route function (camelCase) that calls
 `request` from frontend/src/http.ts; every schema those operations reach becomes a type. Operations marked
-`x-raw-body` (audio upload) are left to frontend/src/api.ts. backend/tests/test_client_generated.py runs --check."""
+`x-raw-body` (audio upload) and `x-sse` (streamed answers) are left to frontend/src/api.ts. backend/tests/test_client_generated.py runs --check."""
 import json
 import re
 import sys
@@ -75,7 +75,7 @@ def operations(spec: dict, refs: set[str]) -> list[str]:
         if not path.startswith("/api/v1/"):
             continue
         for method, op in ops.items():
-            if op.get("x-raw-body"):
+            if op.get("x-raw-body") or op.get("x-sse"):
                 continue
             name = camel(op["operationId"])
             args, query = [], []
