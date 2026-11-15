@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { newDraft, readDraft, writeDraft, type Draft } from './draft';
 import { track } from './telemetry';
 import {
@@ -39,7 +40,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function Tell({ active, owner, inspiration, type, visibility, onLibrary, onProfile }: Props) {
   const [draft, setDraft] = useState(() => readDraft(owner) ?? newDraft());
-  const { id, text, mode, analysis, style, count, panels, jobId, jobStatus, saved, recorded, personal } = draft;
+  const { id, text, mode, analysis, style, count, panels, jobId, jobStatus, saved, recorded } = draft;  // past dreams are always used when they relate (Cenker, 2026-11-15)
   const change = (patch: Partial<Draft>) => setDraft(current => ({ ...current, ...patch }));
   const [busy, setBusy] = useState<'analyze' | 'image' | 'save' | null>(null);
   const [voiceBusy, setVoiceBusy] = useState(false);
@@ -116,7 +117,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   async function interpret() {
     setWriting(null);
     const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;  // then the text comes at once
-    const result = await run('analyze', () => streamDream(text, type, { personal, excludeId: id },
+    const result = await run('analyze', () => streamDream(text, type, { personal: true, excludeId: id },
       (progress) => { if (alive.current && !calm) setWriting(progress); }));
     if (alive.current) setWriting(null);
     if (result && alive.current) {
@@ -142,27 +143,19 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     if (dream && alive.current) { change({ recorded: true, saved: true, panels: dream.panels }); track('dream_saved', id); }
   }
 
-  const modeSwitch = busy === null && <div className="mode-switch" role="radiogroup" aria-label={tr.app.tell}>
-    <button role="radio" aria-checked={mode === 'voice'} aria-label={tr.app.voice} title={tr.app.voice} className={mode === 'voice' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); setVoiceBusy(false); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
-    <button role="radio" aria-checked={mode === 'text'} aria-label={tr.capture.write} title={tr.capture.write} className={mode === 'text' ? 'on' : ''} disabled={voiceBusy} onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="text" /></button>
-  </div>;
-
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {!analysis ? <>
       <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1></header>
       {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
-        {modeSwitch}
         {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
-      </section> : <section className="writing-sheet">
-        {modeSwitch}
+        {!voiceBusy && active && createPortal(<button className="dream-bar" onClick={() => { setError(''); change({ mode: 'text' }); }}><span>{tr.writePlaceholder}</span><Icon name="pen" /></button>, document.body)}
+      </section> : active ? createPortal(<section className="writing-sheet composer" aria-label={tr.capture.write}>
         <textarea autoFocus aria-label={tr.headline} aria-invalid={text.length > 4000} aria-describedby={text.length > 4000 ? 'dream-length' : undefined} value={text} onChange={(event) => change({ text: event.target.value, saved: false })} placeholder={tr.writePlaceholder} rows={8} />
         {text.length > 4000 && <p id="dream-length" className="error">{tr.capture.tooLong}</p>}
-        <div className="personal-setting"><label><input type="checkbox" checked={personal} onChange={event => change({ personal: event.target.checked })} aria-describedby={personal ? "personal-hint" : undefined} /><span>{tr.personal.label}</span></label>
-          {personal && <p id="personal-hint">{tr.personal.hint}</p>}</div>
-        <div className="composer-tools"><span />
+        <div className="composer-tools"><button className="composer-close" aria-label={tr.app.voice} title={tr.app.voice} onClick={() => { setError(''); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
           <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button></div>
-      </section>}
+      </section>, document.body) : null}
     </> : <>
       <header className="result-heading"><button className="back" disabled={busy !== null || jobStatus === 'pending'} aria-label={tr.app.edit} onClick={() => change({ analysis: null })}><Icon name="chevron" /></button><span>{tr.headline}</span></header>
       <div className="result-sheet"><Result analysis={analysis} key={analysis.title}>

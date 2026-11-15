@@ -38,3 +38,5 @@ Cenker bir hatayı düzelttiğinde düzeltmenin kalıbı buraya tek satır yazı
 - 2026-11-15: Tasarım yönü için Cenker'in Pinterest'ine (Chrome'da oturumu açık) bak: grenli kobalt/mor sprey, oluklu cam, risograf, liquid glass. Menüde yazı kalabalığı istemiyor; ikon yeter. Görsel üstündeki yazıya mutlaka koyu tül koy.
 
 - 2026-11-15: Küre gibi bir düğmenin üstüne aynı işi anlatan ikon koyma (mikrofon üstüne mikrofon); başlığın altına açıklama satırı ekleme; yıldız/parıltı ikonu ve dikey çizgili doku istenmiyor. Doku gerçek hayattan (su, mürekkep, sprey) ve doğal, akıcı hareketli olsun; birkaç alternatifi yan yana sun.
+
+- 2026-11-15: Başlık harfleri zıplıyor, küre sese agresif tepki veriyor, ses/yazı ikili çubuğu garip, bulanık cam yapay bulundu → harfler düz hizada; sesi yavaş yumuşat, küçük ölçekle; tek alt yazı alanı + açılan panel; opak çerçeveli çubuk. Kullanıcıya seçim olarak sunulan teknik ayarları (geçmişle ilişkilendir) varsayılan yap.

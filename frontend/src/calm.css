@@ -210,3 +210,44 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .app-shell .tell-heading { padding-top: 6vh; }
 .app-shell .voice-stage { margin-top: 28px; }
 .app-shell .tell .mode-switch { margin-top: 18px; }
+
+/* Polish pass (2026-11-15 evening). Top bar: one centred pill, four equal icons, the koala first. */
+.topbar { width: auto; }
+.topbar .glass { display: flex; gap: 6px; height: 54px; padding: 0 7px; background: linear-gradient(180deg, #0f1c48f2, #0a1438f2); -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: 0 0 0 1px #8fd8ff1f, inset 0 1px 0 #ffffff1f, 0 10px 30px #03041466; }
+.topbar .glass::before { display: none; }
+.tabs { gap: 6px; }
+.mark, .tab, .me { width: 44px; height: 44px; }
+.mark { color: var(--soft); position: relative; margin-right: 6px; }
+.mark::after { content: ''; position: absolute; right: -7px; top: 12px; bottom: 12px; width: 1px; background: #eef6ff1f; }
+.mark svg { width: 23px; height: 23px; filter: none; }
+.mark:hover svg, .mark.on svg { transform: none; }
+.mark.on { color: #fff; background: #ffffff1c; box-shadow: inset 0 1px 0 #ffffff26; }
+
+/* Tell: the heading sits straight and centred; the sphere is dusty rose with a quiet glow. */
+.worn-word > span { transform: none !important; }
+.orb { transform: scale(calc(1 + var(--level) * .035)); transition: transform .4s ease-out; }
+.orb::before { background: radial-gradient(circle, #f2c4cf40, #c98a9e1f 45%, transparent 68%); opacity: calc(.6 + var(--level) * .2); }
+.orb-gl.on ~ .orb-icon { color: #5a3047; }
+
+/* The dream bar: a quiet field at the bottom; tapping it opens the composer in the same frame. */
+.app-shell .page { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+.dream-bar, .composer { position: fixed; z-index: 25; left: 50%; translate: -50% 0; bottom: calc(14px + env(safe-area-inset-bottom)); width: min(600px, calc(100% - 24px)); box-sizing: border-box;
+  border: 0; border-radius: 26px; background: linear-gradient(180deg, #13245ef5, #0b1640f5);
+  box-shadow: 0 0 0 1px #8fd8ff29, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
+.dream-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding: 0 10px 0 20px; color: var(--muted); cursor: text; font: 400 16px var(--font); text-align: left; }
+.dream-bar svg { flex: none; width: 36px; height: 36px; padding: 8px; box-sizing: border-box; border-radius: 50%; background: #ffffff10; color: var(--soft); }
+.dream-bar:hover { box-shadow: 0 0 0 1px #8fd8ff4d, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
+.composer { display: grid; gap: 8px; padding: 16px 14px 12px 20px; animation: composer-up .35s var(--ease) both; }
+@keyframes composer-up { from { opacity: 0; transform: translateY(16px); } }
+.composer textarea { min-height: 120px; height: 28svh; max-height: 46svh; padding: 4px 0; border: 0; background: transparent; color: var(--ink); font: 400 17px/1.7 var(--font); resize: none; }
+.composer textarea::placeholder { color: var(--muted); }
+.composer .composer-tools { display: flex; align-items: center; justify-content: space-between; margin: 0; padding: 0; border: 0; }
+.composer-close { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: #ffffff10; color: var(--soft); cursor: pointer; }
+.composer-close svg { width: 19px; height: 19px; }
+.composer .send-dream { width: 44px; height: 44px; border-radius: 50%; background: var(--dream); color: #071437; box-shadow: 0 4px 16px #8fd8ff40; }
+.composer .send-dream:disabled { opacity: .35; box-shadow: none; }
+
+.mark svg { display: block; }
+.composer textarea:focus, .composer textarea:focus-visible { outline: none; box-shadow: none; }
+.composer:focus-within { box-shadow: 0 0 0 1px #f2c4cf66, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
