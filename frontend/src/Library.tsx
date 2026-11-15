@@ -226,5 +226,5 @@ function DreamWall({ dreams, onOpen }: { dreams: Dream[]; onOpen: (dream: Dream)
 }
 
 export function EmptyLibrary({ onTell }: { onTell: () => void }) {
-  return <section className="library-empty"><Mascot theme="sleep" className="sleeping-koala" /><div className="empty-copy"><h2>{text.empty}</h2><button className="go" onClick={onTell}>{text.emptyAction}</button></div></section>;
+  return <section className="library-empty"><Mascot pose="sleep" className="sleeping-koala" /><div className="empty-copy"><h2>{text.empty}</h2><button className="go" onClick={onTell}>{text.emptyAction}</button></div></section>;
 }
