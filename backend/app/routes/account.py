@@ -55,6 +55,7 @@ async def delete_account(body: AccountDelete, user_id: str = Depends(current_use
             for i in range(0, len(files), 500):
                 await s.blobs.remove(files[i:i + 500])
         await s.store.delete_account(user_id)
+        s.forget(user_id)  # the token still verifies for up to an hour; this process refuses it from now on
     except Exception:
         log.exception("account delete failed")
         raise ApiError(502, "hesap silinemedi; tekrar dene")
