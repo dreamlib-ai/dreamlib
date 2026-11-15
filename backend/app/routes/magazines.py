@@ -3,7 +3,9 @@ G6: its owner may open it to anyone with the link; /m/{slug} is then readable wi
 import logging
 from datetime import date, datetime, time, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Response
+from time import monotonic
+
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 
 from ..contract import MagazineOut, MagazineShare, SharedMagazineOut, answers
@@ -15,6 +17,32 @@ from ..services import Services, current_user, services, sign_panels
 log = logging.getLogger("dreamlib")
 router = APIRouter()
 PICTURE_CACHE = 3600  # seconds a shared picture may be kept; a redrawn panel shows within the hour
+SHARED_PER_MINUTE = 240  # shared-magazine reads per address and minute: a whole magazine is about twenty
+
+
+class Window:
+    """Calls per key in the current minute; enough for one process (docs/mimari.md), forgotten on restart."""
+
+    def __init__(self, limit: int, seconds: float = 60):
+        self.limit, self.seconds, self.start, self.counts = limit, seconds, 0.0, {}
+
+    def allow(self, key: str) -> bool:
+        now = monotonic()
+        if now - self.start >= self.seconds:
+            self.start, self.counts = now, {}
+        self.counts[key] = n = self.counts.get(key, 0) + 1
+        return n <= self.limit
+
+
+shared_reads = Window(SHARED_PER_MINUTE)
+
+
+def reader(request: Request) -> None:
+    """The /m/ routes need no sign-in, so they are limited by the reader's address (Cloudflare's, else the proxy's)."""
+    ip = (request.headers.get("cf-connecting-ip") or request.headers.get("x-forwarded-for", "").split(",")[0]
+          or (request.client.host if request.client else "")).strip()
+    if not shared_reads.allow(ip):
+        raise ApiError(429, "çok sık istek; biraz bekle")
 
 
 def _on(s: Services) -> None:
@@ -101,7 +129,7 @@ async def _shared(s: Services, slug: str) -> dict:
     return row
 
 
-@router.get("/m/{slug}", **answers(SharedMagazineOut, 200))
+@router.get("/m/{slug}", dependencies=[Depends(reader)], **answers(SharedMagazineOut, 200))
 async def shared_magazine(slug: str, s: Services = Depends(services)):
     """No sign-in: the shared magazine's pages, nothing about whose it is; pictures come from /m/{slug}/p/{n}."""
     spec = MagazineSpec.model_validate((await _shared(s, slug))["spec"])
@@ -141,13 +169,13 @@ async def _picture(s: Services, slug: str, n: int | None, thumb: bool) -> Respon
     return Response(data, media_type=kind, headers={"Cache-Control": f"public, max-age={PICTURE_CACHE}"})
 
 
-@router.get("/m/{slug}/p/{n}", responses={200: {"description": "Görsel"}})
+@router.get("/m/{slug}/p/{n}", dependencies=[Depends(reader)], responses={200: {"description": "Görsel"}})
 async def shared_picture(slug: str, n: int, thumb: bool = False, s: Services = Depends(services)):
     """A shared magazine's picture through our own address, so no storage path (which names the owner) leaves."""
     return await _picture(s, slug, n, thumb)
 
 
-@router.get("/m/{slug}/cover", responses={200: {"description": "Kapak görseli"}})
+@router.get("/m/{slug}/cover", dependencies=[Depends(reader)], responses={200: {"description": "Kapak görseli"}})
 async def shared_cover(slug: str, s: Services = Depends(services)):
     """A lasting address for link previews: the cover's thumbnail."""
     return await _picture(s, slug, None, True)

@@ -20,12 +20,21 @@ async function sharedPage(request, env, slug) {
   return new Response(body, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
 }
 
+// a shared magazine's pictures, kept at the edge so repeated reads do not reach the API (and its bandwidth)
+const PICTURE = /^\/api\/v1\/m\/[A-Za-z0-9_-]{8,32}\/(p\/\d+|cover)$/;
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const shared = url.pathname.match(SHARED);
     if (shared && request.method === 'GET') return sharedPage(request, env, shared[1]);
     if (!url.pathname.startsWith('/api/') && url.pathname !== '/healthz') return env.ASSETS.fetch(request);
+    const picture = request.method === 'GET' && PICTURE.test(url.pathname);
+    const key = new Request(url.toString(), { method: 'GET' });
+    if (picture) {
+      const kept = await caches.default.match(key);
+      if (kept) return kept;
+    }
     const upstream = new URL(url.pathname + url.search, env.API_ORIGIN);
     const headers = new Headers(request.headers);
     headers.delete('host');
@@ -36,7 +45,11 @@ export default {
       // G6: a shared magazine's pictures may be kept for as long as the API says; every other answer never is
       const shared = request.method === 'GET' && url.pathname.startsWith('/api/v1/m/') && response.ok;
       if (!shared || !outgoing.get('Cache-Control')?.startsWith('public')) outgoing.set('Cache-Control', 'no-store');
-      return new Response(response.body, { status: response.status, statusText: response.statusText, headers: outgoing });
+      const answer = new Response(response.body, { status: response.status, statusText: response.statusText, headers: outgoing });
+      if (picture && response.status === 200 && outgoing.get('Cache-Control')?.startsWith('public')) {
+        ctx.waitUntil(caches.default.put(key, answer.clone()));
+      }
+      return answer;
     } catch {
       return Response.json({ error: 'servise şu an ulaşılamıyor' }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
     }
