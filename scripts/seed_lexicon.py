@@ -2,7 +2,8 @@
 
 Idempotent: a symbol node is found by (symbol, key) or opened; a candidate the index job opened earlier with the
 same key (sym.<Turkish slug>) becomes approved, so dreams that named it are already linked. Rows are updated in
-place by (source, locator, symbol). One transaction.
+place by (source, locator, symbol); a row of the same source that the export no longer holds is deleted. One
+transaction.
 
     python scripts/seed_lexicon.py --local        # the dreamlib-local stack (npm run db -- up)
     python scripts/seed_lexicon.py --sql out.sql  # the SQL alone, to run elsewhere (the live database)
@@ -40,13 +41,20 @@ select distinct lower(a), 'tr', e.id
  where coalesce(a, '') <> ''
 on conflict do nothing;
 
-insert into public.lexicon_entries (entity_id, tradition, language, heading, meaning, source, locator, url, license,
-                                    rights_holder, attributed_author)
-select e.id, j->>'tradition', j->>'language', j->>'heading', j->>'meaning', j->>'source', j->>'locator', j->>'url',
-       j->>'license', j->>'rights_holder', j->>'attributed_author'
+insert into public.lexicon_entries (entity_id, tradition, language, heading, meaning, meaning_tr, source, locator, url,
+                                    license, rights_holder, attributed_author)
+select e.id, j->>'tradition', j->>'language', j->>'heading', j->>'meaning', coalesce(j->>'meaning_tr', ''), j->>'source',
+       j->>'locator', j->>'url', j->>'license', j->>'rights_holder', j->>'attributed_author'
   from lx join public.entities e on e.kind = 'symbol' and e.key = lx.j->>'key'
 on conflict (source, locator, entity_id) do update
-   set heading = excluded.heading, meaning = excluded.meaning, url = excluded.url, license = excluded.license;
+   set heading = excluded.heading, meaning = excluded.meaning, meaning_tr = excluded.meaning_tr, url = excluded.url,
+       license = excluded.license;
+
+-- a (chapter, symbol) pair the export no longer approves leaves the lexicon; other sources stay as they are
+delete from public.lexicon_entries l
+ where l.source in (select distinct j->>'source' from lx)
+   and not exists (select 1 from lx join public.entities e on e.kind = 'symbol' and e.key = lx.j->>'key'
+                    where lx.j->>'source' = l.source and lx.j->>'locator' = l.locator and e.id = l.entity_id);
 commit;
 """
 

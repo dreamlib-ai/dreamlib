@@ -19,9 +19,10 @@ def run_sql(text: str) -> None:
     assert res.returncode == 0, res.stderr
 
 
-def row(key: str, heading: str, locator: str, meaning: str = "If any one dreams of a serpent...") -> str:
+def row(key: str, heading: str, locator: str, meaning: str = "If any one dreams of a serpent...", tr: str = "") -> str:
     return json.dumps({"key": key, "qid": "Q2102", "labels": {"tr": "yılan", "en": "snake"}, "aliases_tr": ["Yılanlar"],
                        "tradition": "greko-romen", "language": "en", "heading": heading, "meaning": meaning,
+                       "meaning_tr": tr,
                        "source": "lx-test", "locator": locator, "url": "https://example.test", "license": "CC0 1.0",
                        "rights_holder": "", "attributed_author": "Artemidorus"}, ensure_ascii=False)
 
@@ -35,8 +36,10 @@ def test_the_seed_approves_symbols_links_meanings_and_runs_again():
         assert node == "approved|Q2102|snake"  # the dreams' own candidate became the lexicon's symbol
         assert sql("select string_agg(alias, ',' order by alias) from public.entity_aliases a join public.entities e "
                    "on e.id = a.entity_id where e.key = 'sym.lx-yilan'") == "yılan,yılanlar"
-        run_sql(seed_lexicon.sql([row("sym.lx-yilan", "Of Serpents.", "II.13", "Updated text.")]))
-        assert sql("select count(*) from public.lexicon_entries where source = 'lx-test'") == "2"
-        assert sql("select meaning from public.lexicon_entries where source = 'lx-test' and locator = 'II.13'") == "Updated text."
+        run_sql(seed_lexicon.sql([row("sym.lx-yilan", "Of Serpents.", "II.13", "Updated text.", "Yılan görmek.")]))
+        # the export dropped the dragons chapter: its row leaves, the serpents row is updated with its summary
+        assert sql("select string_agg(locator, ',') from public.lexicon_entries where source = 'lx-test'") == "II.13"
+        assert sql("select meaning || '|' || meaning_tr from public.lexicon_entries "
+                   "where source = 'lx-test' and locator = 'II.13'") == "Updated text.|Yılan görmek."
     finally:
         sql("delete from public.entities where key = 'sym.lx-yilan'")

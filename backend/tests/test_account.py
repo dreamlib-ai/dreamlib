@@ -24,5 +24,7 @@ def test_deleting_the_account_takes_everything_and_needs_the_word(api):
     assert client.request("DELETE", "/api/v1/account", headers=auth(), json={}).status_code == 400
     assert client.request("DELETE", "/api/v1/account", headers=auth(), json={"confirm": "yes"}).status_code == 400
     assert client.request("DELETE", "/api/v1/account", headers=auth(), json={"confirm": "delete"}).status_code == 204
-    assert client.get("/api/v1/dreams", headers=auth()).json() == {"dreams": []} and not s.store.consents
+    gone = client.get("/api/v1/dreams", headers=auth())  # the token still verifies, the account does not exist
+    assert gone.status_code == 401 and gone.json()["code"] == "auth_invalid" and not s.store.consents
+    assert client.post("/api/v1/analyze", headers=auth(), json={"text": "Uçuyordum."}).status_code == 401
     assert client.get(f"/api/v1/dreams/{kept['id']}", headers=auth(OTHER)).status_code == 200  # others untouched

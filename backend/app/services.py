@@ -35,6 +35,7 @@ MAX_DREAM = 4000
 
 
 DAY = 86400
+TOKEN_LIFETIME = 3600  # Supabase access tokens' default life
 LOCK_FOR = 4 * 60  # longer than a panel redraw; a crashed process's lock frees itself after this
 
 
@@ -129,6 +130,18 @@ class Services:
     lexicon: object | None = None  # A-tier meanings and collective totals for the interpret task (M7)
     locks: UserLocks = field(default_factory=UserLocks)
     limits: CallLimits = field(default_factory=CallLimits)
+    # accounts deleted in this process -> when; their tokens stay signed until they expire (an hour), so they are
+    # refused here for that long instead of reaching paid calls or failing on foreign keys
+    deleted: dict[str, float] = field(default_factory=dict)
+
+    def forget(self, user_id: str) -> None:
+        now = time.monotonic()
+        self.deleted = {u: at for u, at in self.deleted.items() if now - at < TOKEN_LIFETIME}
+        self.deleted[user_id] = now
+
+    def is_deleted(self, user_id: str) -> bool:
+        at = self.deleted.get(user_id)
+        return at is not None and time.monotonic() - at < TOKEN_LIFETIME
 
     async def take(self, kind: str, user_id: str) -> None:
         await self.limits.take(kind, user_id, bool(self.auth and self.auth.is_guest(user_id)))
@@ -208,13 +221,15 @@ async def current_user(request: Request) -> str:
         raise ApiError(401, "giriş gerekli")
     try:
         user_id = await s.auth.user_id(token)
-        set_scope(user_id=user_id)  # usage rows of this request belong to them
-        return user_id
     except Unauthorized:
         raise ApiError(401, "oturum geçersiz", "auth_invalid")
     except Exception:
         log.exception("auth failed")
         raise ApiError(401, "oturum geçersiz", "auth_invalid")
+    if s.is_deleted(user_id):
+        raise ApiError(401, "hesap silindi", "auth_invalid")
+    set_scope(user_id=user_id)  # usage rows of this request belong to them
+    return user_id
 
 
 def extract_json(text: str) -> dict:

@@ -9,6 +9,11 @@ First export: Artemidorus, Oneirocritica, English 1644 (EEBO-TCP, CC0). A chapte
 heading names (at most three), in old or modern spelling; chapters naming none are left out and counted.
 Symbols without a Turkish Wikidata label are left out too: the product speaks Turkish.
 
+A heading match is only a candidate: `curation-a.json` holds the pairs a person read and approved, keyed
+"<locator>|<symbol key>", each with a short Turkish summary of what the chapter says about that symbol
+(`meaning_tr`). Unapproved pairs (a heading that names a word the chapter is not about, "hog bristles" for the
+pig) are left out and listed, so a new candidate is read before it reaches a dream's interpretation.
+
 Run from the repo root after corpus.sources.artemidorus and corpus.sources.wikidata:
     backend/.venv/Scripts/python -m corpus.lexicon
 """
@@ -25,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from app.pipelines.fields import slug  # noqa: E402  the same node keys the index job opens
 
 OUT = Path(__file__).with_name("lexicon") / "lexicon-a.jsonl"
+CURATION = OUT.with_name("curation-a.json")
 SOURCES = [("artemidorus", "en", "CC0")]  # (source, language, licence prefix that marks the A tier)
 MAX_MEANING = 1500
 MAX_SYMBOLS = 3
@@ -60,9 +66,10 @@ def words(heading: str) -> list[str]:
     return out
 
 
-def build() -> tuple[list[dict], int, int]:
+def build() -> tuple[list[dict], int, int, list[str]]:
     known = concepts()
-    rows, chapters, unmatched = [], 0, 0
+    approved: dict[str, str] = json.loads(CURATION.read_text(encoding="utf-8"))
+    rows, chapters, unmatched, unread = [], 0, 0, []
     for source, lang, tier in SOURCES:
         for line in (ROOT / source / "entries.jsonl").open(encoding="utf-8"):
             e = json.loads(line)
@@ -79,19 +86,24 @@ def build() -> tuple[list[dict], int, int]:
                 continue
             for c in found[:MAX_SYMBOLS]:
                 tr = c["labels"]["tr"]
+                pair = f"{e.get('locator', '')}|sym.{slug(tr)}"
+                if pair not in approved:
+                    unread.append(f"{pair}  {e['symbol_raw'].strip()}")
+                    continue
                 rows.append({
                     "key": f"sym.{slug(tr)}", "qid": c["qid"], "labels": {"tr": tr, "en": c["labels"].get("en", "")},
                     "aliases_tr": [a for a in c["aliases"].get("tr", []) if slug(a)][:8],
                     "tradition": e["tradition"], "language": lang, "heading": e["symbol_raw"].strip(),
-                    "meaning": " ".join(e["meaning"].split())[:MAX_MEANING], "source": source,
+                    "meaning": " ".join(e["meaning"].split())[:MAX_MEANING], "meaning_tr": approved[pair],
+                    "source": source,
                     "locator": e.get("locator", ""), "url": e.get("url", ""), "license": e["license"],
                     "rights_holder": e.get("rights_holder", ""), "attributed_author": e.get("attributed_author", ""),
                 })
-    return rows, chapters, unmatched
+    return rows, chapters, unmatched, unread
 
 
 def main() -> None:
-    rows, chapters, unmatched = build()
+    rows, chapters, unmatched, unread = build()
     OUT.parent.mkdir(exist_ok=True)
     with OUT.open("w", encoding="utf-8", newline="\n") as fh:
         for r in rows:
@@ -99,6 +111,9 @@ def main() -> None:
     symbols = {r["key"] for r in rows}
     print(f"{chapters} chapters, {chapters - unmatched} joined, {unmatched} name no known symbol; "
           f"{len(rows)} rows, {len(symbols)} symbols -> {OUT}")
+    if unread:
+        print(f"{len(unread)} candidate pairs are not in {CURATION.name} and were left out:")
+        print("\n".join("  " + u for u in unread))
 
 
 if __name__ == "__main__":

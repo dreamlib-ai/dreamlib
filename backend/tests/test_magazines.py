@@ -181,6 +181,16 @@ def test_shared_pictures_come_from_our_address_and_never_name_the_owner(mag_api)
     assert client.get(panel["url"]).status_code == 404
 
 
+def test_shared_reads_are_limited_per_address(mag_api, monkeypatch):
+    from app.routes import magazines
+    client, _ = mag_api
+    monkeypatch.setattr(magazines, "shared_reads", magazines.Window(3))
+    one, two = {"cf-connecting-ip": "203.0.113.1"}, {"cf-connecting-ip": "203.0.113.2"}
+    assert [client.get("/api/v1/m/nosuchslug1", headers=one).status_code for _ in range(4)] == [404, 404, 404, 429]
+    assert client.get("/api/v1/m/nosuchslug1", headers=two).status_code == 404  # another reader is not held back
+    assert client.get("/api/v1/m/nosuchslug1/cover", headers=one).json()["code"] == "rate_limited"
+
+
 def test_a_year_ago_tonight_brings_that_nights_magazine(mag_api):
     from datetime import datetime, timezone
     client, s = mag_api

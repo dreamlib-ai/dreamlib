@@ -36,7 +36,7 @@ Betikler `corpus/` içinde, çıktılar git dışında. Yeni bağımlılık gere
 5. **Dışa aktar.** A kademesi `lexicon` olarak ürüne ve açık veri setine çıkar: kavram, gelenek, anlam, kaynak, yer bilgisi.
 6. **OCR metinleri.** Internet Archive kitapları madde madde ayrıştırılır; çoğu kamu malı olduğu için A'ya girer.
 
-Çıktı ürüne iki tablo olarak gelir: kavramlar `entities` tablosunu tohumlar, anlamlar `lexicon_entries` tablosuna girer ([motor](motor.md)). İlk dışa aktarım (M6): `python -m corpus.lexicon` ve `scripts/seed_lexicon.py`; kaynak listesi `corpus/lexicon.py` içinde `SOURCES`.
+Çıktı ürüne iki tablo olarak gelir: kavramlar `entities` tablosunu tohumlar, anlamlar `lexicon_entries` tablosuna girer ([motor](motor.md)). İlk dışa aktarım (M6): `python -m corpus.lexicon` ve `scripts/seed_lexicon.py`; kaynak listesi `corpus/lexicon.py` içinde `SOURCES`. Başlık eşleşmesi yalnız aday: bir (bölüm, sembol) çifti ancak `corpus/lexicon/curation-a.json`'da okunup onaylanmışsa ve o bölümün sembol hakkında söylediğinin Türkçe özetiyle (`meaning_tr`) çıkar; onaysız adaylar dışa aktarımda listelenir, tohumlama aynı kaynağın artık çıkmayan satırlarını siler.
 
 ## Rüya anlatılarıyla çevrimdışı araştırma
 
