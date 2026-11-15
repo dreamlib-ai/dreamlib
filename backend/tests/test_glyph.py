@@ -71,6 +71,18 @@ def test_an_icon_drawn_with_an_older_revision_is_drawn_again(glyph_api):
     assert run(s.entities.get(ids["moon"]))["glyph_prompt"] == "glyph@3"
 
 
+def test_a_pale_fill_inside_the_outline_is_kept():
+    from PIL import ImageDraw
+    img = Image.new("RGB", (1024, 1024), (246, 238, 222))
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((200, 300, 824, 724), fill=(238, 228, 214), outline=(40, 60, 160), width=14)  # a pale loaf, outlined
+    data = io.BytesIO()
+    img.save(data, "PNG")
+    out = Image.open(io.BytesIO(glyph.shrink(data.getvalue()))).convert("RGB")
+    assert sum(abs(a - b) for a, b in zip(out.getpixel((128, 128)), glyph.CREAM)) > 12  # the loaf is not paper
+    assert sum(abs(a - b) for a, b in zip(out.getpixel((2, 2)), glyph.CREAM)) < 12
+
+
 def test_the_object_is_trimmed_to_fill_the_icon():
     paper = (246, 238, 222)
     img = Image.new("RGB", (1024, 1024), paper)
