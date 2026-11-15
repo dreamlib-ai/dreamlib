@@ -69,6 +69,34 @@ def test_a_broken_stream_ends_with_an_error_event(api):
     assert res.status_code == 200 and kinds[-1] == "error" and "done" not in kinds
 
 
+RID = "5b0c1e7e-1d2f-4a8b-9c3d-2e4f6a8b0c1d"
+
+
+def test_a_streamed_answer_is_read_back_by_its_request_id_without_another_use(api):
+    client, s = api
+    s.llm.reply = json.dumps(ANALYSIS, ensure_ascii=False)
+    done = events(client.post("/api/v1/analyze/stream", json={"text": "Uçuyordum.", "requestId": RID}, headers=auth()).text)[-1]
+    calls = len(s.llm.calls) if hasattr(s.llm, "calls") else None
+    back = client.get(f"/api/v1/analyze/stream/{RID}", headers=auth())
+    assert back.status_code == 200 and back.json() == done[1]
+    assert calls is None or len(s.llm.calls) == calls  # read back, not written again
+    assert client.get(f"/api/v1/analyze/stream/{RID}", headers=auth("dev-testuser-two")).status_code == 404
+    assert client.get("/api/v1/analyze/stream/00000000-0000-0000-0000-000000000000", headers=auth()).status_code == 404
+    again = client.post("/api/v1/analyze/stream", json={"text": "Uçuyordum.", "requestId": RID}, headers=auth())
+    assert again.status_code == 409  # the same id is one interpretation, never a second paid one
+
+
+def test_a_failed_stream_reads_back_as_an_upstream_error(api):
+    client, s = api
+    s.llm.stream_fails_after = 2
+    rid = "9a9a9a9a-1d2f-4a8b-9c3d-2e4f6a8b0c1d"
+    kinds = [k for k, _ in events(client.post("/api/v1/analyze/stream", json={"text": "Uçuyordum.", "requestId": rid},
+                                              headers=auth()).text)]
+    assert kinds[-1] == "error"
+    back = client.get(f"/api/v1/analyze/stream/{rid}", headers=auth())
+    assert back.status_code == 502 and back.json()["code"] == "upstream_failed"
+
+
 def test_errors_before_the_stream_are_http_errors(api):
     client, _ = api
     assert client.post("/api/v1/analyze/stream", json={"text": " "}, headers=auth()).status_code == 400

@@ -1,6 +1,8 @@
 """Routes that talk to the models: clean the text, interpret it, draw pictures, transcribe speech."""
+import asyncio
 import logging
 import json
+import time
 import unicodedata
 from uuid import UUID
 
@@ -10,7 +12,7 @@ from pydantic import BaseModel, ValidationError
 from ..errors import ApiError
 from ..jsonstream import FieldReader
 from ..lexicon import context as lexicon_context, interpretation_segments, symbols as lexicon_symbols
-from ..sse import sse_response
+from ..sse import FAILED, sse_response
 from ..models import Analysis, CleanOut
 from ..prompts import VERSIONS, ANALYZE_SYSTEM, CLEAN_SYSTEM, INTERPRETATION_HINTS
 from ..services import MAX_DREAM, Services, current_user, extract_json, one_line, services
@@ -180,31 +182,96 @@ async def analyze(body: AnalyzeIn, user_id: str = Depends(current_user), s: Serv
     return await _finish(reply, text, user_id, s, used)
 
 
+class StreamIn(AnalyzeIn):
+    requestId: UUID | None = None  # the client's own id for this interpretation, to read it back if the line drops
+
+
+RUN_TTL = 15 * 60  # seconds a streamed interpretation can be read back
+RESULT_WAIT = 120  # seconds the read-back waits for one still being written
+_runs: dict[tuple[str, str], tuple[float, asyncio.Task]] = {}  # (user, requestId) -> the task writing it
+_running: set[asyncio.Task] = set()  # tasks without a requestId, held so they are not collected mid-way
+
+
+def _keep(key: tuple[str, str] | None, task: asyncio.Task) -> None:
+    now = time.monotonic()
+    for k in [k for k, (at, t) in _runs.items() if t.done() and now - at > RUN_TTL]:
+        del _runs[k]
+    _running.add(task)
+    task.add_done_callback(_running.discard)
+    task.add_done_callback(lambda t: t.cancelled() or t.exception())  # the failure is logged once, in the task
+    if key:
+        _runs[key] = (now, task)
+
+
 @router.post("/analyze/stream", openapi_extra={"x-sse": True}, **answers(None, 200))
-async def analyze_stream(body: AnalyzeIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
+async def analyze_stream(body: StreamIn, user_id: str = Depends(current_user), s: Services = Depends(services)):
     """G8: the same interpretation as `/analyze`, written while the user waits, as server-sent events: `entity` for
     each lexicon symbol the narrative names (id, words, icon) at once, `title` when it is written, `text` pieces of
-    the interpretation, and `done` with the whole answer (as `/analyze`, with `segments`). A failure after the first
-    byte is an `error` event; the client then asks `/analyze` again. Errors before it are ordinary HTTP errors."""
+    the interpretation, and `done` with the whole answer (as `/analyze`, with `segments`). Errors before the first
+    byte are ordinary HTTP errors, a failure after it an `error` event.
+
+    The answer is written by a task of its own, so it is finished and recorded even when the connection drops; with
+    a `requestId` the client reads it back from `GET /analyze/stream/{requestId}` without spending another use."""
+    key = (user_id, str(body.requestId)) if body.requestId else None
+    if key and key in _runs:
+        raise ApiError(409, "bu yorum zaten yazılıyor")
     text, messages, used = await _prepare(body, user_id, s)
     _, found, glyphs = await lexicon_symbols(s, text)
+    queue: asyncio.Queue[tuple[str, dict]] = asyncio.Queue()
+
+    async def write() -> dict:
+        try:
+            queue.put_nowait(("section", {"name": "semboller"}))
+            for words, entity_id in found:
+                queue.put_nowait(("entity", {"id": entity_id, "text": words, "glyph": glyphs.get(entity_id, "")}))
+            reader, pieces = FieldReader(("title", "interpretation")), []
+            async for piece in s.llm.stream(messages, task="interpret", schema=Analysis):
+                pieces.append(piece)
+                for field, decoded, closed in reader.feed(piece):
+                    if field == "title" and closed:
+                        queue.put_nowait(("title", {"text": reader.value("title")}))
+                    elif field == "interpretation" and decoded:
+                        queue.put_nowait(("text", {"text": decoded}))
+            out = AnalysisOut.model_validate(await _finish("".join(pieces), text, user_id, s, used)).model_dump(mode="json")
+        except Exception:
+            log.exception("analyze: stream failed")
+            queue.put_nowait(("error", {"message": FAILED}))
+            raise
+        queue.put_nowait(("done", out))
+        return out
+
+    task = asyncio.create_task(write())
+    _keep(key, task)
 
     async def events():
-        yield "section", {"name": "semboller"}
-        for words, entity_id in found:
-            yield "entity", {"id": entity_id, "text": words, "glyph": glyphs.get(entity_id, "")}
-        reader, pieces = FieldReader(("title", "interpretation")), []
-        async for piece in s.llm.stream(messages, task="interpret", schema=Analysis):
-            pieces.append(piece)
-            for field, decoded, closed in reader.feed(piece):
-                if field == "title" and closed:
-                    yield "title", {"text": reader.value("title")}
-                elif field == "interpretation" and decoded:
-                    yield "text", {"text": decoded}
-        out = await _finish("".join(pieces), text, user_id, s, used)
-        yield "done", AnalysisOut.model_validate(out).model_dump(mode="json")
+        while True:
+            kind, data = await queue.get()
+            yield kind, data
+            if kind in ("done", "error"):
+                return
 
     return sse_response(events())
+
+
+@router.get("/analyze/stream/{request_id}", **answers(AnalysisOut, 200))
+async def stream_result(request_id: UUID, user_id: str = Depends(current_user)):
+    """G8: a streamed interpretation read back by its `requestId` (the stream's `done`), waiting while it is still
+    being written. 404 when the server never got that stream (the client then asks `/analyze`), 502 when it failed."""
+    run = _runs.get((user_id, str(request_id)))
+    if not run:
+        raise ApiError(404, "yorum bulunamadı")
+    task = run[1]
+    if not task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(task), RESULT_WAIT)
+        except asyncio.TimeoutError:
+            raise ApiError(504, "yorum hâlâ yazılıyor, birazdan tekrar dene")
+        except Exception:
+            pass
+    if task.cancelled() or task.exception():
+        error = None if task.cancelled() else task.exception()
+        raise error if isinstance(error, ApiError) else ApiError(502, "yorum şu an üretilemedi")
+    return task.result()
 
 
 def _model(llm) -> str:

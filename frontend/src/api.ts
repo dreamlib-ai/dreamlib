@@ -94,7 +94,20 @@ export async function streamDream(text: string, type: InterpretationType, contex
   const token = await getToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'text/event-stream' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch('/api/v1/analyze/stream', { method: 'POST', headers, body: JSON.stringify({ ...context, text, type }), signal });
+  const requestId = crypto.randomUUID();
+  // The server finishes and keeps the answer even when the line drops: read it back by id, and ask /analyze (a new
+  // daily use) only when the server never got this stream.
+  const recover = () => g.streamResult(requestId, signal).catch((cause) => {
+    if (cause instanceof ApiError && cause.status === 404) return analyzeDream(text, type, context);
+    throw cause;
+  });
+  let res: Response;
+  try {
+    res = await fetch('/api/v1/analyze/stream', { method: 'POST', headers, body: JSON.stringify({ ...context, text, type, requestId }), signal });
+  } catch (cause) {
+    if (signal?.aborted) throw cause;
+    return recover();
+  }
   if (!res.ok || !res.body) {
     const data = await res.json().catch(() => ({}));
     throw new ApiError(res.status, data.error ?? tr.genericError, data.code ?? 'internal');
@@ -113,7 +126,7 @@ export async function streamDream(text: string, type: InterpretationType, contex
         const kind = /^event: (.*)$/m.exec(block)?.[1];
         const data = JSON.parse(/^data: (.*)$/m.exec(block)?.[1] ?? '{}');
         if (kind === 'done') return data as Analysis;
-        if (kind === 'error') throw new Error(data.message ?? tr.genericError);
+        if (kind === 'error') return recover();  // a 502 from the read-back is the real error
         if (kind === 'entity') progress.symbols = [...progress.symbols, data as StreamSymbol];
         else if (kind === 'title') progress.title = data.text;
         else if (kind === 'text') progress.text += data.text;
@@ -124,7 +137,7 @@ export async function streamDream(text: string, type: InterpretationType, contex
   } catch (cause) {
     if (signal?.aborted) throw cause;
   }
-  return analyzeDream(text, type, context);  // the stream broke; its daily use is spent, this one is the retry
+  return recover();  // the stream broke; the server is still writing it
 }
 
 export type SymbolCard = g.EntityOut;

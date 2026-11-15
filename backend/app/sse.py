@@ -37,7 +37,7 @@ async def encode(events: AsyncIterable[tuple[str, dict]]) -> AsyncIterator[bytes
     try:
         async for kind, data in events:
             yield event(kind, data)
-            if kind == "done":
+            if kind in ("done", "error"):
                 return
     except Exception:
         log.exception("sse: stream failed")

@@ -151,6 +151,10 @@ export const clean = (body: CleanIn, signal?: AbortSignal) =>
 export const analyze = (body: AnalyzeIn, signal?: AbortSignal) =>
   request<AnalysisOut>('POST', `/api/v1/analyze`, body, signal);
 
+/** GET /api/v1/analyze/stream/{request_id} */
+export const streamResult = (requestId: string, signal?: AbortSignal) =>
+  request<AnalysisOut>('GET', `/api/v1/analyze/stream/${encodeURIComponent(String(requestId))}`, undefined, signal);
+
 /** POST /api/v1/manga */
 export const startManga = (body: MangaIn, signal?: AbortSignal) =>
   request<JobRef>('POST', `/api/v1/manga`, body, signal);
