@@ -312,3 +312,10 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
   .sharpen { transition: none; }
 }
 .app-shell .symbol-row li:not(:has(img)) { padding-left: 14px; }
+
+/* Library island (2026-11-15): the dreams seen from above, drawn on the night itself; edges melt away. */
+.island { position: relative; height: min(68svh, 640px); margin: 8px calc(-1 * var(--gutter)) 0; touch-action: none; cursor: grab; opacity: 0; transition: opacity .9s ease;
+  -webkit-mask: radial-gradient(ellipse 72% 62% at 50% 50%, #000 62%, transparent 100%); mask: radial-gradient(ellipse 72% 62% at 50% 50%, #000 62%, transparent 100%); }
+.island.on { opacity: 1; }
+.island:active { cursor: grabbing; }
+.island canvas { display: block; width: 100%; height: 100%; }

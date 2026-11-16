@@ -155,7 +155,7 @@ export const tr = {
     deleteYes: 'Evet, hepsini sil',
   },
   library: {
-    heading: 'Kütüphane',
+    heading: 'Kütüphane', otherFeelings: 'diğer',
     empty: 'Henüz bir rüya kaydetmedin.',
     emptyAction: 'İlk rüyanı anlat',
     loading: 'Yükleniyor',
