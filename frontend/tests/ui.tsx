@@ -7,6 +7,7 @@ import '../src/app.css';
 import '../src/workspace.css';
 import '../src/atmosphere.css';
 import '../src/editorial.css';
+import '../src/brain.css';
 import '../src/magazine.css';
 import '../src/calm.css';
 import { Workspace } from '../src/App';
@@ -77,6 +78,14 @@ globalThis.fetch = async (input, init) => {
     return json({ text: dream.originalText });
   }
   if (path === '/api/v1/analyze') return json(dream);
+  // ?brain: the saved rows as a brain, with a few links of every kind (and some dreams left alone).
+  if (path === '/api/v1/brain') {
+    const relations = ['shares_content', 'shares_concept', 'shares_emotion', 'near_in_time', 'series'] as const;
+    const links = rows.flatMap((row, i) => i % 4 === 3 ? [] : [1, 3, 7].filter(k => i + k < rows.length && (i + k) % 4 !== 3).slice(0, 1 + (i % 2))
+      .map((k, j) => ({ source: row.id, target: rows[i + k].id, relation: relations[(i + j) % 5], weight: .3 + ((i * 7) % 7) / 10, evidence: { shared: [{ label: 'deniz' }], days: k } })));
+    const degree = (id: string) => links.filter(l => l.source === id || l.target === id).length;
+    return json({ relations, links, dreams: rows.map((row, i) => ({ id: row.id, title: row.title, dated: row.createdAt.slice(0, 10), emotions: [['happiness', 'sadness', 'apprehension', 'anger', 'confusion'][i % 5]], thumbnail: row.panels[0]?.thumb ?? '', degree: degree(row.id) })) });
+  }
   // The reading arrives as the server streams it: symbols, title, then the text in small pieces (?slowRead stretches it).
   if (path === '/api/v1/analyze/stream') {
     const step = params.has('slowRead') ? 260 : 40;
