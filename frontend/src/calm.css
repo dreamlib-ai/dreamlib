@@ -319,3 +319,10 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .island.on { opacity: 1; }
 .island:active { cursor: grabbing; }
 .island canvas { display: block; width: 100%; height: 100%; }
+
+/* Brain (2026-11-16): the silhouette sits on the sky itself, no framed panel; the legend is a row of quiet pills. */
+.app-shell .brain { margin: 0 calc(-1 * var(--gutter)); border-radius: 0; background: none; }
+.app-shell .brain-legend { top: 6px; }
+.app-shell .brain-legend button { border: 0; background: var(--bubble); color: var(--soft); font: 500 13px var(--font-ui); }
+.app-shell .brain-card { border: 0; border-radius: 24px; background: linear-gradient(180deg, #13245ef5, #0b1640f5); box-shadow: 0 0 0 1px #8fd8ff29, 0 14px 40px #02051466; backdrop-filter: none; }
+.app-shell .brain-card h2 { font-size: 20px; }

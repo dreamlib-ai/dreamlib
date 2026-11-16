@@ -58,3 +58,16 @@ test('the island gives each feeling a slice, keeps cards apart and puts the newe
   assert.equal(one.spots.length, 1);
   assert.equal(islandLayout([]).spots.length, 0);
 });
+
+test('dreams spread evenly along the cortex line and skip the left-out cerebellum', async () => {
+  const { spread, onCortex } = await load('brainShape.ts');
+  const line = [...Array.from({ length: 11 }, (_, i) => ({ x: i * 10, y: 0 })), ...Array.from({ length: 11 }, (_, i) => ({ x: 300 + i * 10, y: 0 }))];
+  const spots = spread(line, 4);
+  assert.deepEqual(Array.from(spots, s => Math.round(s.x)), [25, 75, 325, 375]);
+  assert.ok(spots.every(s => s.x <= 100 || s.x >= 300), 'no dream lands in the gap');
+  assert.equal(spread(line, 0).length, 0);
+  assert.equal(spread([], 3).length, 0);
+  assert.equal(onCortex(60, 100), true);
+  assert.equal(onCortex(300, 250), false);
+  assert.equal(onCortex(230, 300), false);
+});
