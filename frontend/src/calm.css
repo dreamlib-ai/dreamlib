@@ -320,9 +320,36 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .island:active { cursor: grabbing; }
 .island canvas { display: block; width: 100%; height: 100%; }
 
-/* Brain (2026-11-16): the silhouette sits on the sky itself, no framed panel; the legend is a row of quiet pills. */
-.app-shell .brain { margin: 0 calc(-1 * var(--gutter)); border-radius: 0; background: none; }
-.app-shell .brain-legend { top: 6px; }
+/* Brain (2026-11-17): an engraved brain on the sky (its ink is the picture's opacity); dreams are small
+   lights on its gyri. The brain leans toward the pointer and a soft light follows it. */
+.app-shell .brain { margin: 0 calc(-1 * var(--gutter)); border-radius: 0; background: none; overflow: hidden; }
+.app-shell .brain-legend { top: 6px; z-index: 2; }
 .app-shell .brain-legend button { border: 0; background: var(--bubble); color: var(--soft); font: 500 13px var(--font-ui); }
-.app-shell .brain-card { border: 0; border-radius: 24px; background: linear-gradient(180deg, #13245ef5, #0b1640f5); box-shadow: 0 0 0 1px #8fd8ff29, 0 14px 40px #02051466; backdrop-filter: none; }
+.app-shell .brain-card { z-index: 3; border: 0; border-radius: 24px; background: linear-gradient(180deg, #13245ef5, #0b1640f5); box-shadow: 0 0 0 1px #8fd8ff29, 0 14px 40px #02051466; backdrop-filter: none; }
 .app-shell .brain-card h2 { font-size: 20px; }
+.brain-frame { --mx: 50%; --my: 45%; position: absolute; inset: 52px 0 0; display: grid; place-items: center; perspective: 1200px; touch-action: none; cursor: grab; }
+.brain-frame:active { cursor: grabbing; }
+.brain-frame::after { content: ''; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light;
+  background: radial-gradient(circle 160px at var(--mx) var(--my), #fff6, transparent 70%); }
+.brain-stage { position: relative; width: min(100%, 760px); transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2, .8, .3, 1); will-change: transform; }
+.brain-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .86; user-select: none; pointer-events: none; filter: drop-shadow(0 0 18px #8fb0ff2e); }
+.brain-art-dim { opacity: .3; filter: blur(5px); }
+.brain-links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.brain-links path { fill: none; stroke-linecap: round; transition: stroke-opacity .4s; }
+.brain-links path.flow { stroke-dasharray: 10 14; animation: brain-flow 1.6s linear infinite; }
+@keyframes brain-flow { to { stroke-dashoffset: -48; } }
+.brain-dot { position: absolute; width: calc(var(--size) + 18px); height: calc(var(--size) + 18px); margin: calc((var(--size) + 18px) / -2) 0 0 calc((var(--size) + 18px) / -2);
+  padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; transition: opacity .4s; }
+.brain-dot::before { content: ''; position: absolute; left: 50%; top: 50%; width: var(--size); height: var(--size); translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 35%, var(--tint) 70%); box-shadow: 0 0 10px var(--tint), 0 0 22px color-mix(in srgb, var(--tint) 60%, transparent);
+  animation: brain-pulse 4s ease-in-out infinite; animation-delay: inherit; transition: scale .3s; }
+.brain-dot.alone::before { opacity: .7; }
+.brain-dot.dim { opacity: .18; }
+.brain-dot.on::before { scale: 1.8; box-shadow: 0 0 14px var(--tint), 0 0 40px var(--tint); }
+.brain-dot:hover::before { scale: 1.4; }
+@keyframes brain-pulse { 50% { scale: 1.25; filter: brightness(1.2); } }
+.brain-name { position: absolute; left: 50%; bottom: 100%; translate: -50% -4px; padding: 4px 10px; border-radius: 99px; background: #0b1640e6; color: #eef6ff;
+  font: 500 13px var(--font-ui); white-space: nowrap; pointer-events: none; box-shadow: 0 0 0 1px #8fd8ff29; }
+@media (prefers-reduced-motion: reduce) { .brain-dot::before, .brain-links path.flow { animation: none; } .brain-stage { transition: none; } }
+.brain-frame { transition: bottom .5s cubic-bezier(.2, .8, .3, 1); }
+@media (max-width: 760px) { .brain.picked .brain-frame { bottom: 44%; } }

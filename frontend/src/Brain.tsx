@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { editBrain, getBrain, type Brain as BrainData, type BrainDream, type BrainLink, type Relation } from './api';
-import { BRAIN_BOX, BRAIN_FOLDS, BRAIN_OUTLINE, BRAIN_REGIONS, onCortex, spread, type RegionId } from './brainShape';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { editBrain, getBrain, type Brain as BrainData, type BrainLink, type Relation } from './api';
+import engraving from './assets/brain/engraving.webp';
+import { BRAIN_IMAGE, RIDGES } from './brainRidges';
+import { BRAIN_REGIONS, pickRidges, type RegionId } from './brainShape';
 import { tr } from './strings';
 
-// BG3: the dreamer's dreams on a brain seen from the side. Each dream sits on the cortex line, oldest at the front
-// of the brain and newer ones further round; links curve through the inside, coloured by relation type (BG1).
-// Drawn on a canvas with the outline as a Path2D; no graph library.
+// BG3: the dreamer's dreams on an engraved brain. Each dream is a small light on a gyrus, oldest at the front of
+// the brain; links curve between them, coloured by relation type (BG1). The brain leans toward the finger and a
+// soft light follows it. Points are buttons, links an SVG over the picture; no graph library.
 
 export const RELATION_COLORS: Record<Relation, string> = {
   shares_content: '#86a8ff', shares_concept: '#f3c84b', shares_emotion: '#f29bbb', near_in_time: '#cfd6e6', series: '#ffffff',
@@ -13,32 +15,17 @@ export const RELATION_COLORS: Record<Relation, string> = {
 const EMOTION_COLORS: Record<string, string> = {
   anger: '#ef7d63', apprehension: '#a99cff', sadness: '#79b3e6', confusion: '#f3c84b', happiness: '#9bdc9a',
 };
-
-type Spot = { d: BrainDream; x: number; y: number; r: number };
-type View = { x: number; y: number; k: number };
-
-let cortex: { x: number; y: number }[] | null = null;
-/** The cortex line as points, read once from the outline path. */
-function cortexLine() {
-  if (cortex) return cortex;
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', BRAIN_OUTLINE);
-  const total = path.getTotalLength(), out: { x: number; y: number }[] = [];
-  for (let i = 0; i <= 900; i++) { const p = path.getPointAtLength(total * i / 900); if (onCortex(p.x, p.y)) out.push({ x: p.x, y: p.y }); }
-  return cortex = out;
-}
-
-/** Every dream gets a place on the line, in date order, sized by how many links it has. */
-function places(dreams: BrainDream[]): Spot[] {
-  const ordered = [...dreams].sort((a, b) => a.dated.localeCompare(b.dated) || a.id.localeCompare(b.id));
-  const spots = spread(cortexLine(), ordered.length);
-  const room = 560 / Math.max(ordered.length, 1);  // the cortex line is about 560 units long
-  return ordered.map((d, i) => ({ d, x: spots[i].x, y: spots[i].y, r: Math.min(3.2 + Math.sqrt(d.degree) * 1.3, Math.max(1.6, room * .42)) }));
-}
+const { width: W, height: H } = BRAIN_IMAGE;
 
 function evidenceText(l: BrainLink) {
   if (l.relation === 'near_in_time') return tr.brain.daysApart(l.evidence.days ?? 0);
   return (l.evidence.shared ?? []).map((s) => s.label).slice(0, 4).join(', ');
+}
+
+/** A link bows a little toward the middle of the brain, like a path through it. */
+function curve(a: { x: number; y: number }, b: { x: number; y: number }) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, cx = mx + (W * .46 - mx) * .35, cy = my + (H * .42 - my) * .35;
+  return `M${a.x.toFixed(0)} ${a.y.toFixed(0)} Q${cx.toFixed(0)} ${cy.toFixed(0)} ${b.x.toFixed(0)} ${b.y.toFixed(0)}`;
 }
 
 export default function Brain({ onTell, regions = [] }: { onTell: () => void; regions?: RegionId[] }) {
@@ -53,11 +40,10 @@ export default function Brain({ onTell, regions = [] }: { onTell: () => void; re
     if (from && id && id !== from) { setLinking(false); editBrain(from, id, 'link').then(setData).catch((cause) => setError(cause instanceof Error ? cause.message : tr.genericError)); return; }
     if (!from) setSelected(id);
   };
-  const chooseRef = useRef(choose);
-  chooseRef.current = choose;
   const [hidden, setHidden] = useState<Set<Relation>>(new Set());
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const view = useRef<View>({ x: 0, y: 0, k: 1 });
+  const frame = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const moved = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -67,141 +53,75 @@ export default function Brain({ onTell, regions = [] }: { onTell: () => void; re
 
   const links = useMemo(() => (data?.links ?? []).filter((l) => !hidden.has(l.relation)), [data, hidden]);
   const byId = useMemo(() => new Map((data?.dreams ?? []).map((d) => [d.id, d])), [data]);
-  const spots = useMemo(() => data ? places(data.dreams) : [], [data]);
+  const spots = useMemo(() => {
+    if (!data) return new Map<string, { x: number; y: number }>();
+    const ordered = [...data.dreams].sort((a, b) => a.dated.localeCompare(b.dated) || a.id.localeCompare(b.id));
+    const places = pickRidges(RIDGES, ordered.length);
+    return new Map(ordered.map((d, i) => [d.id, places[i]]));
+  }, [data]);
   const neighbours = useMemo(() => {
     if (!selected) return null;
     return new Set(links.flatMap((l) => (l.source === selected ? [l.target] : l.target === selected ? [l.source] : [])));
   }, [links, selected]);
 
+  // Touch: one finger moves the brain, two pinch, the wheel zooms; the brain leans and the light follows the pointer.
   useEffect(() => {
-    const el = canvas.current;
-    if (!el || !data) return;
-    const ctx = el.getContext('2d');
-    if (!ctx) return;
-    const outline = new Path2D(BRAIN_OUTLINE), folds = BRAIN_FOLDS.map((d) => new Path2D(d));
-    const at = new Map(spots.map((s) => [s.d.id, s]));
-    let frame = 0;
-    // the box fitted to the canvas, below the legend; the reader's pan and zoom go on top of it
-    const fit = () => {
-      const cw = el.clientWidth, ch = el.clientHeight, top = 64;
-      const s = Math.min(cw / BRAIN_BOX.width, (ch - top - 16) / BRAIN_BOX.height) * .94;
-      return { s, ox: (cw - BRAIN_BOX.width * s) / 2, oy: top + (ch - top - BRAIN_BOX.height * s) / 2 };
-    };
-    const draw = () => {
-      frame = 0;
-      const dpr = window.devicePixelRatio || 1, cw = el.clientWidth, ch = el.clientHeight;
-      if (el.width !== Math.round(cw * dpr) || el.height !== Math.round(ch * dpr)) { el.width = Math.round(cw * dpr); el.height = Math.round(ch * dpr); }
-      const f = fit(), v = view.current, k = f.s * v.k;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cw, ch);
-      ctx.translate(cw / 2 + v.x, ch / 2 + v.y);
-      ctx.scale(v.k, v.k);
-      ctx.translate(f.ox - cw / 2, f.oy - ch / 2);
-      ctx.scale(f.s, f.s);
-      const px = 1 / k;  // one screen pixel in box units
-
-      // The brain: a soft inner glow, the folds, the outline; out of focus outside the chosen regions.
-      const shape = () => {
-        const glow = ctx.createRadialGradient(200, 150, 10, 200, 150, 210);
-        glow.addColorStop(0, '#2a3f8a66'); glow.addColorStop(1, '#141f5222');
-        ctx.fillStyle = glow; ctx.fill(outline);
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#cfdcf229'; ctx.lineWidth = 1.4 * px * 1.6;
-        for (const fold of folds) ctx.stroke(fold);
-        ctx.strokeStyle = '#cfdcf266'; ctx.lineWidth = 1.6 * px * 1.4; ctx.stroke(outline);
-      };
-      const focus = regions.map((id) => BRAIN_REGIONS[id]);
-      if (focus.length) {
-        ctx.save(); ctx.filter = `blur(${6}px)`; ctx.globalAlpha = .55; shape(); ctx.restore();
-        ctx.save(); ctx.beginPath();
-        for (const r of focus) ctx.ellipse(r.x, r.y, r.rx, r.ry, 0, 0, Math.PI * 2);
-        ctx.clip(); shape(); ctx.restore();
-      } else shape();
-
-      // Links bow toward the middle of the brain, like paths through it.
-      for (const l of links) {
-        const a = at.get(l.source), b = at.get(l.target);
-        if (!a || !b) continue;
-        const lit = !selected || l.source === selected || l.target === selected;
-        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, cx = mx + (200 - mx) * .55, cy = my + (150 - my) * .55;
-        ctx.globalAlpha = lit ? 0.22 + 0.6 * l.weight : 0.05;
-        ctx.strokeStyle = RELATION_COLORS[l.relation];
-        ctx.lineWidth = (.8 + 1.8 * l.weight) * px * 1.3;
-        ctx.setLineDash(l.relation === 'near_in_time' ? [4 * px, 5 * px] : []);
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(cx, cy, b.x, b.y); ctx.stroke();
-      }
-      ctx.setLineDash([]);
-      for (const s of spots) {
-        const lit = !selected || s.d.id === selected || neighbours?.has(s.d.id);
-        ctx.globalAlpha = lit ? (s.d.degree ? 1 : .72) : 0.18;
-        const tint = EMOTION_COLORS[s.d.emotions[0]] ?? '#f6f1e6';
-        ctx.shadowColor = tint; ctx.shadowBlur = (s.d.id === selected ? 22 : 9) * v.k;
-        ctx.fillStyle = '#f6f1e6';
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0; ctx.lineWidth = Math.min(s.r * .5, 2.4 * px); ctx.strokeStyle = tint; ctx.stroke();
-        if (lit && s.d.title && (selected ? s.d.id === selected : k > 2.4)) {
-          const out = Math.hypot(s.x - 200, s.y - 150) || 1, ux = (s.x - 200) / out, uy = (s.y - 150) / out;  // the name sits outside the brain
-          ctx.fillStyle = '#eef6ff'; ctx.font = `500 ${12.5 * px}px 'Funnel Sans', system-ui, sans-serif`;
-          ctx.textAlign = ux < -.3 ? 'right' : ux > .3 ? 'left' : 'center'; ctx.textBaseline = uy < -.3 ? 'bottom' : uy > .3 ? 'top' : 'middle';
-          ctx.fillText(s.d.title.length > 26 ? `${s.d.title.slice(0, 25)}…` : s.d.title, s.x + ux * (s.r + 6 * px), s.y + uy * (s.r + 6 * px));
-        }
-      }
-      ctx.globalAlpha = 1;
-    };
-    const kick = () => { if (!frame) frame = requestAnimationFrame(draw); };
-    kick();
-
-    const toBox = (cx: number, cy: number) => {
-      const box = el.getBoundingClientRect(), f = fit(), v = view.current;
-      const sx = (cx - box.left - box.width / 2 - v.x) / v.k + box.width / 2, sy = (cy - box.top - box.height / 2 - v.y) / v.k + box.height / 2;
-      return { x: (sx - f.ox) / f.s, y: (sy - f.oy) / f.s, unit: 1 / (f.s * v.k) };
-    };
-    const hit = (cx: number, cy: number) => {
-      const p = toBox(cx, cy);
-      let best: Spot | null = null, near = Infinity;
-      for (const s of spots) { const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < near && d <= s.r + 14 * p.unit) { best = s; near = d; } }
-      return best;
-    };
+    const box = frame.current, inner = stage.current;
+    if (!box || !inner) return;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const view = { x: 0, y: 0, k: 1 }, lean = { x: 0, y: 0 };
     const pointers = new Map<number, { x: number; y: number }>();
-    let moved = false, pinch = 0;
+    let pinch = 0, travel = 0, raf = 0;
+    const apply = () => {
+      raf = 0;
+      inner.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.k}) rotateX(${lean.y * -5}deg) rotateY(${lean.x * 7}deg)`;
+    };
+    const ask = () => { if (!raf) raf = requestAnimationFrame(apply); };
+    const light = (e: PointerEvent) => {
+      const r = box.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+      box.style.setProperty('--mx', `${(nx * 100).toFixed(1)}%`); box.style.setProperty('--my', `${(ny * 100).toFixed(1)}%`);
+      if (!still) { lean.x = nx * 2 - 1; lean.y = ny * 2 - 1; ask(); }
+    };
     const down = (e: PointerEvent) => {
-      el.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 1) { travel = 0; moved.current = false; }
       if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); }
     };
     const move = (e: PointerEvent) => {
+      light(e);
       const last = pointers.get(e.pointerId);
       if (!last) return;
       const dx = e.clientX - last.x, dy = e.clientY - last.y;
-      if (Math.abs(dx) + Math.abs(dy) > 2) moved = true;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      const v = view.current;
+      travel += Math.abs(dx) + Math.abs(dy);
+      if (travel > 8 && !moved.current) { moved.current = true; box.setPointerCapture(e.pointerId); }
       if (pointers.size === 2) {
         const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (pinch) v.k = Math.min(5, Math.max(.8, v.k * (d / pinch)));
+        if (pinch) view.k = Math.min(4, Math.max(1, view.k * d / pinch));
         pinch = d;
-      } else { v.x += dx; v.y += dy; }
-      kick();
+      } else if (moved.current) { view.x += dx; view.y += dy; }
+      const room = box.clientWidth * (view.k - .6);  // never lose the brain off screen
+      view.x = Math.max(-room, Math.min(room, view.x)); view.y = Math.max(-room, Math.min(room, view.y));
+      ask();
     };
-    const up = (e: PointerEvent) => {
-      pointers.delete(e.pointerId);
-      if (!moved && pointers.size === 0) { const s = hit(e.clientX, e.clientY); chooseRef.current(s ? s.d.id : null); }
-      if (pointers.size < 2) pinch = 0;
-    };
-    const wheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const v = view.current; v.k = Math.min(5, Math.max(.8, v.k * Math.exp(-e.deltaY * 0.0015))); kick();
-    };
-    el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move);
-    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-    el.addEventListener('wheel', wheel, { passive: false });
-    window.addEventListener('resize', kick);
+    const up = (e: PointerEvent) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0; };
+    const leave = () => { lean.x = lean.y = 0; ask(); };
+    const wheel = (e: WheelEvent) => { e.preventDefault(); view.k = Math.min(4, Math.max(1, view.k * Math.exp(-e.deltaY * .0015))); if (view.k === 1) view.x = view.y = 0; ask(); };
+    box.addEventListener('pointerdown', down); box.addEventListener('pointermove', move);
+    box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up); box.addEventListener('pointerleave', leave);
+    box.addEventListener('wheel', wheel, { passive: false });
+    apply();
     return () => {
-      cancelAnimationFrame(frame);
-      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
-      el.removeEventListener('wheel', wheel); window.removeEventListener('resize', kick);
+      cancelAnimationFrame(raf);
+      box.removeEventListener('pointerdown', down); box.removeEventListener('pointermove', move);
+      box.removeEventListener('pointerup', up); box.removeEventListener('pointercancel', up); box.removeEventListener('pointerleave', leave);
+      box.removeEventListener('wheel', wheel);
     };
-  }, [data, spots, links, selected, neighbours, regions.join()]);
+  }, [data]);
+
+  const focus = regions.map((id) => BRAIN_REGIONS[id]);
+  const regionMask = focus.length ? focus.map((r) => `radial-gradient(${(r.rx / W * 100).toFixed(1)}% ${(r.ry / H * 100).toFixed(1)}% at ${(r.x / W * 100).toFixed(1)}% ${(r.y / H * 100).toFixed(1)}%, #000 70%, transparent 100%)`).join(', ') : '';
 
   if (error) return <section className="brain brain-state"><p role="alert">{error}</p></section>;
   if (!data) return <section className="brain brain-state"><p role="status">{tr.brain.loading}</p></section>;
@@ -211,8 +131,33 @@ export default function Brain({ onTell, regions = [] }: { onTell: () => void; re
   const chosenLinks = chosen ? links.filter((l) => l.source === chosen.id || l.target === chosen.id) : [];
   const toggle = (r: Relation) => setHidden((h) => { const next = new Set(h); if (next.has(r)) next.delete(r); else next.add(r); return next; });
 
-  return <section className="brain" aria-label={tr.brain.label}>
-    <canvas ref={canvas} className="brain-canvas" aria-hidden="true" />
+  return <section className={chosen ? "brain picked" : "brain"} aria-label={tr.brain.label}>
+    <div ref={frame} className="brain-frame" aria-hidden="true" onClick={() => { if (!moved.current) choose(null); }}>
+      <div ref={stage} className="brain-stage" style={{ aspectRatio: `${W} / ${H}` }}>
+        {focus.length > 0 && <img src={engraving} alt="" className="brain-art brain-art-dim" draggable={false} />}
+        <img src={engraving} alt="" className="brain-art" draggable={false} style={regionMask ? { WebkitMaskImage: regionMask, maskImage: regionMask } : undefined} />
+        <svg className="brain-links" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+          {links.map((l) => {
+            const a = spots.get(l.source), b = spots.get(l.target);
+            if (!a || !b) return null;
+            const lit = !selected || l.source === selected || l.target === selected;
+            return <path key={`${l.relation}${l.source}${l.target}`} d={curve(a, b)} className={selected && lit ? 'flow' : lit ? '' : 'dim'}
+              stroke={RELATION_COLORS[l.relation]} strokeWidth={1.6 + 3.2 * l.weight} strokeOpacity={lit ? .3 + .6 * l.weight : .06}
+              strokeDasharray={l.relation === 'near_in_time' ? '6 9' : undefined} />;
+          })}
+        </svg>
+        {data.dreams.map((d, i) => {
+          const p = spots.get(d.id);
+          if (!p) return null;
+          const lit = !selected || d.id === selected || neighbours?.has(d.id);
+          return <button key={d.id} tabIndex={-1} className={`brain-dot${d.id === selected ? ' on' : ''}${lit ? '' : ' dim'}${d.degree ? '' : ' alone'}`}
+            style={{ left: `${(p.x / W * 100).toFixed(2)}%`, top: `${(p.y / H * 100).toFixed(2)}%`, ['--tint' as string]: EMOTION_COLORS[d.emotions[0]] ?? '#f6f1e6', ['--size' as string]: `${(6 + Math.sqrt(d.degree) * 2.4).toFixed(1)}px`, animationDelay: `${(i * .37) % 4}s` } as CSSProperties}
+            onClick={(e) => { e.stopPropagation(); if (!moved.current) choose(d.id); }}>
+            {d.id === selected && <span className="brain-name">{d.title || tr.brain.untitled}</span>}
+          </button>;
+        })}
+      </div>
+    </div>
     <div className="brain-legend" role="group" aria-label={tr.brain.filter}>
       {data.relations.map((r) => <button key={r} aria-pressed={!hidden.has(r)} onClick={() => toggle(r)}>
         <span className={r === 'near_in_time' ? 'swatch dashed' : 'swatch'} style={{ color: RELATION_COLORS[r] }} />{tr.brain.relations[r]}
