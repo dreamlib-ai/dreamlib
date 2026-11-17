@@ -40,3 +40,5 @@ Cenker bir hatayı düzelttiğinde düzeltmenin kalıbı buraya tek satır yazı
 - 2026-11-15: Küre gibi bir düğmenin üstüne aynı işi anlatan ikon koyma (mikrofon üstüne mikrofon); başlığın altına açıklama satırı ekleme; yıldız/parıltı ikonu ve dikey çizgili doku istenmiyor. Doku gerçek hayattan (su, mürekkep, sprey) ve doğal, akıcı hareketli olsun; birkaç alternatifi yan yana sun.
 
 - 2026-11-15: Başlık harfleri zıplıyor, küre sese agresif tepki veriyor, ses/yazı ikili çubuğu garip, bulanık cam yapay bulundu → harfler düz hizada; sesi yavaş yumuşat, küçük ölçekle; tek alt yazı alanı + açılan panel; opak çerçeveli çubuk. Kullanıcıya seçim olarak sunulan teknik ayarları (geçmişle ilişkilendir) varsayılan yap.
+
+- 2026-11-17: Kendi çizdiğim sade beyin silueti ve üstten bakılan 3B kütüphane adası istenmedi → beyin gönderilen gravür gibi gerçek, ayrıntılı bir çizim olsun (görsel motorla üret, rüyalar kıvrımlarda ışık, etkileşimli); kütüphane VHS/plak rafı gibi perspektifte üst üste kutular. Soyut çizim yerine referanstaki somut nesneyi yakala.
