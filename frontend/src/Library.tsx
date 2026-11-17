@@ -1,10 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { deleteDream, listDreamPage, type Dream, type Panel } from './api';
-import Picture from './Picture';
+import { useEffect, useRef, useState } from 'react';
+import { deleteDream, listDreamPage, type Dream } from './api';
 import Magazine, { Anniversary, ShareMagazine, useMagazine } from './Magazine';
-import { placeCards, wallColumns } from './wall';
 import Result from './Result';
-import LibraryIsland from './LibraryIsland';
+import DreamShelf from './DreamShelf';
 import Icon from './Icon';
 import Mascot from './Mascot';
 import JournalEditor from './JournalEditor';
@@ -127,7 +125,6 @@ type Paging = { hasMore?: boolean; loadingMore?: boolean; moreFailed?: boolean; 
 
 export function LibraryShelf({ dreams, error = '', onTell, onOpen, hasMore = false, loadingMore = false, moreFailed = false, onMore }: { dreams: Dream[] | null; error?: string; onTell: () => void; onOpen: (dream: Dream) => void } & Paging) {
   const [query, setQuery] = useState('');
-  const [flat, setFlat] = useState(() => !canDraw3d());  // the island needs WebGL; without it the plain wall
   const [filter, setFilter] = useState<'all' | 'books' | 'text' | 'favorites'>('all');
   const [from, setFrom] = useState('');
   const [until, setUntil] = useState('');
@@ -170,7 +167,7 @@ export function LibraryShelf({ dreams, error = '', onTell, onOpen, hasMore = fal
     {!error && dreams === null && <p className="small" role="status">{text.loading}</p>}
     {dreams?.length === 0 && <EmptyLibrary onTell={onTell} />}
     {dreams && dreams.length > 0 && filtered?.length === 0 && <p className="no-results">{tr.app.noResults}</p>}
-    {filtered && filtered.length > 0 && (flat ? <DreamWall dreams={filtered} onOpen={onOpen} /> : <LibraryIsland dreams={filtered} onOpen={onOpen} onFail={() => setFlat(true)} />)}
+    {filtered && filtered.length > 0 && <DreamShelf dreams={filtered} onOpen={onOpen} />}
     {hasMore && <MoreSentinel onMore={onMore} />}
     {loadingMore && <p className="small wall-status" role="status">{text.loading}</p>}
     {moreFailed && <p className="wall-status"><span className="error">{text.moreFailed}</span> <button className="text-action" onClick={onMore}>{text.retry}</button></p>}
@@ -192,45 +189,6 @@ function MoreSentinel({ onMore }: { onMore?: () => void }) {
   return <div ref={spot} className="wall-sentinel" aria-hidden="true" />;
 }
 
-function Cover({ panel }: { panel: Panel }) {
-  return <Picture panel={panel} className="wall-cover" thumb />;
-}
-
-/** Masonry: each card goes under the shortest column; the page keeps them in date order for keyboards and screen readers. */
-function DreamWall({ dreams, onOpen }: { dreams: Dream[]; onOpen: (dream: Dream) => void }) {
-  const box = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const place = () => {
-      const { count, gap } = wallColumns(el.clientWidth);
-      const width = (el.clientWidth - gap * (count - 1)) / count;
-      const cards = [...el.children] as HTMLElement[];
-      for (const card of cards) card.style.width = `${width}px`;
-      const { spots, height } = placeCards(cards.map((card) => card.offsetHeight), count, width, gap);
-      cards.forEach((card, i) => { card.style.transform = `translate(${spots[i].x}px, ${spots[i].y}px)`; });
-      el.style.height = `${height}px`;
-    };
-    place();
-    if (typeof ResizeObserver === 'undefined') return;
-    const watch = new ResizeObserver(place);
-    watch.observe(el);
-    for (const card of el.children) watch.observe(card);
-    return () => watch.disconnect();
-  }, [dreams]);
-  return <div ref={box} className="wall">{dreams.map((dream) => {
-    const panel = dream.panels.find((p) => p.url);
-    return <button key={dream.id} className={panel ? 'wall-card' : 'wall-card text-only'} onClick={() => onOpen(dream)}>
-      {panel && <Cover panel={panel} />}
-      <span className="wall-info"><small>{day(dream.journal?.dreamedOn ? dream.journal.dreamedOn + 'T12:00:00' : dream.createdAt)}{dream.journal?.favorite && <Icon name="heart" />}</small><b>{dream.title}</b>{!panel && <span className="wall-excerpt">{dream.originalText.slice(0, 220)}</span>}</span>
-    </button>;
-  })}</div>;
-}
-
 export function EmptyLibrary({ onTell }: { onTell: () => void }) {
   return <section className="library-empty"><Mascot pose="sleep" className="sleeping-koala" /><div className="empty-copy"><h2>{text.empty}</h2><button className="go" onClick={onTell}>{text.emptyAction}</button></div></section>;
-}
-
-function canDraw3d() {
-  try { const gl = document.createElement('canvas').getContext('webgl'); gl?.getExtension('WEBGL_lose_context')?.loseContext(); return Boolean(gl); } catch { return false; }
 }

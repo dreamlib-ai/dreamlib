@@ -313,12 +313,25 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 }
 .app-shell .symbol-row li:not(:has(img)) { padding-left: 14px; }
 
-/* Library island (2026-11-15): the dreams seen from above, drawn on the night itself; edges melt away. */
-.island { position: relative; height: min(68svh, 640px); margin: 8px calc(-1 * var(--gutter)) 0; touch-action: none; cursor: grab; opacity: 0; transition: opacity .9s ease;
-  -webkit-mask: radial-gradient(ellipse 72% 62% at 50% 50%, #000 62%, transparent 100%); mask: radial-gradient(ellipse 72% 62% at 50% 50%, #000 62%, transparent 100%); }
-.island.on { opacity: 1; }
-.island:active { cursor: grabbing; }
-.island canvas { display: block; width: 100%; height: 100%; }
+/* Library shelf (2026-11-17): dream cases stacked in perspective, like tapes or records; the middle one faces you. */
+.shelf { margin: 6px calc(-1 * var(--gutter)) 0; padding: calc(38svh - var(--step) / 2) 0 calc(44svh - var(--step) / 2); list-style: none; }
+.shelf li { position: relative; display: flex; justify-content: center; height: var(--step); perspective: 900px; }
+.shelf .case { position: relative; display: flex; flex-direction: column; flex: none; width: min(80vw, 340px); height: var(--case); margin-top: calc((var(--step) - var(--case)) / 2);
+  padding: 0; border: 0; border-radius: 6px; background: var(--tint); color: #141a3f; text-align: left; cursor: pointer; transform-style: preserve-3d; transform-origin: 50% 50%;
+  box-shadow: 0 24px 40px #02051499, inset 0 0 0 1px #ffffff40; will-change: transform; -webkit-tap-highlight-color: transparent; }
+.shelf .case-band { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex: none; height: 42px; padding: 0 14px; border-radius: 6px 6px 0 0; }
+.shelf .case-band b { overflow: hidden; font: 700 15.5px var(--font-ui); white-space: nowrap; text-overflow: ellipsis; line-height: 42px; }
+.shelf .case-band small { flex: none; font: 500 12px var(--font-ui); opacity: .72; }
+.shelf .case-cover { position: relative; display: block; flex: 1; aspect-ratio: auto !important; margin: 0 6px 6px; overflow: hidden; border-radius: 3px; background: #16264a center / cover no-repeat; }
+.shelf .case-cover img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s; }
+.shelf .case-cover img.shown { opacity: 1; }
+.shelf .case-words { padding: 14px 16px; background: linear-gradient(165deg, #fbf6f8, #fbf6f800 140%), var(--tint); color: #2a2350; font: italic 400 16px/1.5 var(--font-head); }
+.shelf .case-edge { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; border-radius: 0 0 6px 6px; background: linear-gradient(180deg, color-mix(in srgb, var(--tint) 70%, #000), color-mix(in srgb, var(--tint) 45%, #000));
+  transform: rotateX(-90deg); transform-origin: 50% 100%; }
+.shelf .case::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, #ffffff26, transparent 30%, #0000001f); pointer-events: none; }
+.shelf li.front .case { box-shadow: 0 30px 60px #020514b3, 0 0 0 1px #ffffff59, 0 0 40px color-mix(in srgb, var(--tint) 35%, transparent); }
+.shelf .case:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .shelf { padding: 0; } .shelf li { height: auto; margin-bottom: 14px; } .shelf .case { margin: 0; } }
 
 /* Brain (2026-11-16): the silhouette sits on the sky itself, no framed panel; the legend is a row of quiet pills. */
 .app-shell .brain { margin: 0 calc(-1 * var(--gutter)); border-radius: 0; background: none; }
@@ -326,3 +339,6 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .app-shell .brain-legend button { border: 0; background: var(--bubble); color: var(--soft); font: 500 13px var(--font-ui); }
 .app-shell .brain-card { border: 0; border-radius: 24px; background: linear-gradient(180deg, #13245ef5, #0b1640f5); box-shadow: 0 0 0 1px #8fd8ff29, 0 14px 40px #02051466; backdrop-filter: none; }
 .app-shell .brain-card h2 { font-size: 20px; }
+.shelf li { --below: 0; }
+.shelf .case > .case-band:first-child { opacity: calc(1 - var(--below)); }
+.shelf .case-foot { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 0 0 6px 6px; background: var(--tint); opacity: var(--below); }
