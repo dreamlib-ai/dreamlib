@@ -40,15 +40,18 @@ test('BlurHash decodes to the colour it was made from and refuses broken hashes'
   assert.equal(decodeBlurhash('LEHV6nWB2yk8pyo0adR*.7kCMdn"', 4, 4), null);
 });
 
-test('dreams spread evenly along the cortex line and skip the left-out cerebellum', async () => {
-  const { spread, onCortex } = await load('brainShape.ts');
-  const line = [...Array.from({ length: 11 }, (_, i) => ({ x: i * 10, y: 0 })), ...Array.from({ length: 11 }, (_, i) => ({ x: 300 + i * 10, y: 0 }))];
-  const spots = spread(line, 4);
-  assert.deepEqual(Array.from(spots, s => Math.round(s.x)), [25, 75, 325, 375]);
-  assert.ok(spots.every(s => s.x <= 100 || s.x >= 300), 'no dream lands in the gap');
-  assert.equal(spread(line, 0).length, 0);
-  assert.equal(spread([], 3).length, 0);
-  assert.equal(onCortex(60, 100), true);
-  assert.equal(onCortex(300, 250), false);
-  assert.equal(onCortex(230, 300), false);
+test('dreams spread over the brain ridges front to back, and a crowded brain still places every dream', async () => {
+  const { pickRidges } = await load('brainShape.ts');
+  const ridges = Array.from({ length: 40 }, (_, i) => [100 + (i % 10) * 50, 100 + Math.floor(i / 10) * 60]).flat();
+  const few = pickRidges(ridges, 6);
+  assert.equal(few.length, 6);
+  assert.ok(Array.from(few).every((p, i) => i === 0 || p.x >= few[i - 1].x), 'front to back');
+  let nearest = Infinity;
+  for (let i = 0; i < few.length; i++) for (let j = i + 1; j < few.length; j++) nearest = Math.min(nearest, Math.hypot(few[i].x - few[j].x, few[i].y - few[j].y));
+  assert.ok(nearest >= 100, `spread out, nearest ${nearest}`);
+  const many = pickRidges(ridges, 55);
+  assert.equal(many.length, 55);
+  assert.equal(new Set(Array.from(many, p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)).size, 55);
+  assert.deepEqual(Array.from(pickRidges(ridges, 6), p => ({ ...p })), Array.from(few, p => ({ ...p })));
+  assert.equal(pickRidges([], 3).length, 0);
 });
