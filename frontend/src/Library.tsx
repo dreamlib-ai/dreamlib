@@ -7,9 +7,6 @@ import Icon from './Icon';
 import Mascot from './Mascot';
 import JournalEditor from './JournalEditor';
 import { tr } from './strings';
-import { normalizeTag, recurringThemes } from './themes';
-import { effectiveFeatures } from './features';
-import type { Genre } from './api';
 
 const text = tr.library;
 const day = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -125,44 +122,18 @@ type Paging = { hasMore?: boolean; loadingMore?: boolean; moreFailed?: boolean; 
 
 export function LibraryShelf({ dreams, error = '', onTell, onOpen, hasMore = false, loadingMore = false, moreFailed = false, onMore }: { dreams: Dream[] | null; error?: string; onTell: () => void; onOpen: (dream: Dream) => void } & Paging) {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'books' | 'text' | 'favorites'>('all');
-  const [from, setFrom] = useState('');
-  const [until, setUntil] = useState('');
-  const [genre, setGenre] = useState('');
-  const [emotion, setEmotion] = useState('');
-  const themes = recurringThemes((dreams ?? []).map(dream => ({ ...dream, tags:effectiveFeatures(dream).tags })));
-  const availableGenres = [...new Set((dreams ?? []).flatMap(dream => effectiveFeatures(dream).genres))];
-  const availableEmotions = [...new Map((dreams ?? []).flatMap(dream => dream.emotions.filter(e => e.pct > 0).map(e => [normalizeTag(e.label),e.label] as const))).entries()];
-  const [themeFilter, setThemeFilter] = useState<string | null>(null);
-  const recentIds = new Set(dreams?.slice(0, 15).map(dream => dream.id));
   useEffect(() => {
-    if (themeFilter && !recurringThemes((dreams ?? []).map(d => ({...d,tags:effectiveFeatures(d).tags}))).some(theme => theme.label === themeFilter)) setThemeFilter(null);
-  }, [dreams, themeFilter]);
-  const narrowed = Boolean(query || themeFilter || filter !== 'all' || from || until || genre || emotion);
-  useEffect(() => {
-    if (narrowed && hasMore && !loadingMore) onMore?.();  // a search must see every dream, not only the pages read so far
-  }, [narrowed, hasMore, loadingMore, onMore]);
-  const filtered = dreams?.filter((dream) => {
-    const effective = effectiveFeatures(dream);
-    const matches = `${dream.title} ${dream.originalText} ${effective.tags.join(' ')}`.toLocaleLowerCase('tr-TR').includes(query.toLocaleLowerCase('tr-TR'));
-    const matchesTheme = !themeFilter || (recentIds.has(dream.id) && effective.tags.some(tag => normalizeTag(tag) === themeFilter));
-    const date = dream.journal?.dreamedOn ?? dream.createdAt.slice(0, 10);
-    return matches && matchesTheme && (!genre || effective.genres.includes(genre as Genre)) && (!emotion || dream.emotions.some(e => normalizeTag(e.label) === emotion && e.pct > 0)) && (!from || date >= from) && (!until || date <= until) && (filter === 'all' || (filter === 'favorites' ? dream.journal?.favorite : filter === 'books' ? dream.panels.length > 0 : dream.panels.length === 0));
-  });
+    if (query && hasMore && !loadingMore) onMore?.();  // a search must see every dream, not only the pages read so far
+  }, [query, hasMore, loadingMore, onMore]);
+  const needle = query.trim().toLocaleLowerCase('tr-TR');
+  const filtered = dreams?.filter((dream) => !needle || `${dream.title} ${dream.originalText}`.toLocaleLowerCase('tr-TR').includes(needle));
   return <div className="library-content view-transition">
-    <header className="page-heading"><h1>{text.heading}</h1>{dreams && dreams.length > 0 && <button className="new-dream" onClick={onTell} aria-label={tr.app.newDream}><Icon name="plus" /></button>}</header>
-    {dreams && dreams.length > 0 && <Anniversary />}
-    {themes.length > 0 && <section className="recurring-themes" aria-label={tr.personal.themes}><h2>{tr.personal.themes}</h2><div>
-      {themes.map(theme => <button key={theme.label} aria-pressed={themeFilter === theme.label} onClick={() => { setThemeFilter(themeFilter === theme.label ? null : theme.label); setQuery(''); setFilter('all'); }}><span>{theme.label}</span><small>{tr.personal.count(theme.count)}</small></button>)}
-    </div></section>}
-    {dreams && dreams.length > 0 && <div className="library-tools"><label className="library-search"><Icon name="search" /><input type="search" aria-label={tr.app.search} placeholder={tr.app.search} value={query} onChange={(event) => setQuery(event.target.value)} /></label>
-      <div className="library-filters" role="group" aria-label={text.heading}>{(['all', 'books', 'text', 'favorites'] as const).map((key) => <button key={key} aria-pressed={filter === key} className={filter === key ? 'choice selected' : 'choice'} onClick={() => setFilter(key)}>{key === 'all' ? tr.app.filterAll : key === 'books' ? tr.app.filterBooks : key === 'favorites' ? tr.journal.favorites : tr.app.filterText}</button>)}</div>
-      <details className="library-dates"><summary>{tr.classification.filters}</summary><div>
-        <label>{tr.journal.from}<input type="date" value={from} max={until || undefined} onInput={e => setFrom(e.currentTarget.value)} /></label><label>{tr.journal.until}<input type="date" value={until} min={from || undefined} onInput={e => setUntil(e.currentTarget.value)} /></label>
-        {availableGenres.length > 0 && <label>{tr.classification.genres}<select value={genre} onChange={e => setGenre(e.target.value)}><option value="">{tr.classification.all}</option>{availableGenres.map(key => <option key={key} value={key}>{tr.classification.genreLabels[key]}</option>)}</select></label>}
-        {availableEmotions.length > 0 && <label>{tr.classification.emotion}<select value={emotion} onChange={e => setEmotion(e.target.value)}><option value="">{tr.classification.all}</option>{availableEmotions.map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>}
-        <button className="text-action" onClick={() => { setFrom(''); setUntil(''); setGenre(''); setEmotion(''); }}>{tr.journal.clear}</button></div></details>
+    <header className="page-heading"><h1>{text.heading}</h1></header>
+    {dreams && dreams.length > 0 && <div className="library-tools">
+      <label className="library-search"><Icon name="search" /><input type="search" aria-label={tr.app.search} placeholder={tr.app.search} value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+      <button className="new-dream" onClick={onTell} aria-label={tr.app.newDream}><Icon name="plus" /></button>
     </div>}
+    {dreams && dreams.length > 0 && <Anniversary />}
     {error && <p className="error" role="alert">{error}</p>}
     {!error && dreams === null && <p className="small" role="status">{text.loading}</p>}
     {dreams?.length === 0 && <EmptyLibrary onTell={onTell} />}
