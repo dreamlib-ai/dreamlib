@@ -17,6 +17,7 @@ import {
 import Drawing from './Drawing';
 import Icon from './Icon';
 import Mascot, { type Pose } from './Mascot';
+import Orb from './Orb';
 import VoiceInput from './VoiceInput';
 import Worn from './Worn';
 import type { Visibility } from './profile';
@@ -160,6 +161,19 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     return () => { setJustDone(true); setTimeout(() => alive.current && setJustDone(false), 4000); };
   }, [busy]);
   const pose: Pose = busy === 'analyze' ? 'think' : busy === 'image' ? 'hold' : justDone || jobStatus === 'done' ? 'joy' : 'curious';
+  // Writing folds away when the dreamer looks up: the field becomes one line and the orb rises above it.
+  const [settled, setSettled] = useState(false);
+  const sheet = useRef<HTMLElement>(null);
+  useEffect(() => { if (!text.trim()) setSettled(false); }, [text]);
+  useEffect(() => { if (mode !== 'text') setSettled(false); }, [mode]);
+  const lookUp = () => window.setTimeout(() => { if (alive.current && !sheet.current?.contains(document.activeElement)) setSettled(true); }, 0);
+  // A tap anywhere else folds the field away, whether or not the textarea still had the focus.
+  useEffect(() => {
+    if (!active || mode !== 'text' || settled || !text.trim()) return;
+    const away = (event: PointerEvent) => { if (!sheet.current?.contains(event.target as Node)) setSettled(true); };
+    document.addEventListener('pointerdown', away, true);
+    return () => document.removeEventListener('pointerdown', away, true);
+  }, [active, mode, settled, text]);
 
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {(busy === 'analyze' || analysis) && <Mascot pose={pose} className="reading-koala" />}
@@ -169,7 +183,19 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
         {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
         {!voiceBusy && active && createPortal(<button className="dream-bar" onClick={() => { setError(''); change({ mode: 'text' }); }}><span>{tr.writePlaceholder}</span><Icon name="pen" /></button>, document.body)}
-      </section> : active ? createPortal(<section className="writing-sheet composer" aria-label={tr.capture.write}>
+      </section> : active ? createPortal(settled ? <>
+        <button className="orb settled-orb" aria-label={tr.app.voice} title={tr.app.voice} onClick={() => { setError(''); change({ mode: 'voice' }); }}>
+          <span className="orb-sky" aria-hidden="true"><i /><i /></span>
+          <Orb />
+        </button>
+        <section ref={sheet} className="composer settled" aria-label={tr.capture.write}>
+          <button className="settled-text" onClick={() => { setError(''); setSettled(false); }}>{text}</button>
+          <div className="composer-tools">
+            <button className="composer-close" aria-label={tr.app.voice} title={tr.app.voice} onClick={() => { setError(''); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
+            <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button>
+          </div>
+        </section>
+      </> : <section ref={sheet} className="writing-sheet composer" aria-label={tr.capture.write} onBlur={lookUp}>
         <textarea autoFocus aria-label={tr.headline} aria-invalid={text.length > 4000} aria-describedby={text.length > 4000 ? 'dream-length' : undefined} value={text} onChange={(event) => change({ text: event.target.value, saved: false })} placeholder={tr.writePlaceholder} rows={8} />
         {text.length > 4000 && <p id="dream-length" className="error">{tr.capture.tooLong}</p>}
         <div className="composer-tools"><button className="composer-close" aria-label={tr.app.voice} title={tr.app.voice} onClick={() => { setError(''); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
