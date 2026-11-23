@@ -2,8 +2,11 @@
 $root = Split-Path $PSScriptRoot -Parent
 $ErrorActionPreference = 'Stop'
 
+# Worktrees share one interpreter: DREAMLIB_PYTHON wins, then this checkout's venv, then PATH.
+$python = if ($env:DREAMLIB_PYTHON) { $env:DREAMLIB_PYTHON } elseif (Test-Path "$root\backend\.venv\Scripts\python.exe") { "$root\backend\.venv\Scripts\python.exe" } else { 'python' }
+
 Push-Location "$root\backend"
-& "$root\backend\.venv\Scripts\python.exe" -m pytest -q
+& $python -m pytest -q
 if ($LASTEXITCODE) { Pop-Location; exit $LASTEXITCODE }
 Pop-Location
 
