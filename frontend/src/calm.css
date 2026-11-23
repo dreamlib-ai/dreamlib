@@ -252,6 +252,15 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .composer textarea:focus, .composer textarea:focus-visible { outline: none; box-shadow: none; }
 .composer:focus-within { box-shadow: 0 0 0 1px #f2c4cf66, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
 
+/* Settled: when the dreamer looks up, the field folds to one line and the orb rises above it. */
+.composer.settled { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 20px; animation: composer-settle .3s var(--ease) both; }
+@keyframes composer-settle { from { opacity: 0; transform: translateY(10px); } }
+.composer.settled .settled-text { flex: 1; min-width: 0; overflow: hidden; padding: 0; border: 0; background: none; color: var(--muted); font: 400 15px var(--font); text-align: left; white-space: nowrap; text-overflow: ellipsis; cursor: text; }
+.composer.settled .composer-tools { gap: 8px; padding-right: 2px; }
+.settled-orb { position: fixed; z-index: 24; left: 50%; translate: -50% 0; bottom: calc(104px + env(safe-area-inset-bottom)); width: 150px; height: 150px; animation: orb-rise .5s var(--ease) both; }
+@keyframes orb-rise { from { opacity: 0; transform: translateY(18px) scale(.92); } }
+@media (prefers-reduced-motion: reduce) { .composer.settled, .settled-orb { animation: none; } }
+
 /* Reading (2026-11-15): an airy page. Fraunces title, Funnel text at 18px with room between lines and paragraphs. */
 .topbar-back svg { width: 20px; height: 20px; }
 .reading-koala { width: 92px; margin: 0 auto 2px; }
