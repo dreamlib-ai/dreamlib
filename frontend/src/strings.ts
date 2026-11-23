@@ -23,7 +23,7 @@ export const tr = {
     },
   },
   classification: {
-    heading: 'Rüyanın izleri', correct: 'Tür ve deneyimi düzelt', genres: 'Rüya türü', experiences: 'Deneyim', extract:'Rüyanın izlerini çıkar',
+    heading: 'Rüyanın izleri', correct: 'Tür ve deneyimi düzelt', correctShort: 'Tür ve deneyim', genres: 'Rüya türü', experiences: 'Deneyim', extract:'Rüyanın izlerini çıkar',
     perspective: 'Bakış açısı', tags: 'Temalar (virgülle ayır)', recall: 'Ne kadar hatırlıyorum?', reset: 'Model önerisine dön',
     genreLabels: { daily:'Gündelik', fantasy:'Fantastik', scifi:'Bilim kurgu', romance:'Romantik', adventure:'Macera', suspense:'Gerilim' },
     experienceLabels: { lucid:'Rüyada olduğumu biliyordum', recurring:'Bu rüyayı daha önce gördüm', nightmare:'Kâbustu' },

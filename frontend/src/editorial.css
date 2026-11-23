@@ -254,8 +254,9 @@
 .personal-setting p{margin:0 0 10px 28px;color:var(--muted);font-size:10px;max-width:52ch}
 
 .journal-editor { margin:20px 0 30px; }
-.journal-actions { display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
-.journal-actions [aria-pressed="true"] { color:#f3c84b; }
+.journal-actions { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0 0 22px; padding:6px; border:1px solid var(--line); border-radius:18px; background:#f6f1e605; }
+.journal-actions .text-action { min-height:42px; padding:0 14px; border-radius:13px; }
+.journal-actions [aria-pressed="true"] { color:#f3c84b; background:#f3c84b14; }
 .journal-form { display:grid; gap:20px; margin:22px 0; }
 .journal-form label { display:grid; gap:8px; color:var(--soft); font-size:11px; }
 .journal-form :is(input,textarea), .journal-addition textarea { width:100%; min-width:0; border:1px solid var(--line); border-radius:10px; background:#f6f1e607; color:var(--ink); padding:12px; font-size:13px; line-height:1.9; }
@@ -272,8 +273,7 @@
 .journal-refresh p { color:var(--muted); font-size:11px; line-height:1.9; }
 .journal-refresh .personal-setting { display:flex; align-items:center; gap:8px; margin:0; min-height:44px; }
 .journal-refresh input { accent-color:#f3c84b; }
-.classification-editor { padding:12px 0; border-bottom:1px solid var(--line); }
-.classification-editor summary { min-height:44px; padding:10px 0; font-size:12px; color:var(--soft); cursor:pointer; }
+.classification-editor { margin:0 0 22px; padding:18px; border:1px solid var(--line); border-radius:18px; background:#f6f1e605; }
 .classification-editor fieldset { margin:0; padding:0; border:0; min-width:0; }
 .classification-editor legend { margin-bottom:8px; font-size:11px; color:var(--soft); }
 .classification-choices { display:flex; gap:4px 20px; flex-wrap:wrap; }

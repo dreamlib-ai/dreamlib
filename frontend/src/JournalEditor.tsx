@@ -15,6 +15,7 @@ export default function JournalEditor({ dream, onUpdated }: { dream: Dream; onUp
   const [additionId, setAdditionId] = useState(() => crypto.randomUUID());
   const [voice, setVoice] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [classifying, setClassifying] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [personal, setPersonal] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -32,6 +33,7 @@ export default function JournalEditor({ dream, onUpdated }: { dream: Dream; onUp
         if (!editing) setForm({ title: dream.title, originalText: dream.originalText, dreamedOn: dream.journal?.dreamedOn ?? '', reflection: dream.journal?.reflection ?? '' });
         setEditing(value => !value);
       }}><Icon name="pen" />{editing ? tr.library.cancel : tr.app.edit}</button>
+      <button className="text-action" disabled={busy || editing || voiceBusy} aria-pressed={classifying} onClick={() => setClassifying(value => !value)}>{tr.classification.correctShort}</button>
     </div>
     {editing && <form className="journal-form" onSubmit={event => { event.preventDefault(); void save({ ...form, dreamedOn: form.dreamedOn || null }).then(ok => { if (ok) setEditing(false); }); }}>
       <label>{text.title}<input required maxLength={200} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></label>
@@ -41,7 +43,7 @@ export default function JournalEditor({ dream, onUpdated }: { dream: Dream; onUp
       <button className="go" disabled={busy}>{busy ? tr.saving : text.save}</button>
     </form>}
     {!editing && dream.journal?.reflection && <section className="journal-reflection"><h3>{text.reflection}</h3><p>{dream.journal.reflection}</p></section>}
-    <ClassificationEditor dream={dream} disabled={busy || editing || voiceBusy} onSave={save} />
+    {classifying && <ClassificationEditor dream={dream} disabled={busy || editing || voiceBusy} onSave={save} onClose={() => setClassifying(false)} />}
     {dream.journal?.firstText && <details className="original-dream"><summary>{text.firstText}</summary><p>{dream.journal.firstText}</p></details>}
     {(dream.journal?.entries ?? []).map(entry => <div className="journal-entry" key={entry.id}><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString('tr-TR')}</time><p>{entry.text}</p></div>)}
     <details className="journal-addition" onToggle={event => setDetailOpen(event.currentTarget.open)}><summary>{text.addDetail}</summary>
