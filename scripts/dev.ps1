@@ -1,8 +1,10 @@
 # Starts the backend (FastAPI) and the frontend (Vite), each in its own window. Close the windows to stop.
 $root = Split-Path $PSScriptRoot -Parent
-$python = "$root\backend\.venv\Scripts\python.exe"
+# Worktrees share one interpreter: DREAMLIB_PYTHON wins, then this checkout's venv, then PATH.
+$python = if ($env:DREAMLIB_PYTHON) { $env:DREAMLIB_PYTHON } elseif (Test-Path "$root\backend\.venv\Scripts\python.exe") { "$root\backend\.venv\Scripts\python.exe" } else { 'python' }
 
-if (-not (Test-Path $python) -or -not (Test-Path "$root\frontend\node_modules")) {
+$havePython = if ($python -eq 'python') { [bool](Get-Command python -ErrorAction SilentlyContinue) } else { Test-Path $python }
+if (-not $havePython -or -not (Test-Path "$root\frontend\node_modules")) {
   Write-Warning "Kurulum eksik: once 'npm run setup' calistir."
   return
 }
