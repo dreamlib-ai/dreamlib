@@ -1,4 +1,4 @@
-.app-shell { --ink: #17233d; --soft: #526079; --muted: #67738a; --line: #dbe1ed; --cobalt-deep: #203c87; --cobalt-strong: #3566ed; --danger: #ac304b; min-height: 100dvh; color: var(--ink); background: #f7f8fc; }
+﻿.app-shell { --ink: #17233d; --soft: #526079; --muted: #67738a; --line: #dbe1ed; --cobalt-deep: #203c87; --cobalt-strong: #3566ed; --danger: #ac304b; min-height: 100dvh; color: var(--ink); background: #f7f8fc; }
 .app-shell [hidden] { display: none !important; }
 .app-shell .nav { position: relative; inset: auto; width: 100%; background: var(--night); }
 .app-shell .nav-in { max-width: 1160px; height: 88px; margin: auto; padding: 18px 32px; flex-direction: row; align-items: center; gap: 36px; }
@@ -19,7 +19,6 @@
 .page-heading h1 { margin: 0; font-size: clamp(26px,3vw,36px); line-height: 1.3; }
 .page-heading p { margin: 10px 0 0; color: var(--soft); font-size: 12px; }
 .page-heading time { white-space: nowrap; color: var(--soft); font-size: 11px; }
-.explore-top { display: grid; grid-template-columns: minmax(0,1.65fr) minmax(0,1fr); gap: 22px; }
 .welcome-card > div { position: relative; z-index: 1; width: 57%; }
 .welcome-card h2 { font-size: clamp(24px,2.6vw,34px); line-height: 1.3; margin: 0 0 26px; }
 .welcome-card > img { position: absolute; width: 44%; height: 95%; object-fit: contain; object-position: bottom; right: 8px; bottom: -10px; }
@@ -112,7 +111,6 @@
  .app-shell .link { padding-inline: 12px; }
  .app-shell .page { padding-inline: 24px; }
  .atlas-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
- .explore-top { grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 16px; }
  .welcome-card { padding: 24px; }
  .journal-card { padding: 22px; }
  .journal-card strong { font-size: 20px; }
@@ -130,7 +128,6 @@
  .page-heading h1 { font-size: 27px; }
  .page-heading time { font-size: 10px; }
  .page-heading p { font-size: 10px; line-height: 1.8; }
- .explore-top { grid-template-columns: 1fr; gap: 16px; }
  .welcome-card { min-height: 225px; padding: 24px; border-radius: 20px; }
  .welcome-card > div { width: 59%; }
  .welcome-card h2 { font-size: 25px; margin-bottom: 24px; }
