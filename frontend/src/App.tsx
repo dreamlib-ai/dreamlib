@@ -39,9 +39,9 @@ export function Nav({ view, onView, avatarUrl, onBack }: { view: View; onView: (
   </div></header>;
 }
 
-export function Workspace({ account, onSignOut }: { account: Account; onSignOut: () => void }) {
+export function Workspace({ account, onSignOut, start = 'tell' }: { account: Account; onSignOut: () => void; start?: View }) {
   useEffect(() => { sessionEvent(account.id); }, [account.id]);
-  const [view, setView] = useState<View>('tell');
+  const [view, setView] = useState<View>(start);
   const [draft, setDraft] = useState(0);
   const [type, setType] = useState<InterpretationType>('universal');
   const [selfProfile,setSelfProfile]=useState<AvatarProfile|null>(null);

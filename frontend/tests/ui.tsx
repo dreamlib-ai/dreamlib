@@ -178,4 +178,4 @@ Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { 
 const account = { id: 'test', email: '', provider: '', profile: { onboarded: true, visibility: 'private' as const } };
 createRoot(document.getElementById('root')!).render(<StrictMode><Sky />{params.has('intro') && <Intro />}{params.has('shared') ? <SharedMagazinePage slug="abcDEF123_-x" /> : params.has('onboarding') || params.has('privacy')
   ? <Onboarding account={params.has('privacy') ? account : null} replay={false} initialError="" onDone={async () => {}} />
-  : <Workspace account={account} onSignOut={() => {}} />}</StrictMode>);
+  : <Workspace account={account} onSignOut={() => {}} start={(params.get('view') as 'tell' | 'library' | 'brain' | 'profile' | null) ?? 'tell'} />}</StrictMode>);
