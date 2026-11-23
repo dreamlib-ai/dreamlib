@@ -202,7 +202,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
           <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button></div>
       </section>, document.body) : null}
     </> : <>
-      <div className="result-sheet"><Result analysis={analysis} key={analysis.title} after={
+      <div className="result-sheet"><Result analysis={analysis} key={analysis.title} traces={false} after={
         <div className="result-feedback" role="group" aria-label={tr.feedback.question}><span>{tr.feedback.question}</span>
           {(['helpful', 'unhelpful'] as const).map(value => <button key={value} className="text-action" aria-pressed={feedback === value} onClick={() => { setFeedback(value); track(value === 'helpful' ? 'feedback_helpful' : 'feedback_unhelpful', id); }}>{value === 'helpful' ? tr.feedback.yes : tr.feedback.no}</button>)}
         </div>}>

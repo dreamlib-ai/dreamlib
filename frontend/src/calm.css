@@ -282,12 +282,24 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .app-shell .result-feedback .text-action { min-height: 36px; padding: 0 2px; color: var(--soft); font: 500 14px var(--font-ui); }
 .app-shell .result-feedback .text-action[aria-pressed="true"] { color: #fff; text-decoration-color: var(--pink); }
 .cloud-button.visualize { display: block; width: 100%; max-width: 360px; margin: 6px auto 34px; }
-.reading-more { margin-top: 8px; }
-.app-shell .reading-more .tags { justify-content: center; gap: 8px; margin: 0 0 14px; }
-.app-shell .reading-more .tag { padding: 6px 12px; border-radius: 99px; background: var(--bubble); color: var(--soft); font: 500 13px var(--font-ui); }
-.app-shell .reading-more .result-details { border-top: 1px solid var(--line); }
-.app-shell .reading-more .result-details summary { min-height: 52px; display: flex; align-items: center; color: var(--soft); font: italic 500 18px var(--font-head); }
-.app-shell .reading-more :is(.obj p, .classification-line, .small) { font-size: 16px; line-height: 1.65; color: var(--soft); }
+/* Traces: the reading's genre, feelings and objects stay in the open under the text, never behind a chevron. */
+.app-shell .traces { margin: 30px 0 8px; padding-top: 22px; border-top: 1px solid var(--line); }
+.app-shell .traces h3 { margin: 0 0 12px; color: var(--muted); font: 500 12.5px var(--font-ui); }
+.app-shell .trace-block { margin-top: 26px; }
+.app-shell .traces .tags { margin: 0 0 16px; }
+.app-shell .traces .classification-line { justify-content: flex-start; margin: 0 0 20px; }
+.app-shell .emotion-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.app-shell .emotion-chips li { position: relative; display: flex; align-items: baseline; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #f6f1e608; color: var(--soft); font: 500 14px var(--font-ui); overflow: hidden; }
+.app-shell .emotion-chips li::before { content: ''; position: absolute; inset: 0; width: var(--share, 0%); background: linear-gradient(90deg, #f2c4cf30, #bba5f31f); }
+.app-shell .emotion-chips span, .app-shell .emotion-chips b { position: relative; }
+.app-shell .emotion-chips b { color: #ffe3ec; font-weight: 600; }
+.app-shell .objects { display: grid; gap: 14px; margin: 0; }
+.app-shell .objects .obj { display: grid; grid-template-columns: minmax(90px, 9em) 1fr; gap: 12px; align-items: baseline; }
+.app-shell .objects dt { color: #ffe3ec; font: 500 15px var(--font-ui); }
+.app-shell .objects dd { margin: 0; color: var(--soft); font: 400 16px/1.62 var(--font); }
+/* The two remaining disclosures read as quiet links, not as chevron bars. */
+.app-shell :is(.original-dream, .journal-addition, .first-text) summary { display: inline-flex; align-items: center; min-height: 44px; list-style: none; color: var(--soft); font: 500 14px var(--font-ui); text-decoration: underline; text-decoration-color: #f2c4cf59; text-underline-offset: .3em; cursor: pointer; }
+.app-shell :is(.original-dream, .journal-addition) summary::-webkit-details-marker { display: none; }
 
 /* Drawing: dust drifts onto a sheet, gathers in a cloud band, the panel lines appear as each panel finishes. */
 .drawing { display: grid; justify-items: center; gap: 14px; margin: 4px 0 34px; }
