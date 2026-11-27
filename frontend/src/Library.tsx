@@ -71,14 +71,14 @@ function Detail({ dream, onBack, onRemoved, onUpdated }: { dream: Dream; onBack:
   );
 }
 
-export default function Library({ onTell, onRemoved }: { onTell: () => void; onRemoved?: (id: string) => void }) {
+export default function Library({ initialDream = null, onTell, onRemoved }: { initialDream?: Dream | null; onTell: () => void; onRemoved?: (id: string) => void }) {
   const [dreams, setDreams] = useState<Dream[] | null>(null);
   const [next, setNext] = useState<string | undefined>();
   const [error, setError] = useState('');
   const [moreFailed, setMoreFailed] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const busy = useRef(false);
-  const [open, setOpen] = useState<Dream | null>(null);
+  const [open, setOpen] = useState<Dream | null>(initialDream);
 
   useEffect(() => {
     let alive = true;

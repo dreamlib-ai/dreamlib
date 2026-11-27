@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { newDraft, readDraft, writeDraft, type Draft } from './draft';
 import { track } from './telemetry';
 import {
@@ -17,9 +16,7 @@ import {
 import Drawing from './Drawing';
 import Icon from './Icon';
 import Mascot, { type Pose } from './Mascot';
-import Orb from './Orb';
 import VoiceInput from './VoiceInput';
-import Worn from './Worn';
 import type { Visibility } from './profile';
 import Result from './Result';
 import { tr } from './strings';
@@ -31,7 +28,7 @@ type Props = {
   type: InterpretationType;
   visibility: Visibility;
   onType: (t: InterpretationType) => void;
-  onLibrary: () => void;
+  onLibrary: (dream?: Dream) => void;
   /** The way back from the reading to the told dream lives in the top bar; null hides it. */
   onBack: (back: (() => void) | null) => void;
 };
@@ -168,18 +165,24 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     onBack(analysis && busy === null && jobStatus !== 'pending' ? () => { setError(''); change({ analysis: null }); } : null);
     return () => onBack(null);
   }, [active, !!analysis, busy, jobStatus]);
-  const [justDone, setJustDone] = useState(false);  // the koala cheers when the reading lands, then settles
+  const [justDone, setJustDone] = useState(false);
+  const previousAnalysis = useRef(analysis);
   useEffect(() => {
-    if (busy !== 'analyze') return;
-    return () => { setJustDone(true); setTimeout(() => alive.current && setJustDone(false), 4000); };
-  }, [busy]);
+    const arrived = !!analysis && analysis !== previousAnalysis.current;
+    previousAnalysis.current = analysis;
+    setJustDone(arrived);
+    if (arrived) {
+      const timer = window.setTimeout(() => setJustDone(false), 4000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [analysis]);
   const pose: Pose = busy === 'analyze' ? 'think' : busy === 'image' ? 'hold' : justDone || jobStatus === 'done' ? 'joy' : 'curious';
-  // Writing folds away when the dreamer looks up: the field becomes one line and the orb rises above it.
+  // Writing folds away when the dreamer looks up, keeping the same text and actions.
   const [settled, setSettled] = useState(false);
   const sheet = useRef<HTMLElement>(null);
   useEffect(() => { if (!text.trim()) setSettled(false); }, [text]);
   useEffect(() => { if (mode !== 'text') setSettled(false); }, [mode]);
-  const lookUp = () => window.setTimeout(() => { if (alive.current && !sheet.current?.contains(document.activeElement)) setSettled(true); }, 0);
+  const lookUp = () => window.setTimeout(() => { if (alive.current && text.trim() && !sheet.current?.contains(document.activeElement)) setSettled(true); }, 0);
   // A tap anywhere else folds the field away, whether or not the textarea still had the focus.
   useEffect(() => {
     if (!active || mode !== 'text' || settled || !text.trim()) return;
@@ -191,16 +194,12 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   return <div className={analysis ? 'tell has-result view-transition' : 'tell view-transition'}>
     {(busy === 'analyze' || analysis) && <Mascot pose={pose} className="reading-koala" />}
     {!analysis ? <>
-      {busy !== 'analyze' && <header className="tell-heading"><h1><Worn text={tr.app.writingTitle} /></h1></header>}
+      {busy !== 'analyze' && <header className="tell-heading"><h1>{tr.app.writingTitle}</h1></header>}
       {busy === 'analyze' ? writing && (writing.title || writing.text) ? <Writing progress={writing} /> : <section className="dream-processing" role="status"><p>{tr.capture.analyzing}</p>{writing && writing.symbols.length > 0 && <SymbolRow symbols={writing.symbols} />}</section> : mode === 'voice' ? <section className="voice-stage">
         <VoiceInput active={active} onBusy={setVoiceBusy} disabled={busy !== null} onText={(transcript) => { setDraft(d => ({ ...d, text: `${d.text}${d.text ? '\n' : ''}${transcript}`, mode: 'text' })); }} onError={setError} />
+        {!voiceBusy && <button className="dream-bar" onClick={() => { setError(''); change({ mode: 'text' }); }}><Icon name="pen" /><span>{tr.capture.write}</span></button>}
         {!voiceBusy && <RecentDreams active={active} onLibrary={onLibrary} />}
-        {!voiceBusy && active && createPortal(<button className="dream-bar" onClick={() => { setError(''); change({ mode: 'text' }); }}><span>{tr.writePlaceholder}</span><Icon name="pen" /></button>, document.body)}
-      </section> : active ? createPortal(settled ? <>
-        <button className="orb settled-orb" aria-label={tr.app.voice} title={tr.app.voice} onClick={() => { setError(''); change({ mode: 'voice' }); }}>
-          <span className="orb-sky" aria-hidden="true"><i /><i /></span>
-          <Orb />
-        </button>
+      </section> : active ? <div className="composer-stage">{settled ?
         <section ref={sheet} className="composer settled" aria-label={tr.capture.write}>
           <button className="settled-text" onClick={() => { setError(''); setSettled(false); }}>{text}</button>
           <div className="composer-tools">
@@ -208,12 +207,12 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
             <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button>
           </div>
         </section>
-      </> : <section ref={sheet} className="writing-sheet composer" aria-label={tr.capture.write} onBlur={lookUp}>
+      : <section ref={sheet} className="writing-sheet composer" aria-label={tr.capture.write} onBlur={lookUp}>
         <textarea autoFocus aria-label={tr.headline} aria-invalid={text.length > 4000} aria-describedby={text.length > 4000 ? 'dream-length' : undefined} value={text} onChange={(event) => change({ text: event.target.value, saved: false })} placeholder={tr.writePlaceholder} rows={8} />
         {text.length > 4000 && <p id="dream-length" className="error">{tr.capture.tooLong}</p>}
         <div className="composer-tools"><button className="composer-close" aria-label={tr.app.voice} title={tr.app.voice} onClick={() => { setError(''); change({ mode: 'voice' }); }}><Icon name="mic" /></button>
           <button className="send-dream" aria-label={tr.capture.send} title={tr.capture.send} disabled={!text.trim() || text.length > 4000} onClick={() => void interpret()}><Icon name="send" /></button></div>
-      </section>, document.body) : null}
+      </section>}</div> : null}
     </> : <>
       <div className="result-sheet"><Result analysis={analysis} key={analysis.title} traces={false} after={
         <>
@@ -244,7 +243,7 @@ const dayOf = (dream: Dream) => new Date(dream.journal?.dreamedOn ? dream.journa
   .toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
 
 /** The last few dreams under the record button, so the first screen also leads back to what was told before. */
-function RecentDreams({ active, onLibrary }: { active: boolean; onLibrary: () => void }) {
+function RecentDreams({ active, onLibrary }: { active: boolean; onLibrary: (dream?: Dream) => void }) {
   const [dreams, setDreams] = useState<Dream[]>([]);
   useEffect(() => {
     if (!active) return;
@@ -254,8 +253,8 @@ function RecentDreams({ active, onLibrary }: { active: boolean; onLibrary: () =>
   }, [active]);
   if (!dreams.length) return null;
   return <section className="recent" aria-labelledby="recent-title">
-    <header><h2 id="recent-title">{tr.app.recent}</h2><button className="quiet-link" onClick={onLibrary}>{tr.app.all}</button></header>
-    <ul>{dreams.map(dream => <li key={dream.id}><button onClick={onLibrary}>
+    <header><h2 id="recent-title">{tr.app.recent}</h2><button className="quiet-link" onClick={() => onLibrary()}>{tr.app.all}</button></header>
+    <ul>{dreams.map(dream => <li key={dream.id}><button onClick={() => onLibrary(dream)}>
       <time>{dayOf(dream)}</time><span>{dream.title}</span>
     </button></li>)}</ul>
   </section>;

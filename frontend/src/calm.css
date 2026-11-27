@@ -111,13 +111,14 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .orb:disabled { cursor: default; }
 
 /* Recent dreams: soft bubbles with a date and a title. */
-.recent { width: 100%; margin-top: 40px; }
+.recent { width: 100%; max-width: 440px; margin-top: clamp(32px, 7svh, 60px); }
 .recent header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
 .app-shell .recent h2 { margin: 0; font-size: 20px; font-style: italic; color: var(--soft); }
-.recent .quiet-link { padding: 6px 0; font-size: 14px; }
-.recent ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.recent li button { display: grid; grid-template-columns: 72px 1fr; align-items: baseline; gap: 12px; width: 100%; padding: 15px 18px; border: 0; border-radius: 20px; background: var(--bubble); color: var(--ink); text-align: left; cursor: pointer; font: 400 16px/1.35 var(--font); transition: background .3s, transform .3s var(--ease); }
-.recent li button:hover { background: linear-gradient(160deg, #f4a9cb26, #bba5f31a); transform: translateY(-1px); }
+.recent .quiet-link { min-height: 44px; padding: 6px 0; font-size: 14px; }
+.recent ul { display: grid; margin: 0; padding: 0; list-style: none; }
+.recent li + li { border-top: 1px solid var(--line); }
+.recent li button { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: baseline; gap: 12px; width: 100%; min-height: 48px; padding: 13px 0; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; font: 400 16px/1.35 var(--font); }
+.recent li button:hover span { text-decoration: underline; text-underline-offset: 3px; }
 .recent time { color: var(--muted); font: 500 12.5px var(--font-ui); letter-spacing: .02em; }
 
 /* Onboarding steps: little clouds count the way, one cloud button at the bottom. */
@@ -207,9 +208,9 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 @media (prefers-reduced-motion: reduce) { .mark-orb { animation: none; } }
 
 /* Tell is the heading and the sphere right under it; the voice/text pair sits under the sphere. */
-.app-shell .tell-heading { padding-top: 6vh; }
-.app-shell .voice-stage { margin-top: 28px; }
-.app-shell .tell .mode-switch { margin-top: 18px; }
+.app-shell .tell-heading { padding-top: clamp(14px, 4svh, 42px); }
+.app-shell .tell-heading h1 { color: var(--paper); text-wrap: balance; }
+.app-shell .voice-stage { gap: 12px; margin-top: clamp(20px, 4svh, 36px); }
 
 /* Polish pass (2026-11-15 evening). Top bar: one centred pill, four equal icons, the koala first. */
 .topbar { width: auto; }
@@ -230,20 +231,23 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .orb::before { background: radial-gradient(circle, #f2c4cf40, #c98a9e1f 45%, transparent 68%); opacity: calc(.6 + var(--level) * .2); }
 .orb-gl.on ~ .orb-icon { color: #5a3047; }
 
-/* The dream bar: a quiet field at the bottom; tapping it opens the composer in the same frame. */
-.app-shell .page { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
-.dream-bar, .composer { position: fixed; z-index: 25; left: 50%; translate: -50% 0; bottom: calc(14px + env(safe-area-inset-bottom)); width: min(600px, calc(100% - 24px)); box-sizing: border-box;
-  border: 0; border-radius: 26px; background: linear-gradient(180deg, #13245ef5, #0b1640f5);
-  box-shadow: 0 0 0 1px #8fd8ff29, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
-.dream-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding: 0 10px 0 20px; color: var(--muted); cursor: text; font: 400 16px var(--font); text-align: left; }
-.dream-bar svg { flex: none; width: 36px; height: 36px; padding: 8px; box-sizing: border-box; border-radius: 50%; background: #ffffff10; color: var(--soft); }
-.dream-bar:hover { box-shadow: 0 0 0 1px #8fd8ff4d, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
-.composer { display: grid; gap: 8px; padding: 16px 14px 12px 20px; animation: composer-up .35s var(--ease) both; }
+.app-shell .voice-capture .orb { width: clamp(120px, 24svh, 168px); height: clamp(120px, 24svh, 168px); }
+.voice-capture .orb-idle { margin-bottom: 26px; }
+.orb-label { position: absolute; z-index: 2; top: calc(100% + 5px); inset-inline: 0; color: var(--paper); font: 600 17px/1.25 var(--font-ui); white-space: nowrap; }
+.app-shell .capture-status:empty { display: none; }
+.app-shell .orb:focus-visible { outline: 2px solid var(--paper); outline-offset: 5px; }
+.dream-bar { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 14px; border: 0;
+  background: none; color: var(--soft); cursor: pointer; font: 500 16px var(--font-ui); }
+.dream-bar svg { flex: none; width: 17px; height: 17px; }
+.dream-bar:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.composer-stage { max-width: 520px; margin: clamp(22px, 5svh, 44px) auto 0; }
+.composer { display: grid; gap: 8px; padding: 16px 14px 12px 20px; border-radius: 22px; background: #121a36;
+  box-shadow: 0 0 0 1px #b4bce142, 0 14px 40px #02051444; animation: composer-up .35s var(--ease) both; }
 @keyframes composer-up { from { opacity: 0; transform: translateY(16px); } }
 .composer textarea { min-height: 120px; height: 28svh; max-height: 46svh; padding: 4px 0; border: 0; background: transparent; color: var(--ink); font: 400 17px/1.7 var(--font); resize: none; }
 .composer textarea::placeholder { color: var(--muted); }
 .composer .composer-tools { display: flex; align-items: center; justify-content: space-between; margin: 0; padding: 0; border: 0; }
-.composer-close { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: #ffffff10; color: var(--soft); cursor: pointer; }
+.composer-close { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: #ffffff10; color: var(--soft); cursor: pointer; }
 .composer-close svg { width: 19px; height: 19px; }
 .composer .send-dream { width: 44px; height: 44px; border-radius: 50%; background: var(--dream); color: #071437; box-shadow: 0 4px 16px #8fd8ff40; }
 .composer .send-dream:disabled { opacity: .35; box-shadow: none; }
@@ -252,19 +256,19 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .composer textarea:focus, .composer textarea:focus-visible { outline: none; box-shadow: none; }
 .composer:focus-within { box-shadow: 0 0 0 1px #f2c4cf66, inset 0 1px 0 #ffffff1f, 0 14px 40px #02051466; }
 
-/* Settled: when the dreamer looks up, the field folds to one line and the orb rises above it. */
+/* The same composer folds to one line when focus leaves it. */
 .composer.settled { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 20px; animation: composer-settle .3s var(--ease) both; }
 @keyframes composer-settle { from { opacity: 0; transform: translateY(10px); } }
-.composer.settled .settled-text { flex: 1; min-width: 0; overflow: hidden; padding: 0; border: 0; background: none; color: var(--muted); font: 400 15px var(--font); text-align: left; white-space: nowrap; text-overflow: ellipsis; cursor: text; }
+.composer.settled .settled-text { flex: 1; min-width: 0; min-height: 44px; overflow: hidden; padding: 0; border: 0; background: none; color: var(--muted); font: 400 15px var(--font); text-align: left; white-space: nowrap; text-overflow: ellipsis; cursor: text; }
 .composer.settled .composer-tools { gap: 8px; padding-right: 2px; }
-.settled-orb { position: fixed; z-index: 24; left: 50%; translate: -50% 0; bottom: calc(104px + env(safe-area-inset-bottom)); width: 150px; height: 150px; animation: orb-rise .5s var(--ease) both; }
-@keyframes orb-rise { from { opacity: 0; transform: translateY(18px) scale(.92); } }
-@media (prefers-reduced-motion: reduce) { .composer.settled, .settled-orb { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .composer, .composer.settled { animation: none; } }
 
 /* Reading (2026-11-15): an airy page. Fraunces title, Funnel text at 18px with room between lines and paragraphs. */
 .topbar-back svg { width: 20px; height: 20px; }
-.reading-koala { width: 92px; margin: 0 auto 2px; }
-.app-shell .result-sheet { max-width: 34em; margin: 0 auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.reading-koala { width: 78px; margin: 0 auto 6px; }
+.app-shell .result-sheet { position: relative; isolation: isolate; max-width: 34em; margin: 0 auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.result-sheet::before { content: ''; position: absolute; z-index: -1; inset: -20px -12px; pointer-events: none;
+  background: radial-gradient(ellipse at center, #090d21d4 28%, #090d2170 72%, transparent 100%); }
 .reading-save { color: var(--soft); font: 400 14px/1.5 var(--font-ui); }
 .reading-save [role="status"]:not(:empty) { display: block; margin: 18px 0 0; }
 .reading-save-error { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 12px; margin: 18px 0 0; }
@@ -272,6 +276,7 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .reading-save-error button { min-height: 44px; color: var(--ink); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
 .app-shell .result.reading, .app-shell .result.writing { display: block; max-width: 34em; margin: 0 auto; }
 .app-shell .reading h2, .app-shell .writing h2 { margin: 6px 0 26px; font-size: clamp(30px, 7.6vw, 40px); line-height: 1.12; text-align: center; text-wrap: balance; }
+.app-shell .result-sheet .reading h2 { margin-bottom: 22px; color: var(--paper); text-align: start; }
 .app-shell .reading-text p, .app-shell .writing .lead { margin: 0 0 1.15em; color: var(--ink); font: 400 18px/1.75 var(--font); letter-spacing: 0; white-space: pre-line; }
 .app-shell .writing .lead { color: var(--soft); }
 .app-shell .writing .caret { border-bottom-color: var(--pink); }
@@ -286,7 +291,9 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .app-shell .result-feedback { gap: 4px 14px; margin: 4px 0 30px; color: var(--soft); font: 400 14px var(--font); }
 .app-shell .result-feedback .text-action { min-height: 36px; padding: 0 2px; color: var(--soft); font: 500 14px var(--font-ui); }
 .app-shell .result-feedback .text-action[aria-pressed="true"] { color: #fff; text-decoration-color: var(--pink); }
-.cloud-button.visualize { display: block; width: 100%; max-width: 360px; margin: 6px auto 34px; }
+.cloud-button.visualize { display: block; width: 100%; max-width: 240px; margin: 6px 0 34px; background: #ecd1df; color: #271b35; }
+.cloud-button.visualize .cloud-fill { opacity: .25; }
+.cloud-button.visualize .cta-label { color: inherit; text-shadow: none; }
 /* Traces: the reading's genre, feelings and objects stay in the open under the text, never behind a chevron. */
 .app-shell .traces { margin: 30px 0 8px; padding-top: 22px; border-top: 1px solid var(--line); }
 .app-shell .traces h3 { margin: 0 0 12px; color: var(--muted); font: 500 12.5px var(--font-ui); }
