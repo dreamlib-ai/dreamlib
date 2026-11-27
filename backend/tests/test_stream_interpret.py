@@ -69,6 +69,17 @@ def test_a_broken_stream_ends_with_an_error_event(api):
     assert res.status_code == 200 and kinds[-1] == "error" and "done" not in kinds
 
 
+def test_stream_validation_does_not_log_dream_content(api, caplog):
+    client, s = api
+    marker = "synthetic-private-dream"
+    s.llm.reply = json.dumps({**ANALYSIS, "tags": marker})
+    res = client.post("/api/v1/analyze/stream", json={"text": marker}, headers=auth())
+    kinds = [kind for kind, _ in events(res.text)]
+    assert kinds[-1] == "error" and "done" not in kinds
+    assert "invalid model response" in caplog.text and "list_type" in caplog.text
+    assert marker not in caplog.text
+
+
 RID = "5b0c1e7e-1d2f-4a8b-9c3d-2e4f6a8b0c1d"
 
 

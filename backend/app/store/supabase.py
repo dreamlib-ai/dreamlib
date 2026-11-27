@@ -151,7 +151,7 @@ class Supabase:
     async def _rest(self, method: str, params=None, body=None, prefer: str = "") -> list[dict]:
         res = await self._do(method, "/rest/v1/dreams", self.key, json_body=body, prefer=prefer, params=params)
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"rest: status {res.status_code}: {res.text.strip()}")
+            raise RuntimeError(f"rest: dreams {method} status {res.status_code}")
         return res.json() if res.content.strip() else []
 
     @staticmethod
@@ -252,7 +252,7 @@ class Supabase:
         """Removes the auth user; every table that holds their data goes with it (on delete cascade)."""
         res = await self._do("DELETE", f"/auth/v1/admin/users/{user_id}", self.key)
         if res.status_code // 100 != 2 and res.status_code != 404:
-            raise RuntimeError(f"account: delete status {res.status_code}: {res.text.strip()[:200]}")
+            raise RuntimeError(f"account: delete status {res.status_code}")
         self.cache.clear()  # no token of theirs may pass from the cache
 
     async def set_tier(self, user_id: str, dream_id: str, tier: str, version: str) -> str | None:
@@ -262,7 +262,7 @@ class Supabase:
         res = await self._do("POST", "/rest/v1/rpc/set_dream_tier", self.key,
                              json_body={"p_user": user_id, "p_dream": dream_id, "p_tier": tier, "p_version": version})
         if res.status_code != 200:
-            raise RuntimeError(f"consent: status {res.status_code}: {res.text.strip()[:300]}")
+            raise RuntimeError(f"consent: status {res.status_code}")
         return res.json()
 
     async def update_journal(self, user_id: str, d: Dream, revision: int) -> Dream:
@@ -360,7 +360,7 @@ class Supabase:
             headers={"apikey": self.key, "Authorization": f"Bearer {self.key}", "Content-Type": ctype},
         )
         if up.status_code // 100 != 2:
-            raise RuntimeError(f"storage: upload status {up.status_code}: {up.text[:300]}")
+            raise RuntimeError(f"storage: upload status {up.status_code}")
         try:  # G3: layout facts and a thumbnail; a picture is still saved when this fails
             await self._describe(user_id, path, data)
         except Exception:
@@ -378,7 +378,7 @@ class Supabase:
                "color": meta.color, "thumb_path": thumb}
         res = await self._do("POST", "/rest/v1/images", self.key, json_body=row, prefer="resolution=merge-duplicates,return=minimal")
         if res.status_code // 100 != 2:
-            raise RuntimeError(f"images: insert status {res.status_code}: {res.text[:300]}")
+            raise RuntimeError(f"images: insert status {res.status_code}")
 
     async def image_meta(self, paths: list[str]) -> dict[str, dict]:
         """path -> {width, height, blurhash, color, thumb_path} for the stored pictures that have one."""
@@ -406,7 +406,7 @@ class Supabase:
                                   headers={"apikey": self.key, "Authorization": f"Bearer {self.key}", "Content-Type": ctype,
                                            "x-upsert": "true"})
         if up.status_code // 100 != 2:
-            raise RuntimeError(f"storage: public upload status {up.status_code}: {up.text[:300]}")
+            raise RuntimeError(f"storage: public upload status {up.status_code}")
         return f"{self.public_url}/storage/v1/object/public/{bucket}/{path}"
 
     async def read(self, path: str) -> tuple[bytes, str]:

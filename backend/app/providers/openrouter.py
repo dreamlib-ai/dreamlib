@@ -83,7 +83,7 @@ class OpenRouter:
     @staticmethod
     def _ok(res: httpx.Response, task: str) -> httpx.Response:
         if res.status_code // 100 != 2:
-            raise ProviderError(f"openrouter: {task} status {res.status_code}: {res.text[:300]}", res.status_code)
+            raise ProviderError(f"openrouter: {task} status {res.status_code}", res.status_code)
         return res
 
     async def chat(self, messages: list[dict], json_mode: bool = False, *, task: str,
@@ -148,8 +148,7 @@ class OpenRouter:
                     payload["response_format"] = {"type": "json_object"}
                     continue
                 if res.status_code // 100 != 2:
-                    text = (await res.aread()).decode(errors="replace")
-                    raise ProviderError(f"openrouter: {task} status {res.status_code}: {text[:300]}", res.status_code)
+                    raise ProviderError(f"openrouter: {task} status {res.status_code}", res.status_code)
                 model, usage = models[0], {}
                 async for line in res.aiter_lines():
                     if not line.startswith("data:"):
@@ -159,7 +158,7 @@ class OpenRouter:
                         break
                     chunk = json.loads(data)
                     if chunk.get("error"):
-                        raise RuntimeError(f"openrouter: {task} failed mid-stream: {str(chunk['error'])[:300]}")
+                        raise RuntimeError(f"openrouter: {task} failed mid-stream")
                     model = chunk.get("model") or model
                     usage = chunk.get("usage") or usage
                     for choice in chunk.get("choices") or []:

@@ -54,18 +54,21 @@ def test_stream_retries_once_before_the_first_byte(monkeypatch):
 
 
 def test_stream_raises_on_a_client_error_and_on_an_error_mid_stream():
-    llm, _ = client((400, "bad"))
-    with pytest.raises(RuntimeError):
+    marker = "synthetic-private-dream"
+    llm, _ = client((400, marker))
+    with pytest.raises(RuntimeError) as failure:
         asyncio.run(collect(llm.stream(MESSAGES, task="interpret")))
-    llm, _ = client((200, chunk("yarım ") + "data: " + json.dumps({"error": {"message": "provider down"}}) + "\n\n"))
+    assert "400" in str(failure.value) and marker not in str(failure.value)
+    llm, _ = client((200, chunk("yarım ") + chunk(error={"message": marker})))
     got = []
 
     async def run():
         async for piece in llm.stream(MESSAGES, task="interpret"):
             got.append(piece)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as failure:
         asyncio.run(run())
+    assert marker not in str(failure.value)
     assert got == ["yarım "]  # what came before the failure was delivered
 
 

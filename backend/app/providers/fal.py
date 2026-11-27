@@ -57,7 +57,7 @@ class Fal:
         """Queues a request and returns its handle."""
         res = await self.http.post(f"{QUEUE}/{self.model}", json=body, headers=self._auth)
         if res.status_code // 100 != 2:
-            raise ProviderError(f"fal: submit status {res.status_code}: {res.text[:300]}", res.status_code)
+            raise ProviderError(f"fal: submit status {res.status_code}", res.status_code)
         d = res.json()
         if not d.get("status_url") or not d.get("response_url"):
             raise RuntimeError("fal: bad queue reply")
@@ -82,7 +82,7 @@ class Fal:
         while True:
             st = await self.http.get(handle["status_url"], headers=self._auth)
             if st.status_code // 100 != 2:
-                raise ProviderError(f"fal: status {st.status_code}: {st.text[:300]}", st.status_code)
+                raise ProviderError(f"fal: poll status {st.status_code}", st.status_code)
             body = st.json()
             if first and timing:  # the queue position when we first looked is a feature too
                 timing[1][3] = float(body.get("queue_position") or 0)
@@ -97,7 +97,7 @@ class Fal:
             await asyncio.sleep(POLL_EVERY)
         res = await self.http.get(handle["response_url"], headers=self._auth)
         if res.status_code // 100 != 2:
-            raise ProviderError(f"fal: result status {res.status_code}: {res.text[:300]}", res.status_code)
+            raise ProviderError(f"fal: result status {res.status_code}", res.status_code)
         urls = [i["url"] for i in res.json().get("images", []) if i.get("url")]
         if not urls:
             raise RuntimeError("fal: no images returned")
@@ -111,7 +111,7 @@ class Fal:
             body["language"] = language
         res = await self.http.post(f"https://fal.run/{self.model}", json=body, headers=self._auth, timeout=180)
         if res.status_code // 100 != 2:
-            raise ProviderError(f"fal: status {res.status_code}: {res.text[:300]}", res.status_code)
+            raise ProviderError(f"fal: transcribe status {res.status_code}", res.status_code)
         if self.meter:
             await self.meter.record("fal", self.model, self.task, 1, "requests", 0.0)
         return res.json().get("text", "").strip()
