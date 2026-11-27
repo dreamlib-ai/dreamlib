@@ -62,7 +62,7 @@ export default function StylePicker({ initial, remembered, profile, onClose, onS
           <span>{text.remember}</span>
         </label>
       </div>
-      <button className="style-start" type="submit">{text.start}</button>
+      <footer className="style-picker-footer"><button className="style-start" type="submit">{text.start}</button></footer>
     </form>
   </dialog>;
 }
