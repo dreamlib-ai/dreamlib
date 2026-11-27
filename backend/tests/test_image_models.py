@@ -30,7 +30,7 @@ def test_unknown_id_still_works_and_bad_choices_are_refused(tmp_path, monkeypatc
 
 
 # A revision's text never changes once used; add a new revision instead. When adding one, pin it here.
-PINNED = {"image@1": "4725d6eb0c1b"}
+PINNED = {"image@1": "4725d6eb0c1b", "image@2": "bde12cd04a95"}
 
 
 def digest(rev: dict) -> str:
