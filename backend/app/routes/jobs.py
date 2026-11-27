@@ -15,6 +15,7 @@ from ..models import MangaMeta, Panel
 from ..pipelines import image
 from ..pipelines.manga import PANEL_COUNTS, REDO_TIMEOUT, panels_of, refresh_reference, render
 from ..prompts import STYLE_HINTS
+from ..prompts import image as image_prompts
 from ..services import Services, current_user, remove_files, services, sign_panels
 from ..store.jobstore import Busy, Job
 from .analysis import dream_text
@@ -114,6 +115,7 @@ async def start_manga(body: MangaIn, user_id: str = Depends(current_user), s: Se
         if not profile.avatar or not profile.avatarPath:
             raise ApiError(400,'önce bir avatar seç')
         input.update(avatarPath=profile.avatarPath,avatarSpec=profile.avatar.model_dump(),avatarRevision=profile.revision)
+    input["promptVersion"] = image_prompts.active(style)
     return await _queue(s, user_id, "manga", input, n, str(body.requestId) if body.requestId else "")
 
 
@@ -129,7 +131,7 @@ async def start_images(body: ImagesIn, user_id: str = Depends(current_user), s: 
     style = body.style or "manga"
     if style not in STYLE_HINTS:
         raise ApiError(400, "bilinmeyen stil")
-    return await _queue(s, user_id, "image", {"prompt": prompt, "style": style}, min(max(body.count, 1), image.MAX_IMAGES))
+    return await _queue(s, user_id, "image", {"prompt": prompt, "style": style, "promptVersion": image_prompts.active(style)}, min(max(body.count, 1), image.MAX_IMAGES))
 
 
 def job_panels(job: Job) -> list[Panel]:

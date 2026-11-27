@@ -52,8 +52,22 @@ test('legacy queued booklets retain the original no-avatar request snapshot', as
   const {api}=await harness();const d=api.newDraft();
   d.analysis={title:'T',cleanText:'C',interpretation:'I',tags:[],objects:[],emotions:[]};
   d.jobId=randomUUID();d.jobStatus='pending';
-  delete d.jobUseAvatar;delete d.jobAvatarRevision;delete d.jobPerspective;delete d.useAvatar;
+  delete d.jobUseAvatar;delete d.jobAvatarRevision;delete d.jobPerspective; d.useAvatar=true; d.style='manga';
   api.writeDraft('a',d);const restored=api.readDraft('a');
-  assert.equal(restored.useAvatar,true);assert.equal(restored.jobUseAvatar,false);
+  assert.equal(restored.style,'manga');assert.equal(restored.jobUseAvatar,false);
   assert.equal(restored.jobAvatarRevision,0);assert.equal(restored.jobPerspective,'unknown');
+});
+
+test('new style choices restore without changing an older job or another account', async () => {
+  const { api } = await harness();
+  assert.equal(api.newDraft().style, 'photographic');
+  const draft = api.newDraft();
+  draft.style = 'stop_motion';
+  api.writeDraft('one', draft);
+  api.writePreferredStyle('one', 'watercolor');
+  assert.equal(api.readDraft('one').style, 'stop_motion');
+  assert.equal(api.readPreferredStyle('one'), 'watercolor');
+  assert.equal(api.readPreferredStyle('two'), null);
+  api.writePreferredStyle('one', null);
+  assert.equal(api.readPreferredStyle('one'), null);
 });

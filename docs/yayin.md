@@ -21,6 +21,8 @@ railway up backend --path-as-root --detach --project $env:RAILWAY_PROJECT_ID --s
 
 Frontend: `VITE_SUPABASE_URL` ve publishable anahtar build ortamında tanımlanır; `frontend/` içinde `npm run build`, ardından `wrangler deploy`.
 
+Frontend yeni API davranışı kullanacaksa önce API’yi yayınla ve ilgili ucu dene. İlgili göç SQL kataloğunda da doğrulanmalı; migration geçmişi ve `/healthz` bir özelliğin yazma yolunu tek başına doğrulamaz.
+
 Ortam dosyaları yayın paketine girmez; backend Docker imajı yalnız requirements ve uygulama kodunu alır. Sunucu anahtarları Railway servis değişkenlerindedir; değerleri loglara dökme.
 
 ## Yayın sonrası kontrol

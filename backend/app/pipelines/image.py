@@ -16,7 +16,7 @@ MAX_IMAGES = 4
 async def run(ctx: JobContext) -> None:
     s, job, st = ctx.s, ctx.job, ctx.state
     if "request" not in st:
-        st["prompt_version"] = st.get("prompt_version") or image_prompts.active()
+        st["prompt_version"] = st.get("prompt_version") or job.input.get("promptVersion") or image_prompts.PRE_SELECTION
         t = image_prompts.revision(st["prompt_version"])
         prompt = t["single"].format(style=t["styles"][job.input['style']], prompt=job.input['prompt'])
         client = s.images

@@ -30,7 +30,7 @@ def test_unknown_id_still_works_and_bad_choices_are_refused(tmp_path, monkeypatc
 
 
 # A revision's text never changes once used; add a new revision instead. When adding one, pin it here.
-PINNED = {"image@1": "4725d6eb0c1b", "image@2": "bde12cd04a95"}
+PINNED = {"image@1": "4725d6eb0c1b", "image@2": "bde12cd04a95", "image@3": "de224485d4bb"}
 
 
 def digest(rev: dict) -> str:
@@ -45,6 +45,9 @@ def test_image_prompt_revisions_are_frozen():
 
 def test_new_jobs_use_the_chosen_revision_and_old_ones_keep_theirs(monkeypatch):
     assert image.active() == image.LATEST
+    monkeypatch.setenv("DREAMLIB_IMAGE_PROMPT", "image@2")
+    assert image.active("manga") == "image@2"
+    assert image.active("watercolor") == image.LATEST
     monkeypatch.setenv("DREAMLIB_IMAGE_PROMPT", "image@9")
     with pytest.raises(ValueError):
         image.active()

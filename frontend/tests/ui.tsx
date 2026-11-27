@@ -25,6 +25,7 @@ dream.features = {version:1, genres:['fantasy','adventure'], perspective:'first-
 if (params.has('reset')) { localStorage.removeItem(testKey); localStorage.removeItem('dreamlib:draft:v1:test'); localStorage.removeItem('dreamlib:avatar-draft:v1:test'); localStorage.removeItem('dreamlib:avatar-design:v1:test'); }
 const fake = JSON.parse(localStorage.getItem(testKey) ?? '{"rows":[],"jobs":{}}');
 fake.profile ??= {id:'test',displayName:'',avatar:null,avatarUrl:'',presetId:null,revision:0};
+if (params.has('withAvatar')) Object.assign(fake.profile, { avatar: defaultAvatar, avatarUrl:'/avatars/ink.webp', presetId:'ink', revision:3 });
 // ?wall: 60 dreams with pictures of many shapes (G3 sizes, colour, BlurHash) and some text-only ones (G7).
 const shapes = [[1024,1024],[832,1216],[1216,832],[768,1344],[1024,1536]];
 const pictures = ['/avatar-512.png','/avatars/ink.webp','/favicon.png'];
@@ -50,7 +51,7 @@ let loseSaveResponse = params.has('lostSave');
 globalThis.fetch = async (input, init) => {
   const path = new URL(String(input), location.origin).pathname;
   const payload = typeof init?.body === 'string' ? JSON.parse(init.body) : {};
-  calls.push({ path, method: init?.method ?? 'GET', text: payload.text ?? payload.originalText, personal: payload.personal, excludeId: payload.excludeId, useAvatar:payload.useAvatar,avatarRevision:payload.avatarRevision,perspective:payload.perspective, bytes: init?.body instanceof Blob ? init.body.size : undefined }); trace();
+  calls.push({ path, method: init?.method ?? 'GET', text: payload.text ?? payload.originalText, personal: payload.personal, excludeId: payload.excludeId, style:payload.style, requestId:payload.requestId, useAvatar:payload.useAvatar,avatarRevision:payload.avatarRevision,perspective:payload.perspective, bytes: init?.body instanceof Blob ? init.body.size : undefined }); trace();
   const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
   if (path === '/api/v1/events') return new Response(null, { status: 204 });
   if (path === '/api/v1/account/export') return json({ exportedAt: new Date().toISOString(), account: 'test', profile: fake.profile, dreams: rows, consents: [], magazines: [], analyses: [] });

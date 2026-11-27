@@ -100,7 +100,7 @@ async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list
     except (ValueError, KeyError, TypeError) as e:
         raise JobFailed("hikâye taslağı okunamadı, tekrar dene", f"bad storyboard: {type(e).__name__}") from None
     scenes = [camera + ' ' + scene for scene in scenes]
-    meta = MangaMeta(style=input["style"], character_note=str(sb.get("characterNote", "")), scenes=scenes[:n], consistent=input["consistent"],avatar_path=input.get('avatarPath',''),avatar_spec=appearance,perspective=perspective,prompt_version=image_prompts.active(),image_model=getattr(getattr(s.images, 'spec', None), 'name', ''))
+    meta = MangaMeta(style=input["style"], character_note=str(sb.get("characterNote", "")), scenes=scenes[:n], consistent=input["consistent"],avatar_path=input.get('avatarPath',''),avatar_spec=appearance,perspective=perspective,prompt_version=input.get("promptVersion") or image_prompts.PRE_SELECTION,image_model=getattr(getattr(s.images, 'spec', None), 'name', ''))
     return meta, captions[:n]
 
 
@@ -119,7 +119,10 @@ async def render(s: Services, user_id: str, meta: MangaMeta, i: int, requests: d
     if meta.consistent and meta.ref_url:
         if not s.editor:
             raise RuntimeError("manga: editor unavailable")
-        identity = t["identity_avatar"] if i == 0 and meta.avatar_path else t["identity_reference"]
+        if i == 0 and meta.avatar_path:
+            identity = t.get("identity_avatar_pov", t["identity_avatar"]) if meta.perspective == "first-person" else t["identity_avatar"]
+        else:
+            identity = t["identity_reference"]
         prompt = t["edit_panel"].format(identity=identity, style=style, scene=scene)
         client, body = s.editor, s.editor.edit_body(clip(prompt, MAX_SCENE_PROMPT), [meta.ref_url])
     else:

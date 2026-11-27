@@ -5,17 +5,34 @@ export type Draft = {
   style: ArtStyle; count: number; panels: Panel[]; jobId?: string;
   jobStatus: 'none' | 'pending' | 'done' | 'failed'; recorded: boolean; saved: boolean;
   personal: boolean;
-  useAvatar:boolean; perspective:Perspective; jobUseAvatar:boolean; jobAvatarRevision:number; jobPerspective:Perspective;
+  perspective:Perspective; jobUseAvatar:boolean; jobAvatarRevision:number; jobPerspective:Perspective;
 };
 const prefix = 'dreamlib:draft:v1:';
+const stylePrefix = 'dreamlib:visual-style:v1:';
+export const artStyles = ['photographic', 'manga', 'illustration', 'collage', 'watercolor', 'stop_motion'] as const satisfies readonly ArtStyle[];
+const validStyle = (style: unknown): style is ArtStyle => artStyles.some(value => value === style);
 const maxAge = 24 * 60 * 60 * 1000;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const string = (v: unknown): v is string => typeof v === 'string';
 
 export function newDraft(): Draft {
-  return { id: crypto.randomUUID(), text: '', mode: 'voice', analysis: null, style: 'manga', count: 4,
+  return { id: crypto.randomUUID(), text: '', mode: 'voice', analysis: null, style: artStyles[0], count: 4,
     panels: [], jobStatus: 'none', recorded: false, saved: false, personal: false,
-    useAvatar:true,perspective:'unknown',jobUseAvatar:false,jobAvatarRevision:0,jobPerspective:'unknown' };
+    perspective:'unknown',jobUseAvatar:false,jobAvatarRevision:0,jobPerspective:'unknown' };
+}
+
+export function readPreferredStyle(owner: string): ArtStyle | null {
+  try {
+    const style = localStorage.getItem(stylePrefix + owner);
+    return validStyle(style) ? style : null;
+  } catch { return null; }
+}
+
+export function writePreferredStyle(owner: string, style: ArtStyle | null) {
+  try {
+    if (style) localStorage.setItem(stylePrefix + owner, style);
+    else localStorage.removeItem(stylePrefix + owner);
+  } catch { /* the selection still applies to this dream */ }
 }
 
 export function readDraft(owner: string): Draft | null {
@@ -26,7 +43,7 @@ export function readDraft(owner: string): Draft | null {
     const { updatedAt, value: d } = JSON.parse(raw);
     if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > maxAge || updatedAt > Date.now() + 60_000) throw new Error('expired');
     if (!d || !uuid.test(d.id) || !string(d.text) || d.text.length > 16_000 || !['voice', 'text'].includes(d.mode)
-      || !['manga', 'illustration', 'collage', 'photographic'].includes(d.style) || ![4, 6, 9].includes(d.count)
+      || !validStyle(d.style) || ![4, 6, 9].includes(d.count)
       || !['none', 'pending', 'done', 'failed'].includes(d.jobStatus) || (d.jobId && !uuid.test(d.jobId))
       || !Array.isArray(d.panels) || d.panels.length > 9 || !d.panels.every((p: Panel) => string(p.path) && string(p.caption))
       || typeof d.recorded !== 'boolean' || typeof d.saved !== 'boolean') throw new Error('invalid');
@@ -43,7 +60,6 @@ export function readDraft(owner: string): Draft | null {
       || !a.features.experiences.every((e: {kind?: unknown; quote?: unknown}) => e && string(e.kind) && string(e.quote)))) delete a.features;
     d.personal = d.personal === true; // migrate existing v1 drafts without erasing their text
     const cameras=['unknown','first-person','observer','mixed'];
-    d.useAvatar=typeof d.useAvatar==='boolean'?d.useAvatar:true;
     d.perspective=cameras.includes(d.perspective)?d.perspective:'unknown';
     d.jobUseAvatar=d.jobUseAvatar===true;
     d.jobAvatarRevision=Number.isInteger(d.jobAvatarRevision)&&d.jobAvatarRevision>=0?d.jobAvatarRevision:0;
