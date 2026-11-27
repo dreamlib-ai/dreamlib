@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getSelfProfile, type AvatarProfile, type InterpretationType } from './api';
+import { getSelfProfile, type AvatarProfile, type Dream, type InterpretationType } from './api';
 import AvatarPage from './AvatarPage';
 import { clearAvatarDraft } from './avatar';
 import Brain from './Brain';
@@ -42,20 +42,26 @@ export function Nav({ view, onView, avatarUrl, onBack }: { view: View; onView: (
 export function Workspace({ account, onSignOut, start = 'tell' }: { account: Account; onSignOut: () => void; start?: View }) {
   useEffect(() => { sessionEvent(account.id); }, [account.id]);
   const [view, setView] = useState<View>(start);
+  const [recentDream, setRecentDream] = useState<Dream | null>(null);
   const [draft, setDraft] = useState(0);
   const [type, setType] = useState<InterpretationType>('universal');
   const [selfProfile,setSelfProfile]=useState<AvatarProfile|null>(null);
   const [back, setBackState] = useState<(() => void) | null>(null);
   const setBack = useCallback((next: (() => void) | null) => setBackState(() => next), []);
+  function openLibrary(dream?: Dream) {
+    setRecentDream(dream ?? null);
+    setView('library');
+    window.scrollTo(0, 0);
+  }
   useEffect(()=>{let alive=true;getSelfProfile().then(profile=>{if(alive)setSelfProfile(profile);}).catch(()=>{});return()=>{alive=false;};},[account.id]);
   return <div className="app-shell">
-    <Nav view={view} onView={setView} avatarUrl={selfProfile?.avatarUrl} onBack={view === 'tell' ? back : null} />
+    <Nav view={view} onView={next => { if (next !== view) setRecentDream(null); setView(next); }} avatarUrl={selfProfile?.avatarUrl} onBack={view === 'tell' ? back : null} />
     <main className="page">
       {view==='profile'&&<div className="account-row"><span title={account.email}>{account.email}</span><button className="text-action" onClick={onSignOut}><Icon name="logout" />{tr.auth.signOut}</button></div>}
-      <div hidden={view !== 'tell'}><Tell key={draft} owner={account.id} active={view === 'tell'} type={type} visibility={account.profile.visibility} onType={setType} onLibrary={() => setView('library')} onBack={setBack} /></div>
+      <div hidden={view !== 'tell'}><Tell key={draft} owner={account.id} active={view === 'tell'} type={type} visibility={account.profile.visibility} onType={setType} onLibrary={openLibrary} onBack={setBack} /></div>
       {view === 'brain' && <Brain onTell={() => { clearDraft(account.id); setDraft(current => current + 1); setView('tell'); }} />}
       {view==='profile'&&<AvatarPage owner={account.id} onUpdated={setSelfProfile} />}
-      {view === 'library' && <div className="library-view"><Library onRemoved={(id) => {
+      {view === 'library' && <div className="library-view"><Library initialDream={recentDream} onRemoved={(id) => {
         if (readDraft(account.id)?.id === id) { clearDraft(account.id); setDraft(current => current + 1); }
       }} onTell={() => { clearDraft(account.id); setDraft(current => current + 1); setView('tell'); }} /></div>}
     </main>
