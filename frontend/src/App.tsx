@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getSelfProfile, type AvatarProfile, type Dream, type InterpretationType } from './api';
 import AvatarPage from './AvatarPage';
-import { clearAvatarDraft } from './avatar';
+import { clearAvatarDesign, clearAvatarDraft } from './avatar';
 import Brain from './Brain';
 import Library from './Library';
 import Onboarding from './Onboarding';
@@ -101,7 +101,7 @@ function AccountApp() {
   }
 
   async function leave() {
-    try { await signOut(); if (account) { clearDraft(account.id); clearAvatarDraft(account.id); } setAccount(null); setError(''); }
+    try { await signOut(); if (account) { clearDraft(account.id); clearAvatarDraft(account.id); clearAvatarDesign(account.id); } setAccount(null); setError(''); }
     catch (cause) { setError(authMessage(cause)); }
   }
 
