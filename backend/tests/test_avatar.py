@@ -41,6 +41,7 @@ def test_manga_freezes_avatar_and_viewpoint_through_profile_changes(api):
     assert job['status']=='done' and not s.images.calls and len(s.editor.calls)==4
     assert s.editor.calls[0][2]==[p['avatarUrl']]
     assert 'POV' in s.editor.calls[0][1]
+    assert "camera is the dreamer's eyes" in s.editor.calls[0][1]
     meta=s.queue.jobs[job['id']].state['meta']
     assert meta['AvatarPath']==p['avatarUrl'] and meta['Perspective']=='first-person'
     client.patch('/api/v1/profile',headers=auth(),json={'revision':p['revision'],'presetId':'moss'})

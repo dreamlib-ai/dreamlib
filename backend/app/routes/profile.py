@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from ..avatar import AvatarSpec, PRESETS, PresetId, SelfProfile, avatar_prompt
 from ..errors import ApiError, Conflict
+from ..prompts import image as image_prompts
 from ..services import Services, current_user, services
 from .jobs import _queue, job_or_404
 
@@ -92,4 +93,4 @@ async def create_avatar(body: AvatarIn, user_id: str = Depends(current_user), s:
         raise ApiError(409, 'profil değişti; yeniden açıp dene', 'revision_conflict')
     if profile.avatarPath and not s.editor:
         raise ApiError(503,'karakter tutarlılığı servisi kurulu değil')
-    return await _queue(s,user_id,'image',{'purpose':'avatar','avatarSpec':body.spec.model_dump(),'baseRevision':body.baseRevision,'basePath':profile.avatarPath,'prompt':avatar_prompt(body.spec),'style':'illustration'},1,str(body.requestId))
+    return await _queue(s,user_id,'image',{'purpose':'avatar','avatarSpec':body.spec.model_dump(),'baseRevision':body.baseRevision,'basePath':profile.avatarPath,'prompt':avatar_prompt(body.spec),'style':'illustration','promptVersion':image_prompts.active("illustration")},1,str(body.requestId))

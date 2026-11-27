@@ -1,6 +1,8 @@
 import asyncio
 from datetime import datetime, timezone
 
+import pytest
+
 from app.store.jobstore import Job
 
 from .conftest import ANALYSIS, OTHER, TOKEN, auth, storyboard, wait_job
@@ -85,6 +87,30 @@ def test_manga_job_makes_a_booklet_and_saves_with_its_drawing_plan(api):
     assert redo.status_code == 200 and redo.json()["caption"] == "Sahne 2"
     assert client.post(f"/api/v1/dreams/{saved['id']}/panels/9/redo", headers=auth()).status_code == 400
     assert client.post(f"/api/v1/dreams/{saved['id']}/panels/2/redo", headers=auth(OTHER)).status_code == 404
+
+
+@pytest.mark.parametrize(("style", "hint"), [("watercolor", "transparent watercolor"), ("stop_motion", "3D stop-motion miniature")])
+def test_visual_style_is_saved_and_kept_when_one_panel_is_redrawn(api, monkeypatch, style, hint):
+    client, s = api
+    s.llm.reply = storyboard(4)
+    res = client.post("/api/v1/manga", headers=auth(), json={"text": "Uçuyordum.", "style": style})
+    assert res.status_code == 202
+    job = wait_job(client, res.json()["id"])
+    assert job["status"] == "done"
+    assert hint in s.images.calls[0][1]
+    saved = client.post("/api/v1/dreams", headers=auth(), json={**DREAM, "jobId": job["id"], "style": "manga"}).json()
+    assert saved["style"] == style
+    before = [p["path"] for p in saved["panels"]]
+
+    monkeypatch.setenv("DREAMLIB_IMAGE_PROMPT", "image@1")
+    s.queue.jobs.clear()
+    assert client.post(f"/api/v1/dreams/{saved['id']}/panels/2/redo", headers=auth()).status_code == 200
+    assert hint in s.editor.calls[-1][1]
+    assert "no text" in s.editor.calls[-1][1]
+    current = client.get(f"/api/v1/dreams/{saved['id']}", headers=auth()).json()
+    after = [p["path"] for p in current["panels"]]
+    assert current["style"] == style and after[2] != before[2]
+    assert after[:2] == before[:2] and after[3:] == before[3:]
 
 
 def test_manga_rejects_bad_input_and_a_second_running_job(api):

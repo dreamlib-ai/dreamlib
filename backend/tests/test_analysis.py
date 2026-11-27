@@ -68,7 +68,7 @@ def test_images_are_a_job_and_clamp_count(api):
     job = wait_job(client, res.json()["id"])
     assert job["status"] == "done" and len(job["panels"]) == 4 and job["panels"][3]["url"].startswith("https://")
     kind, prompt, n = s.images.calls[0]
-    assert n == 4 and prompt.startswith("Black and white manga")
+    assert n == 4 and prompt.startswith("Strict monochrome manga")
     assert client.post("/api/v1/images", headers=auth(), json={"prompt": "orman", "style": "nope"}).status_code == 400
     assert client.post("/api/v1/images", json={"prompt": "orman"}).status_code == 401
 

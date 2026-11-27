@@ -11,7 +11,7 @@ import { WALL_PAGE } from './wall';
 
 export { ApiError, type ErrorCode } from './http';
 export type InterpretationType = 'universal' | 'cultural' | 'psychoanalytic';
-export type ArtStyle = 'manga' | 'illustration' | 'collage' | 'photographic';
+export type ArtStyle = 'manga' | 'illustration' | 'collage' | 'photographic' | 'watercolor' | 'stop_motion';
 export type AvatarProfile = g.ProfileOut;
 export const getSelfProfile = () => g.getProfile();
 export const updateSelfProfile = (revision:number,changes:{displayName?:string;presetId?:PresetId;avatarJobId?:string;clearAvatar?:boolean}) => g.updateProfile({revision,...changes});

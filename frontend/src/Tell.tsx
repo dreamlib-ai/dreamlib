@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { newDraft, readDraft, writeDraft, type Draft } from './draft';
+import { newDraft, readDraft, readPreferredStyle, writeDraft, writePreferredStyle, type Draft } from './draft';
 import { track } from './telemetry';
 import {
   ApiError,
   streamDream,
   type StreamProgress,
-  getSelfProfile,
+  type ArtStyle,
+  type AvatarProfile,
   getJob,
   listDreamPage,
   saveDream,
@@ -19,6 +20,7 @@ import Mascot, { type Pose } from './Mascot';
 import VoiceInput from './VoiceInput';
 import type { Visibility } from './profile';
 import Result from './Result';
+import StylePicker from './StylePicker';
 import { tr } from './strings';
 
 type Props = {
@@ -27,6 +29,7 @@ type Props = {
   inspiration?: string;
   type: InterpretationType;
   visibility: Visibility;
+  profile: AvatarProfile | null;
   onType: (t: InterpretationType) => void;
   onLibrary: (dream?: Dream) => void;
   /** The way back from the reading to the told dream lives in the top bar; null hides it. */
@@ -35,7 +38,7 @@ type Props = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export default function Tell({ active, owner, inspiration, type, visibility, onLibrary, onBack }: Props) {
+export default function Tell({ active, owner, inspiration, type, visibility, profile, onLibrary, onBack }: Props) {
   const [draft, setDraft] = useState(() => readDraft(owner) ?? newDraft());
   const { id, text, mode, analysis, style, count, panels, jobId, jobStatus, saved, recorded } = draft;  // past dreams are always used when they relate (Cenker, 2026-11-15)
   const change = (patch: Partial<Draft>) => setDraft(current => ({ ...current, ...patch }));
@@ -49,6 +52,8 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   const [retry, setRetry] = useState(0);
   const [feedback, setFeedback] = useState<'helpful' | 'unhelpful' | null>(null);
   const [writing, setWriting] = useState<StreamProgress | null>(null);
+  const [pickingStyle, setPickingStyle] = useState(false);
+  const preferredStyle = pickingStyle ? readPreferredStyle(owner) : null;
   const alive = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => { setStorageError(!writeDraft(owner, draft)); }, [owner, draft]);
@@ -134,16 +139,17 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
       setFeedback(null); track('analysis_ready', id);
     }
   }
-  async function visualize() {
+  function visualize(chosen: ArtStyle, remember: boolean, avatarRevision?: number) {
     if (!analysis || busy) return;
-    setError(''); setProgress(0);setBusy('image');
-    try {
-      const profile=draft.useAvatar?await getSelfProfile():null;
-      const useAvatar=!!profile?.avatar && draft.useAvatar;
-      change({ jobId: crypto.randomUUID(), jobStatus: 'pending', saved: false,
-        jobUseAvatar:useAvatar,jobAvatarRevision:useAvatar?profile!.revision:0,
-        jobPerspective:draft.perspective==='unknown'?analysis.features?.perspective??'unknown':draft.perspective });
-    } catch(cause) { setBusy(null);setError(cause instanceof Error?cause.message:tr.genericError); }
+    setPickingStyle(false);
+    setError('');
+    setProgress(0);
+    setEta(undefined);
+    setBusy('image');
+    writePreferredStyle(owner, remember ? chosen : null);
+    change({ style: chosen, jobId: crypto.randomUUID(), jobStatus: 'pending', saved: false,
+      jobUseAvatar: avatarRevision !== undefined, jobAvatarRevision: avatarRevision ?? 0,
+      jobPerspective: draft.perspective === 'unknown' ? analysis.features?.perspective ?? 'unknown' : draft.perspective });
   }
   async function save() {
     if (!analysis || busy !== null || jobStatus === 'pending') return;
@@ -228,10 +234,12 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
           </div>
         </>}>
         {busy === 'image' ? <Drawing count={count} done={progress} eta={eta} />
-          : !(jobStatus === 'done' && panels.length > 0) && <button className="cloud-button visualize" disabled={busy !== null} onClick={() => jobStatus === 'pending' ? setRetry(n => n + 1) : void visualize()}>
+          : !(jobStatus === 'done' && panels.length > 0) && <button className="cloud-button visualize" disabled={busy !== null} onClick={() => jobStatus === 'pending' ? setRetry(n => n + 1) : setPickingStyle(true)}>
             <span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{jobStatus === 'pending' ? tr.recovery.resume : tr.visualize}</span></button>}
         {panels.length > 0 && <section className="booklet"><div className="shots">{panels.map((panel) => <figure key={panel.path}>{panel.url && <Sharpen src={panel.url} alt={panel.caption} />}{panel.caption && <figcaption>{panel.caption}</figcaption>}</figure>)}</div></section>}
       </Result></div>
+      {pickingStyle && active && <StylePicker initial={jobStatus === 'failed' ? style : preferredStyle ?? style} remembered={preferredStyle !== null}
+        profile={profile} onClose={() => setPickingStyle(false)} onStart={visualize} />}
     </>}
     {storageError && <p className="error" role="status">{tr.recovery.storage}</p>}
     {error && <p className="error" role="alert">{error}</p>}
