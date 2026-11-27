@@ -265,6 +265,11 @@ html.arriving :is(.voice-stage, .steps-foot) { animation-delay: .4s; }
 .topbar-back svg { width: 20px; height: 20px; }
 .reading-koala { width: 92px; margin: 0 auto 2px; }
 .app-shell .result-sheet { max-width: 34em; margin: 0 auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.reading-save { color: var(--soft); font: 400 14px/1.5 var(--font-ui); }
+.reading-save [role="status"]:not(:empty) { display: block; margin: 18px 0 0; }
+.reading-save-error { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 12px; margin: 18px 0 0; }
+.reading-save-error p { margin: 0; }
+.reading-save-error button { min-height: 44px; color: var(--ink); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
 .app-shell .result.reading, .app-shell .result.writing { display: block; max-width: 34em; margin: 0 auto; }
 .app-shell .reading h2, .app-shell .writing h2 { margin: 6px 0 26px; font-size: clamp(30px, 7.6vw, 40px); line-height: 1.12; text-align: center; text-wrap: balance; }
 .app-shell .reading-text p, .app-shell .writing .lead { margin: 0 0 1.15em; color: var(--ink); font: 400 18px/1.75 var(--font); letter-spacing: 0; white-space: pre-line; }
