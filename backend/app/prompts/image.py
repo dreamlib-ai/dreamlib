@@ -21,9 +21,24 @@ REVISIONS: dict[str, dict] = {
         "identity_avatar": "Keep the same recognizable individual, face, hair, clothing silhouette and proportions; adapt the reference to the requested rendering style.",
         "identity_reference": "Keep the exact same character design, proportions and art style as the reference image.",
     },
+    # image@2: a live flux test drew a made-up signature on the first panel; panels now forbid any lettering.
+    "image@2": {
+        "styles": {
+            "manga": "Black and white manga panel, ink linework, screentone shading, dreamlike atmosphere",
+            "illustration": "Soft editorial illustration, flat colors with print texture, surreal dreamlike mood",
+            "collage": "Surreal paper collage, cut-out shapes, muted palette, dreamlike composition",
+            "photographic": "Cinematic dreamlike photograph, soft light, shallow depth of field, surreal atmosphere",
+        },
+        "single": "{style}, no text, lettering, signature or watermark. {prompt}",
+        "avatar_edit": "Keep this individual recognizable while applying the requested appearance changes. {prompt}",
+        "text_panel": "{style}, no text, lettering, speech bubbles, signature or watermark. {character}. {scene}",
+        "edit_panel": "{identity} {style}, no text, lettering, speech bubbles, signature or watermark. New scene: {scene}",
+        "identity_avatar": "Keep the same recognizable individual, face, hair, clothing silhouette and proportions; adapt the reference to the requested rendering style.",
+        "identity_reference": "Keep the exact same character design, proportions and art style as the reference image.",
+    },
 }
 
-LATEST = "image@1"
+LATEST = "image@2"
 LEGACY = "image@1"  # jobs saved before revisions were recorded used this wording
 
 
