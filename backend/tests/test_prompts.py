@@ -7,13 +7,14 @@ from app.providers.openrouter import TASKS
 # file and update both columns here.
 PINNED = {
     "clean": ("clean@1", "f7fdb8d0a250"),
-    "interpret": ("interpret@2", "b8aaae56822b"),
+    "interpret": ("interpret@3", "ce364618eaa7"),
     "storyboard": ("storyboard@1", "0435565ec848"),
 }
 
 
 def text(task: str) -> str:
-    return {"clean": prompts.CLEAN_SYSTEM, "interpret": prompts.ANALYZE_SYSTEM, "storyboard": prompts.storyboard_prompt(4)}[task]
+    interpretation = "\n".join([prompts.ANALYZE_SYSTEM, *prompts.INTERPRETATION_HINTS.values()])
+    return {"clean": prompts.CLEAN_SYSTEM, "interpret": interpretation, "storyboard": prompts.storyboard_prompt(4)}[task]
 
 
 def test_every_prompt_is_pinned_to_its_version():
