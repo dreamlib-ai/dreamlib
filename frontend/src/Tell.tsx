@@ -45,6 +45,7 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   const [busy, setBusy] = useState<'analyze' | 'image' | 'save' | null>(null);
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [error, setError] = useState('');
+  const [saveError, setSaveError] = useState<{ message: string; retryable: boolean } | null>(null);
   const [storageError, setStorageError] = useState(false);
   const [progress, setProgress] = useState(0);
   const [eta, setEta] = useState<number | undefined>();
@@ -111,10 +112,21 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
   async function run<T>(kind: 'analyze' | 'save', work: () => Promise<T>): Promise<T | undefined> {
     setBusy(kind); setError('');
     try { return await work(); }
-    catch (cause) { if (alive.current) setError(cause instanceof Error ? cause.message : tr.genericError); }
+    catch (cause) {
+      if (alive.current && kind === 'save') {
+        const retryable = !(cause instanceof ApiError) || cause.status === 408 || cause.status === 429 || cause.status >= 500;
+        setSaveError({
+          message: !retryable && cause instanceof ApiError ? cause.message : tr.recovery.saveFailed,
+          retryable,
+        });
+      } else if (alive.current) {
+        setError(cause instanceof Error ? cause.message : tr.genericError);
+      }
+    }
     finally { if (alive.current) setBusy(null); }
   }
   async function interpret() {
+    setSaveError(null);
     setWriting(null);
     const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;  // then the text comes at once
     const result = await run('analyze', () => streamDream(text, type, { personal: true, excludeId: id },
@@ -137,7 +149,8 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
     } catch(cause) { setBusy(null);setError(cause instanceof Error?cause.message:tr.genericError); }
   }
   async function save() {
-    if (!analysis) return;
+    if (!analysis || busy !== null || jobStatus === 'pending') return;
+    setSaveError(null);
     const dream = await run('save', () => saveDream(text, type, analysis, style, panels,
       jobStatus === 'done' ? jobId : undefined, visibility, id, recorded));
     if (dream && alive.current) { change({ recorded: true, saved: true, panels: dream.panels }); track('dream_saved', id); }
@@ -203,9 +216,18 @@ export default function Tell({ active, owner, inspiration, type, visibility, onL
       </section>, document.body) : null}
     </> : <>
       <div className="result-sheet"><Result analysis={analysis} key={analysis.title} traces={false} after={
-        <div className="result-feedback" role="group" aria-label={tr.feedback.question}><span>{tr.feedback.question}</span>
-          {(['helpful', 'unhelpful'] as const).map(value => <button key={value} className="text-action" aria-pressed={feedback === value} onClick={() => { setFeedback(value); track(value === 'helpful' ? 'feedback_helpful' : 'feedback_unhelpful', id); }}>{value === 'helpful' ? tr.feedback.yes : tr.feedback.no}</button>)}
-        </div>}>
+        <>
+          <div className="reading-save">
+            <span role="status">{busy === 'save' ? tr.recovery.saving : saved ? tr.app.savedDream : ''}</span>
+            {saveError && <div className="reading-save-error">
+              <p role="alert">{saveError.message}</p>
+              {saveError.retryable && <button className="text-action" disabled={busy !== null || jobStatus === 'pending'} onClick={() => void save()}>{tr.app.retry}</button>}
+            </div>}
+          </div>
+          <div className="result-feedback" role="group" aria-label={tr.feedback.question}><span>{tr.feedback.question}</span>
+            {(['helpful', 'unhelpful'] as const).map(value => <button key={value} className="text-action" aria-pressed={feedback === value} onClick={() => { setFeedback(value); track(value === 'helpful' ? 'feedback_helpful' : 'feedback_unhelpful', id); }}>{value === 'helpful' ? tr.feedback.yes : tr.feedback.no}</button>)}
+          </div>
+        </>}>
         {busy === 'image' ? <Drawing count={count} done={progress} eta={eta} />
           : !(jobStatus === 'done' && panels.length > 0) && <button className="cloud-button visualize" disabled={busy !== null} onClick={() => jobStatus === 'pending' ? setRetry(n => n + 1) : void visualize()}>
             <span className="cloud-fill" aria-hidden="true"><i /><i /></span><span className="cta-label">{jobStatus === 'pending' ? tr.recovery.resume : tr.visualize}</span></button>}

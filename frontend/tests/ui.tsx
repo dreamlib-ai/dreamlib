@@ -46,6 +46,7 @@ function trace() {
   element.textContent = JSON.stringify({ calls, records: rows.length, jobs: Object.keys(fake.jobs).length });
 }
 let transcripts = 0;
+let loseSaveResponse = params.has('lostSave');
 globalThis.fetch = async (input, init) => {
   const path = new URL(String(input), location.origin).pathname;
   const payload = typeof init?.body === 'string' ? JSON.parse(init.body) : {};
@@ -112,7 +113,12 @@ globalThis.fetch = async (input, init) => {
     const saved = { ...dream, ...payload, id: path.split('/').pop(), panels: (payload.panels ?? []).map((p: object) => ({ ...p, url:'/favicon.png' })) };
     const index = rows.findIndex(row => row.id === saved.id);
     if (index < 0) rows.push(saved); else rows[index] = saved;
-    persist(); return json(saved);
+    persist();
+    if (loseSaveResponse) {
+      loseSaveResponse = false;
+      throw new TypeError('Simulated lost response after saving the dream');
+    }
+    return json(saved);
   }
   if (path === '/api/v1/magazines/anniversary') return params.has('magazine') ? json(fakeMagazine(rows[0])) : json({ error:'yok', code:'not_found' }, 404);
   if (path.startsWith('/api/v1/m/')) {

@@ -43,6 +43,8 @@ export const tr = {
   intro: { replay: 'Dreamlib’i tanı' },
   personal: { label: 'Geçmiş rüyalarımla ilişkilendir', hint: 'Varsa son 15 kaydının kısa metinleri ve temaları yorum için kullanılır.', themes: 'Tekrar eden temalar', count: (n: number) => `${n} rüyada` },
   recovery: {
+    saving: 'Rüyan kaydediliyor',
+    saveFailed: 'Rüyan kütüphaneye kaydedilemedi.',
     resume: 'Çizime devam et',
     timeout: 'Yanıt gecikti. Tekrar deneyebilirsin; taslağın korunuyor.',
     connection: 'Bağlantı kesildi. Çizime kaldığın yerden devam edebilirsin.',
