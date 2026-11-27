@@ -7,10 +7,10 @@ from app.models import Dream, MangaMeta, Panel
 from .conftest import run, sql
 
 
-def dream(**kw) -> Dream:
+def dream(*, style="manga", **kw) -> Dream:
     return Dream(title="Uçan orman", originalText="Ormanın üstünde uçuyordum.", cleanText="Ormanın üstünde uçuyordum.",
                  type="universal", interpretation="Özgürlük arzusu.", mood="huzurlu", tags=["uçmak"],
-                 panels=[Panel(caption="bir", path="u/1.png"), Panel(caption="iki", path="u/2.png")], style="manga",
+                 panels=[Panel(caption="bir", path="u/1.png"), Panel(caption="iki", path="u/2.png")], style=style,
                  visibility="private", **kw)  # the route fills this in before saving
 
 
@@ -24,6 +24,15 @@ def test_save_read_list_and_delete_keep_every_field(sb, user):
     run(sb.delete_dream(user, saved.id))
     with pytest.raises(NotFound):
         run(sb.get_dream(user, saved.id))
+
+
+@pytest.mark.parametrize("style", ["watercolor", "stop_motion"])
+def test_new_styles_keep_their_render_metadata_in_the_database(sb, user, style):
+    meta = MangaMeta(style=style, scenes=["a", "b"], consistent=True, prompt_version="image@3")
+    saved = run(sb.save_dream(user, dream(style=style, manga_meta=meta)))
+    got = run(sb.get_dream(user, saved.id))
+    assert got.style == got.manga_meta.style == style
+    assert got.manga_meta.prompt_version == "image@3"
 
 
 def test_list_pages_by_created_at_then_id(sb, user):
