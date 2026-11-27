@@ -98,7 +98,7 @@ async def _storyboard(s: Services, input: dict, n: int) -> tuple[MangaMeta, list
         if len(scenes) < n:
             raise ValueError(f"only {len(scenes)} panels")
     except (ValueError, KeyError, TypeError) as e:
-        raise JobFailed("hikâye taslağı okunamadı, tekrar dene", f"bad storyboard: {e}")
+        raise JobFailed("hikâye taslağı okunamadı, tekrar dene", f"bad storyboard: {type(e).__name__}") from None
     scenes = [camera + ' ' + scene for scene in scenes]
     meta = MangaMeta(style=input["style"], character_note=str(sb.get("characterNote", "")), scenes=scenes[:n], consistent=input["consistent"],avatar_path=input.get('avatarPath',''),avatar_spec=appearance,perspective=perspective,prompt_version=image_prompts.active(),image_model=getattr(getattr(s.images, 'spec', None), 'name', ''))
     return meta, captions[:n]

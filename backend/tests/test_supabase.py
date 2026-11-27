@@ -116,6 +116,14 @@ def test_save_sends_database_column_names_and_old_meta_keys():
     assert "created_at" not in row and "id" not in row
 
 
+def test_failed_save_does_not_echo_private_dream_text():
+    marker = "synthetic-private-dream"
+    sb = client(lambda req: httpx.Response(400, json={"details": marker}))
+    with pytest.raises(RuntimeError) as caught:
+        run(sb.save_dream(UID, Dream(title="Test", originalText=marker)))
+    assert "400" in str(caught.value) and marker not in str(caught.value)
+
+
 def test_replace_panels_is_compare_and_swap():
     def handler(req):
         assert json.loads(req.url.params["panels"].removeprefix("eq.")) == [{"caption": "a", "path": "old"}]

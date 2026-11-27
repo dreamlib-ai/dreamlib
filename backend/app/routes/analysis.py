@@ -158,7 +158,7 @@ async def _finish(reply: str, text: str, user_id: str, s: Services, used: dict) 
         # Do not leak private narrative fragments through Pydantic's input_value traceback.
         issues = [{"field": ".".join(map(str, issue["loc"])), "type": issue["type"]} for issue in error.errors(include_input=False, include_context=False)][:8] if isinstance(error, ValidationError) else [{"type": type(error).__name__}]
         log.warning("analyze: invalid model response %s", json.dumps(issues))
-        raise ApiError(502, "yorum okunamadı, tekrar dene")
+        raise ApiError(502, "yorum okunamadı, tekrar dene") from None
     out = result.model_dump()
     out["segments"] = await interpretation_segments(s, result.interpretation)
     if s.analyses:  # M3: every interpretation is a row; the dream picks it up by analysisId when saved

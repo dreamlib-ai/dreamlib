@@ -3,6 +3,7 @@ import json
 from types import SimpleNamespace
 
 import httpx
+import pytest
 
 from app import worker
 from app.pipelines.registry import KINDS, Kind
@@ -60,6 +61,17 @@ def test_fal_counts_pictures_when_queued_not_when_read_again():
     row = sink.rows[0]
     assert (row["provider"], row["task"], row["units"], row["unit"]) == ("fal", "image", 2, "images")
     assert abs(row["cost_usd"] - 0.006) < 1e-9
+
+
+def test_a_fal_queue_error_does_not_echo_the_prompt():
+    marker = "synthetic-private-dream"
+    fal = Fal("key", resolve("fast", "image"))
+    fal.http = httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda req: httpx.Response(422, json={"detail": marker})
+    ))
+    with pytest.raises(RuntimeError) as caught:
+        run(fal.submit(Fal.image_body(marker)))
+    assert "422" in str(caught.value) and marker not in str(caught.value)
 
 
 def test_a_failing_sink_never_breaks_the_call():
