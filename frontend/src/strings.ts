@@ -11,8 +11,11 @@ export const tr = {
   },
   avatar: {
     heading:'Avatarın', profile:'Profilim', active:'Seçili avatarın', preview:'Önizleme', oldPreview:'Önizleme önceki seçimlerine ait',
-    pick:'Bir karakter seç', generating:'Avatarın çiziliyor', presets:'Hazır karakterler', variant:(n:number)=>`Avatar varyantı ${n}`,
+    pick:'Henüz avatarın yok', generating:'Avatarın çiziliyor', presets:'Hazır karakterler', variant:(n:number)=>`Avatar varyantı ${n}`,
     name:'Görünen adın', saveName:'Kaydet', design:'Kendi avatarını tasarla', generate:'Önizlemeyi oluştur', use:'Avatarımı kullan', remove:'Avatarı kaldır',
+    edit:'Avatarı düzenle', draft:'Avatar taslağı', restart:'Yeni önizleme oluştur', resume:'Önizlemeye devam et', discard:'Vazgeç',
+    removeConfirm:'Aktif avatarın kaldırılsın mı?', storage:'Avatar taslağı bu cihazda saklanamadı.',
+    groups:{face:'Yüz',hair:'Saç',clothes:'Kıyafet',pose:'Duruş'},
     useInDream:'Avatarım varsa çizimde kullan', camera:'Bakış açısı', automatic:'Rüyamdaki gibi', create:'Avatar oluştur',
     fields:{skin:'Ten',face:'Yüz',hair:'Saç',hairColor:'Saç rengi',build:'Vücut',outfit:'Kıyafet',outfitColor:'Kıyafet rengi',accessory:'Aksesuar',expression:'İfade',pose:'Poz'},
     options:{

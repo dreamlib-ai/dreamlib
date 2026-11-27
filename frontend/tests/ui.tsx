@@ -22,7 +22,7 @@ const params = new URLSearchParams(location.search);
 const dream: Dream = { id: 'test-dream', title: 'Denizin üstünde', originalText: 'Gece denizin üstünde uçuyordum. Aşağıda ışıkları yanan bir şehir vardı.', cleanText: 'Denizin üstünde uçuyordum.', interpretation: 'Denizin üstünde uçmak, özgürlük isteğini ve bilinmeyene duyulan merakı çağrıştırabilir. Rüyandaki huzur, bu değişime açık olduğunu düşündürüyor. Bu sahnenin senin için anlamını kendi hislerinle birlikte değerlendirebilirsin.', tags: ['Deniz', 'Uçmak'], objects: [{ label: 'Deniz', meaning: 'Keşfetmek istediğin duyguları hatırlatabilir.' }], emotions: [{ label: 'Huzur', pct: 70, note: '' }, { label: 'Merak', pct: 30, note: '' }], type: 'universal', style: 'manga', panels: [], visibility: 'private', createdAt: '2026-11-01T06:00:00Z' };
 const testKey = 'dreamlib:ui-recovery';
 dream.features = {version:1, genres:['fantasy','adventure'], perspective:'first-person', people:[], places:['deniz'], events:['uçmak'], experiences:[]};
-if (params.has('reset')) { localStorage.removeItem(testKey); localStorage.removeItem('dreamlib:draft:v1:test'); localStorage.removeItem('dreamlib:avatar-draft:v1:test'); }
+if (params.has('reset')) { localStorage.removeItem(testKey); localStorage.removeItem('dreamlib:draft:v1:test'); localStorage.removeItem('dreamlib:avatar-draft:v1:test'); localStorage.removeItem('dreamlib:avatar-design:v1:test'); }
 const fake = JSON.parse(localStorage.getItem(testKey) ?? '{"rows":[],"jobs":{}}');
 fake.profile ??= {id:'test',displayName:'',avatar:null,avatarUrl:'',presetId:null,revision:0};
 // ?wall: 60 dreams with pictures of many shapes (G3 sizes, colour, BlurHash) and some text-only ones (G7).
@@ -161,7 +161,10 @@ globalThis.fetch = async (input, init) => {
   if (path.startsWith('/api/v1/jobs/')) {
     const id = path.split('/').pop();
     const pending = Date.now() < (fake.jobs[id]?.ready ?? 0);
-    if(fake.jobs[id]?.kind==='avatar')return json({id,status:pending?'running':'done',total:1,done:pending?0:1,panels:pending?[]:[{path:'test/avatar',url:'/avatars/ink.webp',caption:''}],error:''});
+    if (fake.jobs[id]?.kind === 'avatar') {
+      if (params.has('failAvatar')) return json({ id, status:'failed', total:1, done:0, panels:[], error:'Önizleme oluşturulamadı' });
+      return json({id,status:pending?'running':'done',total:1,done:pending?0:1,panels:pending?[]:[{path:'test/avatar',url:'/avatars/ink.webp',caption:''}],error:''});
+    }
     return json({ id, status: pending ? 'running' : 'done', total:4, done:pending ? Math.min(3, Math.floor((Date.now() - (fake.jobs[id].started ?? 0)) / 2500)) : 4,
       panels: pending ? [] : [0,1,2,3].map(n => ({ path:`test/panel-${n}`, caption:`Sahne ${n}`, url:'/favicon.png' })), error:'' });
   }

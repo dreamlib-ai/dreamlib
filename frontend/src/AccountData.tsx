@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { deleteAccount, exportAccount } from './api';
-import { clearAvatarDraft } from './avatar';
+import { clearAvatarDesign, clearAvatarDraft } from './avatar';
 import { clearDraft } from './draft';
 import { signOut } from './session';
 import { tr } from './strings';
@@ -28,7 +28,7 @@ export default function AccountData({ owner }: { owner: string }) {
     setBusy(true); setError('');
     try {
       await deleteAccount();
-      clearDraft(owner); clearAvatarDraft(owner);
+      clearDraft(owner); clearAvatarDraft(owner); clearAvatarDesign(owner);
       await signOut().catch(() => {});
       window.location.assign('/');
     } catch (e) { setError(e instanceof Error ? e.message : tr.genericError); setBusy(false); }

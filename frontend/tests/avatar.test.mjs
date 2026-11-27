@@ -18,4 +18,11 @@ test('pending avatar references are owner-scoped, bounded and recoverable withou
   now+=86400001;assert.equal(api.readAvatarDraft('one'),null);assert.equal(rows.size,0);
   api.writeAvatarDraft('one',{...pending,spec:{...pending.spec,hair:'injected'}});
   assert.equal(api.readAvatarDraft('one'),null);
+  const design={...pending.spec,hair:'curly'};
+  assert.ok(api.writeAvatarDesign('one',design));
+  assert.equal(api.readAvatarDesign('one').hair,'curly');
+  assert.equal(api.readAvatarDesign('two'),null);
+  assert.equal(api.readAvatarDraft('one'),null);
+  api.clearAvatarDesign('one');
+  assert.equal(api.readAvatarDesign('one'),null);
 });
